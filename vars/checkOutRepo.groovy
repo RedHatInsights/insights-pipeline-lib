@@ -2,8 +2,8 @@
 
 
 def call(Map parameters = [:]){ 
-    targetDir = parameters[targetDir]
-    repoUrl = parameters[repoUrl]
+    targetDir = parameters['targetDir']
+    repoUrl = parameters['repoUrl']
     branch = parameters.get('branch', 'master')
 
     checkout([
