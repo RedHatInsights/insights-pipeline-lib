@@ -48,6 +48,8 @@ def call(parameters = [:]) {
 
     withStatusContext.smoke {
         lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
+            echo "Using project: ${env.PROJECT}"
+
             openShift.withNode(namespace: env.PROJECT) {
                 runPipeline(env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                             ocDeployerServiceSets, pytestMarker, extraEnvVars)
