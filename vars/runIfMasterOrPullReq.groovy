@@ -1,6 +1,6 @@
 // Run the code block only after checking SCM and verifying this is a master branch or an untested PR
 
-def call(Closure body)
+def call(Closure body) {
     scmVars = checkout scm
 
     echo "env.CHANGE_ID:                  ${env.CHANGE_ID}"
