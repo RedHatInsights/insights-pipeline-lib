@@ -2,7 +2,7 @@
 
 
 def call(parameters = [:]) {
-    pylama = parameters.get('pylama', False)
+    pylama = parameters.get('pylama', false)
 
     withStatusContext.lint {
         if (pylama) {
