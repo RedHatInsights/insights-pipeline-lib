@@ -11,3 +11,5 @@ Required Jenkins plugins:
  * Lockable Resources Plugin
  * Kubernetes Plugin
 
+For `openShift.withNode`, if you want to deploy to a non-default namespace, make sure you add the proper service
+account to the namespace. See https://github.com/jenkinsci/kubernetes-plugin#integration-tests-in-a-different-cluster
