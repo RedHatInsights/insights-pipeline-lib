@@ -1,6 +1,6 @@
 // Check that code coverage isn't below a certain threshold
 // Assumes that python code coverage has already been run
-import com.redhat.insights_pipeline.constants.Const;
+import com.redhat.insights_pipeline.Const;
 
 
 def call(threshold = 80) {
