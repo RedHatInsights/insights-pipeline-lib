@@ -6,7 +6,6 @@ class pipelineVars implements Serializable {
     String coverageContext = "continuous-integration/jenkins/coverage"
     String smokeContext = "continuous-integration/jenkins/e2e-smoke"
     String userPath = "~/.local/bin"
-    String jenkinsSvcAccount = "jenkins/jenkins"
     String defaultNameSpace = "jenkins"
     String gitSshCreds = "insightsdroid-ssh-git"
     String smokeTestResourceLabel = "smoke_test_projects"

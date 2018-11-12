@@ -10,7 +10,6 @@ def withNode(Map parameters = [:], Closure body = null) {
     podTemplate(
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: pipelineVars.jenkinsSvcAccount,
         cloud: 'openshift',
         namespace: namespace,
         containers: [
