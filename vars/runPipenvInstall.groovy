@@ -1,5 +1,5 @@
 // Test that pipenv install works, and check that the lock file is in sync with the Pipfile
-import com.redhat.insights_pipeline.Const;
+import com.redhat.insights_pipeline.Const
 
 
 lockErrorRegex = /.*Your Pipfile.lock \(\S+\) is out of date. Expected: \(\S+\).*/

@@ -1,5 +1,5 @@
 // Constants
-package com.redhat.insights_pipeline;
+package com.redhat.insights_pipeline
 
 
 class Const implements Serializable {

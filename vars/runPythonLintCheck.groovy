@@ -1,4 +1,5 @@
-import com.redhat.insights_pipeline.Const;
+import com.redhat.insights_pipeline.Const
+
 
 // Run a lint check using either flake8 or pylama (with the pytest plugin)
 

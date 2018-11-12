@@ -1,5 +1,5 @@
 // Notifies a github context with a certain status. Replaces URLs with blue ocean URLs
-import com.redhat.insights_pipeline.Const;
+import com.redhat.insights_pipeline.Const
 
 
 def call(String context, String status) {
