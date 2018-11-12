@@ -4,7 +4,7 @@
 
 private def dry(String context, Closure body) {
     // Don't Repeat Yourself...
-    ghNotify context: context, "PENDING"
+    ghNotify context: context, status: "PENDING"
 
     try {
         body()

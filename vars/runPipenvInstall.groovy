@@ -49,8 +49,8 @@ def call(parameters = [:]) {
     }
     if (installFailed) {
         error("pipenv install has failed")
-        ghNotify context: pipelineVars.pipInstallContext, "FAILURE"
+        ghNotify context: pipelineVars.pipInstallContext, status: "FAILURE"
     } else {
-        ghNotify context: pipelineVars.pipInstallContext, "SUCCESS"
+        ghNotify context: pipelineVars.pipInstallContext, status: "SUCCESS"
     }
 }
