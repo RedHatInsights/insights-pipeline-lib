@@ -2,7 +2,9 @@
 // Assumes that python code coverage has already been run
 
 
-def call(threshold = 80) {
+def call(Map parameters = [:]) {
+    def threshold = parameters.get('threshold', 80)
+
     def status = 99
 
     status = sh(

@@ -1,7 +1,10 @@
 // Notifies a github context with a certain status. Replaces URLs with blue ocean URLs
 
 
-def call(String context, String status) {
+def call(Map parameters = [:]) {
+    def context = parameters['context']
+    def status = parameters['status']
+
     def targetUrl
 
     def buildUrl = env.BUILD_URL

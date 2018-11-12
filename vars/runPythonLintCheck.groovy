@@ -1,7 +1,9 @@
 // Run a lint check using either flake8 or pylama (with the pytest plugin)
 
 
-def call(pylama = False) {
+def call(parameters = [:]) {
+    pylama = parameters.get('pylama', False)
+
     withStatusContext.lint {
         if (pylama) {
             sh "${pipelineVars.userPath}/pipenv run python -m pytest --pylama --junitxml=lint-results.xml --ignore=tests/"

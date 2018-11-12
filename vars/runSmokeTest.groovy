@@ -39,13 +39,13 @@ e2eTestsDir = 'e2e-tests'
 e2eTestsRepo = 'https://github.com/RedHatInsights/e2e-tests.git'
 
 
-def call(
-    String ocdeployerBuilderPath,
-    String ocDeployerComponentPath,
-    String ocDeployerServiceSets,
-    String pytestMarker,
-    Map extraEnvVars,
-) {
+def call(parameters = [:]) {
+    def ocDeployerBuilderPath = parameters['ocDeployerBuildPath']
+    def ocDeployerComponentPath = parameters['ocDeployerComponentPath']
+    def ocDeployerServiceSets = parameters['ocDeployerServiceSets']
+    def pytestMarker = parameters['pytestMarker']
+    def extraEnvVars = parameters.get('extraEnvVars', [:])
+
     withStatusContext.smoke {
         lock(label: resourceLabel, quantity: 1, variable: "PROJECT") {
             runSmokeTest(env.PROJECT)
@@ -53,20 +53,20 @@ def call(
 
         openShift.withNode() {
             runPipeline(
-                env.PROJECT, ocdeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets, pytestMarker, extraEnvVars
+                env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets, pytestMarker, extraEnvVars
             )
         }
     }
 }
 
 
-private def deployEnvironment(refspec, project, ocdeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets) {
+private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets) {
     stage("Deploy test environment") {
         dir(e2eDeployDir) {
             // First, deploy the builder for only this app to build the PR image in this project
-            sh "echo \"${ocdeployerBuilderPath}:\" > env.yml"
+            sh "echo \"${ocDeployerBuilderPath}:\" > env.yml"
             sh "echo \"  SOURCE_REPOSITORY_REF: ${refspec}\" >> env.yml"
-            sh  "${venvDir}/bin/ocdeployer --pick ${ocdeployerBuilderPath} --template-dir buildfactory -e env.yml --secrets-src-project secrets --no-confirm ${project}"
+            sh  "${venvDir}/bin/ocdeployer --pick ${ocDeployerBuilderPath} --template-dir buildfactory -e env.yml --secrets-src-project secrets --no-confirm ${project}"
 
             // Now deploy the full env, set the image for this app to be pulled from this local project instead of buildfactory
             sh "echo \"${ocdeployerComponentPath}:\" > env.yml"
@@ -79,7 +79,7 @@ private def deployEnvironment(refspec, project, ocdeployerBuilderPath, ocDeploye
 
 private def runPipeline(
     String project,
-    String ocdeployerBuilderPath,
+    String ocDeployerBuilderPath,
     String ocDeployerComponentPath,
     String ocDeployerServiceSets,
     String pytestMarker,
@@ -143,7 +143,7 @@ private def runPipeline(
     }
 
     try {
-        deployEnvironment(refspec, project, ocdeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
+        deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
     } catch (err) {
         collectLogs(project)
         throw err
@@ -158,6 +158,10 @@ private def runPipeline(
          * will take care of failing the build if any tests fail...
          */
         dir(e2eTestsDir) {
+            extraEnvVars.each { key, val ->
+                sh "export ${key}=${val}"
+            }
+
             sh """
                 ${venvDir}/bin/ocdeployer --list-routes ${project} --output json > routes.json
                 cat routes.json
@@ -165,7 +169,6 @@ private def runPipeline(
                 cat env_vars.sh
                 . ./env_vars.sh
                 export OCP_ENV=${project}
-                export TEST_ACCOUNT=${testAccount}
 
                 ${venvDir}/bin/python -m pytest --junitxml=junit.xml -s -v -m ${pytestMarker} 2>&1 | tee pytest.log
             """

@@ -15,7 +15,10 @@ def removeAll() {
 }
 
 
-def post(commitId, str) {
+def post(Map parameters = [:]) {
+    commitId = parameters['commitId']
+    str = parameters['str']
+
     def shortId = commitId.substring(0, 7)
     def body = "Commit `${shortId}` Pipfile violation\n${str}"
     try {

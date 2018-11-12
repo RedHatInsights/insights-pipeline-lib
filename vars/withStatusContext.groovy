@@ -1,6 +1,5 @@
 // Context manager which notifies github if the operation succeeds or fails
 // Example: withStatusContext.swagger { do swagger stuff }
-import com.redhat.insights_pipeline.Const
 
 
 private def dry(String context, Closure body) {
@@ -19,25 +18,25 @@ private def dry(String context, Closure body) {
 
 
 def lint(Closure body) {
-    dry(Const.lintContext, body)
+    dry(pipelineVars.lintContext, body)
 }
 
 def unitTest(Closure body) {
-    dry(Const.unitTestContext, body)
+    dry(pipelineVars.unitTestContext, body)
 }
 
 def coverage(Closure body) {
-    dry(Const.coverageContext, body)
+    dry(pipelineVars.coverageContext, body)
 }
 
 def pipInstall(Closure body) {
-    dry(Const.pipInstallContext, body)
+    dry(pipelineVars.pipInstallContext, body)
 }
 
 def swagger(Closure body) {
-    dry(Const.swaggerContext, body)
+    dry(pipelineVars.swaggerContext, body)
 }
 
 def smoke(Closure body) {
-    dry(Const.smokeContext, body)
+    dry(pipelineVars.smokeContext, body)
 }

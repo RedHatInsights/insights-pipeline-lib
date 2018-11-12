@@ -1,7 +1,11 @@
 // Helper to check out a github repo
 
 
-def call(targetDir, repoUrl, branch = 'master') {
+def call(Map parameters = [:]){ 
+    targetDir = parameters[targetDir]
+    repoUrl = parameters[repoUrl]
+    branch = parameters.get('branch', 'master')
+
     checkout([
         $class: 'GitSCM',
         branches: [[name: branch]],

@@ -10,4 +10,5 @@ class pipelineVars implements Serializable {
     public String defaultNameSpace = "jenkins"
     public String gitSshCreds = "insightsdroid-ssh-git"
     public String smokeTestResourceLabel = "smoke_test_projects"
+    public String defaultNodeImage = "docker-registry.default.svc:5000/jenkins/jenkins-slave-base-centos7-python36:latest"
 }

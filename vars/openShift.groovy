@@ -1,17 +1,16 @@
 // Helpers involving jenkins slaves running on openshift
 
 
-def withNode(
-    String image = "docker-registry.default.svc:5000/jenkins/jenkins-slave-base-centos7-python36:latest",
-    String namespace = Const.defaultNameSpace,
-    Closure body
-) {
+def withNode(Map parameters = [:], Closure body = null) {
+    image = parameters.get('image', pipelineVars.defaultNodeImage)
+    namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
+
     label = "test-${UUID.randomUUID().toString()}"
 
     podTemplate(
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: Const.jenkinsSvcAccount,
+        serviceAccount: pipelineVars.jenkinsSvcAccount,
         cloud: 'openshift',
         namespace: namespace,
         containers: [
@@ -38,7 +37,9 @@ def withNode(
 }
 
 
-def collectLogs(project) {
+def collectLogs(parameters = [:]) {
+    project = parameters['project']
+
     stage("Collect logs") {
         try {
             sh "oc project ${project}"

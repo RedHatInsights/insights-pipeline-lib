@@ -6,7 +6,9 @@ lockError = "\n* `Pipfile.lock` is out of sync. Run '`pipenv lock`' and commit t
 installError = "\n* '`pipenv install`' has failed."
 
 
-def call(scmVars) {
+def call(parameters = [:]) {
+    scmVars = parameters['scmVars']
+
     sh "pip install --user --no-warn-script-location pipenv"
     sh "${pipelineVars.userPath}/pipenv run pip install --upgrade pip"
 
