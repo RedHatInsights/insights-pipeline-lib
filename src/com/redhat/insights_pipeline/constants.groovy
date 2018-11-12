@@ -1,4 +1,6 @@
 // Constants
+package com.redhat.insights_pipeline;
+
 
 class Const implements Serializable {
     public String lintContext = "continuous-integration/jenkins/lint"

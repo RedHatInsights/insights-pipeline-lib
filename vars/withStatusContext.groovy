@@ -1,6 +1,6 @@
 // Context manager which notifies github if the operation succeeds or fails
 // Example: withStatusContext.swagger { do swagger stuff }
-import com.redhat.constants.Const;
+import com.redhat.insights_pipeline.constants.Const;
 
 
 private def dry(String context, Closure body) {

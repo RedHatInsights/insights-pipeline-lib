@@ -32,8 +32,8 @@
  *
  */
 
-import com.redhat.constants.Const;
-import com.redhat.utils.Utils;
+import com.redhat.insights_pipeline.constants.Const;
+import com.redhat.insights_pipeline.utils.Utils;
 
 
 venvDir = "~/.venv"

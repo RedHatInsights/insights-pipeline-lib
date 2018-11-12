@@ -1,4 +1,8 @@
 // Utils and helpers
+package com.redhat.insights_pipeline;
+
+import com.cloudbees.groovy.cps.NonCPS;
+
 
 class Utils {
     @NonCPS
