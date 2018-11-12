@@ -1,5 +1,4 @@
 // Notifies a github context with a certain status. Replaces URLs with blue ocean URLs
-import com.redhat.insights_pipeline.Const
 
 
 def call(String context, String status) {
@@ -16,13 +15,13 @@ def call(String context, String status) {
         targetUrl = env.RUN_DISPLAY_URL
     } else {
         switch (context) {
-            case Const.lintContext:
+            case pipelineVars.lintContext:
                 targetUrl =  "${blueBuildUrl}tests"
                 break
-            case Const.unitTestContext:
+            case pipelineVars.unitTestContext:
                 targetUrl =  "${blueBuildUrl}tests"
                 break
-            case Const.coverageContext:
+            case pipelineVars.coverageContext:
                 targetUrl = "${env.BUILD_URL}artifact/htmlcov/index.html"
                 break
             default:

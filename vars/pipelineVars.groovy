@@ -1,8 +1,4 @@
-// Constants
-package com.redhat.insights_pipeline
-
-
-class Const implements Serializable {
+class pipelineVars implements Serializable {
     public String lintContext = "continuous-integration/jenkins/lint"
     public String unitTestContext = "continuous-integration/jenkins/unittest"
     public String pipInstallContext = "continuous-integration/jenkins/pipinstall"

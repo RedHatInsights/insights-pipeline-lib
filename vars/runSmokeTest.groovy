@@ -32,10 +32,6 @@
  *
  */
 
-import com.redhat.insights_pipeline.Const
-import com.redhat.insights_pipeline.Utils
-
-
 venvDir = "~/.venv"
 e2eDeployDir = 'e2e-deploy'
 e2eDeployRepo = 'https://github.com/RedHatInsights/e2e-deploy.git'
@@ -133,7 +129,7 @@ private def runPipeline(
     stage("Install e2e-tests") {
         dir(e2eTestsDir) {
             // Use sshagent so we can clone github private repos referenced in requirements.txt
-            sshagent(credentials: [Const.gitSshCreds]) {
+            sshagent(credentials: [pipelineVars.gitSshCreds]) {
                 sh """
                     mkdir -p ~/.ssh
                     touch ~/.ssh/known_hosts
