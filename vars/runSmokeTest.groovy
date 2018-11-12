@@ -77,14 +77,8 @@ private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeploye
 }
 
 
-private def runPipeline(
-    String project,
-    String ocDeployerBuilderPath,
-    String ocDeployerComponentPath,
-    String ocDeployerServiceSets,
-    String pytestMarker,
-    Map extraEnvVars
-) {
+private def runPipeline(String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
+                        String ocDeployerServiceSets, String pytestMarker, Map extraEnvVars) {
     cancelPriorBuilds()
 
     currentBuild.result = "SUCCESS"
@@ -97,7 +91,8 @@ private def runPipeline(
 
     // get refspec so we can set up the OpenShift build config to point to this PR
     // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
-    def refspec;
+    def refspec
+
     stage("Get refspec") {
         refspec = "refs/pull/${env.CHANGE_ID}/merge"
         def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refspec}").trim()
