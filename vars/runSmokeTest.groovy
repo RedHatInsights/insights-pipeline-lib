@@ -51,7 +51,7 @@ def call(parameters = [:]) {
             runSmokeTest(env.PROJECT)
         }
 
-        openShift.withNode() {
+        openShift.withNode(namespace: env.PROJECT) {
             runPipeline(
                 env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets, pytestMarker, extraEnvVars
             )
