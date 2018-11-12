@@ -32,13 +32,6 @@
  *
  */
 
-venvDir = "~/.venv"
-e2eDeployDir = 'e2e-deploy'
-e2eDeployRepo = 'https://github.com/RedHatInsights/e2e-deploy.git'
-e2eTestsDir = 'e2e-tests'
-e2eTestsRepo = 'https://github.com/RedHatInsights/e2e-tests.git'
-
-
 def call(parameters = [:]) {
     def ocDeployerBuilderPath = parameters['ocDeployerBuildPath']
     def ocDeployerComponentPath = parameters['ocDeployerComponentPath']
@@ -61,16 +54,16 @@ def call(parameters = [:]) {
 
 private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets) {
     stage("Deploy test environment") {
-        dir(e2eDeployDir) {
+        dir(pipelineVars.e2eDeployDir) {
             // First, deploy the builder for only this app to build the PR image in this project
             sh "echo \"${ocDeployerBuilderPath}:\" > env.yml"
             sh "echo \"  SOURCE_REPOSITORY_REF: ${refspec}\" >> env.yml"
-            sh  "${venvDir}/bin/ocdeployer --pick ${ocDeployerBuilderPath} --template-dir buildfactory -e env.yml --secrets-src-project secrets --no-confirm ${project}"
+            sh  "${pipelineVars.venvDir}/bin/ocdeployer --pick ${ocDeployerBuilderPath} --template-dir buildfactory -e env.yml --secrets-src-project secrets --no-confirm ${project}"
 
             // Now deploy the full env, set the image for this app to be pulled from this local project instead of buildfactory
             sh "echo \"${ocdeployerComponentPath}:\" > env.yml"
             sh "echo \"  IMAGE_NAMESPACE: ${project}\" >> env.yml"   
-            sh  "${venvDir}/bin/ocdeployer -s ${ocdeployerServiceSets} -e env.yml --secrets-src-project secrets --no-confirm ${project}"
+            sh  "${pipelineVars.venvDir}/bin/ocdeployer -s ${ocdeployerServiceSets} -e env.yml --secrets-src-project secrets --no-confirm ${project}"
         }
     }
 }
@@ -102,26 +95,26 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
 
     // check out e2e-tests
     stage("Check out repos") {
-        checkoutRepo(e2eTestsDir, e2eTestsRepo)
-        checkoutRepo(e2eDeployDir, e2eDeployRepo)
+        checkoutRepo(pipelineVars.e2eTestsDir, pipelineVars.e2eTestsRepo)
+        checkoutRepo(pipelineVars.e2eDeployDir, pipelineVars.e2eDeployRepo)
     }
 
     stage("Install ocdeployer") {
         sh """
-            python3.6 -m venv ${venvDir}
-            ${venvDir}/bin/pip install --upgrade pip
+            python3.6 -m venv ${pipelineVars.venvDir}
+            ${pipelineVars.venvDir}/bin/pip install --upgrade pip
         """
-        dir(e2eDeployDir) {
-            sh "${venvDir}/bin/pip install -r requirements.txt"
+        dir(pipelineVars.e2eDeployDir) {
+            sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
         }
     }
 
     stage("Wipe test environment") {
-        sh "${venvDir}/bin/ocdeployer -w --no-confirm ${project}"
+        sh "${pipelineVars.venvDir}/bin/ocdeployer -w --no-confirm ${project}"
     }
 
     stage("Install e2e-tests") {
-        dir(e2eTestsDir) {
+        dir(pipelineVars.e2eTestsDir) {
             // Use sshagent so we can clone github private repos referenced in requirements.txt
             sshagent(credentials: [pipelineVars.gitSshCreds]) {
                 sh """
@@ -129,7 +122,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
                     touch ~/.ssh/known_hosts
                     cp ~/.ssh/known_hosts ~/.ssh/known_hosts.backup
                     ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts
-                    ${venvDir}/bin/pip install -r requirements.txt
+                    ${pipelineVars.venvDir}/bin/pip install -r requirements.txt
                     cp ~/.ssh/known_hosts.backup ~/.ssh/known_hosts
                 """
             }
@@ -151,20 +144,20 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
          * NOTE: 'tee' is used when running pytest so we always get a "0" return code. The 'junit' step
          * will take care of failing the build if any tests fail...
          */
-        dir(e2eTestsDir) {
+        dir(pipelineVars.e2eTestsDir) {
             extraEnvVars.each { key, val ->
                 sh "export ${key}=${val}"
             }
 
             sh """
-                ${venvDir}/bin/ocdeployer --list-routes ${project} --output json > routes.json
+                ${pipelineVars.venvDir}/bin/ocdeployer --list-routes ${project} --output json > routes.json
                 cat routes.json
-                ${venvDir}/bin/python envs/convert-from-ocdeployer.py routes.json env_vars.sh
+                ${pipelineVars.venvDir}/bin/python envs/convert-from-ocdeployer.py routes.json env_vars.sh
                 cat env_vars.sh
                 . ./env_vars.sh
                 export OCP_ENV=${project}
 
-                ${venvDir}/bin/python -m pytest --junitxml=junit.xml -s -v -m ${pytestMarker} 2>&1 | tee pytest.log
+                ${pipelineVars.venvDir}/bin/python -m pytest --junitxml=junit.xml -s -v -m ${pytestMarker} 2>&1 | tee pytest.log
             """
 
             archiveArtifacts "pytest.log"
@@ -174,10 +167,10 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     openShift.collectLogs(project)
 
     stage("Wipe test environment") {
-        sh "${venvDir}/bin/ocdeployer -w --no-confirm ${project}"
+        sh "${pipelineVars.venvDir}/bin/ocdeployer -w --no-confirm ${project}"
     }
 
-    dir(e2eTestsDir) {
+    dir(pipelineVars.e2eTestsDir) {
         junit "junit.xml"
     }
 }
