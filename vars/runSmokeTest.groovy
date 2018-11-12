@@ -47,7 +47,7 @@ def call(parameters = [:]) {
     def extraEnvVars = parameters.get('extraEnvVars', [:])
 
     withStatusContext.smoke {
-        lock(label: resourceLabel, quantity: 1, variable: "PROJECT") {
+        lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
             runSmokeTest(env.PROJECT)
         }
 
