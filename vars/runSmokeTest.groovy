@@ -83,9 +83,9 @@ private def runPipeline(
     String ocDeployerComponentPath,
     String ocDeployerServiceSets,
     String pytestMarker,
-    Map extraEnvVars,
+    Map extraEnvVars
 ) {
-    cancelPriorBuilds
+    cancelPriorBuilds()
 
     currentBuild.result = "SUCCESS"
 
@@ -145,7 +145,7 @@ private def runPipeline(
     try {
         deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
     } catch (err) {
-        collectLogs(project)
+        openShift.collectLogs(project)
         throw err
     }
 
@@ -177,7 +177,7 @@ private def runPipeline(
         }
     }
 
-    collectLogs(project)
+    openShift.collectLogs(project)
 
     stage("Wipe test environment") {
         sh "${venvDir}/bin/ocdeployer -w --no-confirm ${project}"
