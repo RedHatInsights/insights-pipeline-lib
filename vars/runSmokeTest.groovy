@@ -96,7 +96,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     // check out e2e-tests
     stage("Check out repos") {
         checkOutRepo(targetDir: pipelineVars.e2eTestsDir, repoUrl: pipelineVars.e2eTestsRepo)
-        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo, "newocdeployer")
+        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo, branch: "newocdeployer")
     }
 
     stage("Install ocdeployer") {
