@@ -58,12 +58,12 @@ private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeploye
             // First, deploy the builder for only this app to build the PR image in this project
             sh "echo \"${ocDeployerBuilderPath}:\" > env.yml"
             sh "echo \"  SOURCE_REPOSITORY_REF: ${refspec}\" >> env.yml"
-            sh  "${pipelineVars.venvDir}/bin/ocdeployer --pick ${ocDeployerBuilderPath} --template-dir buildfactory -e env.yml --secrets-src-project secrets --no-confirm ${project}"
+            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env.yml ${project}"
 
             // Now deploy the full env, set the image for this app to be pulled from this local project instead of buildfactory
             sh "echo \"${ocdeployerComponentPath}:\" > env.yml"
             sh "echo \"  IMAGE_NAMESPACE: ${project}\" >> env.yml"   
-            sh  "${pipelineVars.venvDir}/bin/ocdeployer -s ${ocdeployerServiceSets} -e env.yml --secrets-src-project secrets --no-confirm ${project}"
+            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -s ${ocdeployerServiceSets} -e env.yml ${project}"
         }
     }
 }
@@ -96,7 +96,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     // check out e2e-tests
     stage("Check out repos") {
         checkOutRepo(targetDir: pipelineVars.e2eTestsDir, repoUrl: pipelineVars.e2eTestsRepo)
-        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
+        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo, "newocdeployer")
     }
 
     stage("Install ocdeployer") {
@@ -110,7 +110,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     }
 
     stage("Wipe test environment") {
-        sh "${pipelineVars.venvDir}/bin/ocdeployer -w --no-confirm ${project}"
+        sh "${pipelineVars.venvDir}/bin/ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
     stage("Install e2e-tests") {
@@ -150,7 +150,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
             }
 
             sh """
-                ${pipelineVars.venvDir}/bin/ocdeployer --list-routes ${project} --output json > routes.json
+                ${pipelineVars.venvDir}/bin/ocdeployer list-routes ${project} --output json > routes.json
                 cat routes.json
                 ${pipelineVars.venvDir}/bin/python envs/convert-from-ocdeployer.py routes.json env_vars.sh
                 cat env_vars.sh
@@ -167,7 +167,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     openShift.collectLogs(project)
 
     stage("Wipe test environment") {
-        sh "${pipelineVars.venvDir}/bin/ocdeployer -w --no-confirm ${project}"
+        sh "${pipelineVars.venvDir}/bin/ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
     dir(pipelineVars.e2eTestsDir) {
