@@ -164,7 +164,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
         }
     }
 
-    openShift.collectLogs(project)
+    openShift.collectLogs(project: project)
 
     stage("Wipe test environment") {
         sh "${pipelineVars.venvDir}/bin/ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
