@@ -33,7 +33,7 @@
  */
 
 def call(parameters = [:]) {
-    def ocDeployerBuilderPath = parameters['ocDeployerBuildPath']
+    def ocDeployerBuilderPath = parameters['ocDeployerBuilderPath']
     def ocDeployerComponentPath = parameters['ocDeployerComponentPath']
     def ocDeployerServiceSets = parameters['ocDeployerServiceSets']
     def pytestMarker = parameters['pytestMarker']
