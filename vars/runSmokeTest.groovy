@@ -174,5 +174,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
         junit "junit.xml"
     }
 
-    assert currentBuild.result == "SUCCESS"
+    if (currentBuild.result != "SUCCESS") {
+        throw new Exception("Smoke test failed");
+    }
 }
