@@ -173,4 +173,6 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     dir(pipelineVars.e2eTestsDir) {
         junit "junit.xml"
     }
+
+    assert currentBuild.result == "SUCCESS"
 }
