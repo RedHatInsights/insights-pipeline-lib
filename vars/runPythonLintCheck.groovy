@@ -8,7 +8,7 @@ def call(parameters = [:]) {
         if (pylama) {
             sh "${pipelineVars.userPath}/pipenv run python -m pytest --pylama --junitxml=lint-results.xml --ignore=tests/"
         } else {
-            sh "${pipelineVars.userPath}/pipenv run flake8 advisor/api/ --output-file lint-results.txt"
+            sh "${pipelineVars.userPath}/pipenv run flake8 . --output-file lint-results.txt"
             sh "${pipelineVars.userPath}/pipenv run flake8_junit lint-results.txt lint-results.xml"
         }
     }
