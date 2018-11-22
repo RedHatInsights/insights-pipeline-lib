@@ -33,10 +33,18 @@ def pipInstall(Closure body) {
     dry(pipelineVars.pipInstallContext, body)
 }
 
+def bundleInstall(Closure body) {
+    dry(pipelineVars.bundleInstallContext, body)
+}
+
 def swagger(Closure body) {
     dry(pipelineVars.swaggerContext, body)
 }
 
 def smoke(Closure body) {
     dry(pipelineVars.smokeContext, body)
+}
+
+def dbMigrate(Closure body) {
+    dry(pipelineVars.dbMigrateContext, body)
 }
