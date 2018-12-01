@@ -8,16 +8,18 @@ def withNode(Map parameters = [:], Closure body = null) {
     limitCpu = parameters.get('resourceLimitCpu', "500m")
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     limitMemory = parameters.get('resourceLimitMemory', "650Mi")
-
-    label = "test-${UUID.randomUUID().toString()}"
-
-    podTemplate(
+    yaml = parameters.get('yaml')
+    podParameters = [
         label: label,
         slaveConnectTimeout: 120,
         serviceAccount: pipelineVars.jenkinsSvcAccount,
         cloud: 'openshift',
-        namespace: namespace,
-        containers: [
+        namespace: namespace
+    ]
+    if (yaml) {
+        podParameters['yaml'] = readTrusted(yaml)
+    } else {
+        podParameters['containers'] = [
             containerTemplate(
                 name: 'jnlp',
                 image: image,
@@ -33,7 +35,11 @@ def withNode(Map parameters = [:], Closure body = null) {
                 ],
             ),
         ]
-    ) {
+    }
+
+    label = "test-${UUID.randomUUID().toString()}"
+
+    podTemplate(podParameters) {
         node(label) {
             body()
         }
