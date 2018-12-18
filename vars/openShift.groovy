@@ -9,6 +9,9 @@ def withNode(Map parameters = [:], Closure body = null) {
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     limitMemory = parameters.get('resourceLimitMemory', "650Mi")
     yaml = parameters.get('yaml')
+
+    label = "test-${UUID.randomUUID().toString()}"
+
     podParameters = [
         label: label,
         slaveConnectTimeout: 120,
@@ -36,8 +39,6 @@ def withNode(Map parameters = [:], Closure body = null) {
             ),
         ]
     }
-
-    label = "test-${UUID.randomUUID().toString()}"
 
     podTemplate(podParameters) {
         node(label) {
