@@ -22,4 +22,7 @@ class pipelineVars implements Serializable {
     String e2eDeployRepo = 'https://github.com/RedHatInsights/e2e-deploy.git'
     String e2eTestsDir = 'e2e-tests'
     String e2eTestsRepo = 'https://github.com/RedHatInsights/e2e-tests.git'
+    String e2eDeployHelmDir = 'e2e-deploy-helm'
+    String e2eDeployHelmRepo = 'https://github.com/RedHatInsights/e2e-deploy-helm.git'
+
 }

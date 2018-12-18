@@ -33,9 +33,8 @@
  */
 
 def call(parameters = [:]) {
-    def ocDeployerBuilderPath = parameters['ocDeployerBuilderPath']
-    def ocDeployerComponentPath = parameters['ocDeployerComponentPath']
-    def ocDeployerServiceSets = parameters['ocDeployerServiceSets']
+    def helmComponentChartName = parameters['helmComponentChartName']
+    def helmSmokeTestChartName = parameters['helmSmokeTestChartName']
     def pytestMarker = parameters['pytestMarker']
     def extraEnvVars = parameters.get('extraEnvVars', [:])
 
@@ -44,33 +43,37 @@ def call(parameters = [:]) {
             echo "Using project: ${env.PROJECT}"
 
             openShift.withNode(namespace: env.PROJECT) {
-                runPipeline(env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
-                            ocDeployerServiceSets, pytestMarker, extraEnvVars)
+                runPipeline(env.PROJECT, helmComponentChartName, helmSmokeTestChartName, pytestMarker, extraEnvVars)
             }
         }
     }
 }
 
 
-private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets) {
+private def deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName) {
     stage("Deploy test environment") {
-        dir(pipelineVars.e2eDeployDir) {
-            // First, deploy the builder for only this app to build the PR image in this project
-            sh "echo \"${ocDeployerBuilderPath}:\" > env.yml"
-            sh "echo \"  SOURCE_REPOSITORY_REF: ${refspec}\" >> env.yml"
-            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env.yml ${project}"
+        dir(pipelineVars.e2eDeployHelmDir) {
+            sh "cp values-dev.yaml values-smoketest.yaml"
+            sh "echo '' >> values-smoketest.yaml"
+            sh "echo '${helmComponentChartName}:' >> values-smoketest.yaml"
+            sh "echo '  build:' >> values-smoketest.yaml"
+            sh "echo '    install: true' >> values-smoketest.yaml"
+            sh "echo '    src_repository_ref: ${refspec}' >> values-smoketest.yaml"
+            sh "helm dep up smoke_test_charts/{$helmSmokeTestChartName}"
+            sh "helm install smoke_test_charts/${helmSmokeTestChartName} --name ${helmSmokeTestChartName}-smoke --values values-smoketest.yaml --values secrets.yaml --namespace ${project}"
 
-            // Now deploy the full env, set the image for this app to be pulled from this local project instead of buildfactory
-            sh "echo \"${ocDeployerComponentPath}:\" > env.yml"
-            sh "echo \"  IMAGE_NAMESPACE: ${project}\" >> env.yml"   
-            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env.yml --scale-resources 0.5 ${project}"
         }
     }
 }
 
 
-private def runPipeline(String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-                        String ocDeployerServiceSets, String pytestMarker, Map extraEnvVars) {
+private def runPipeline(
+    String project,
+    String helmComponentChartName,
+    String helmSmokeTestChartName,
+    String pytestMarker,
+    Map extraEnvVars
+) {
     cancelPriorBuilds()
 
     currentBuild.result = "SUCCESS"
@@ -96,7 +99,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     // check out e2e-tests
     stage("Check out repos") {
         checkOutRepo(targetDir: pipelineVars.e2eTestsDir, repoUrl: pipelineVars.e2eTestsRepo)
-        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
+        checkOutRepo(targetDir: pipelineVars.e2eDeployHelmDir, repoUrl: pipelineVars.e2eDeployHelmRepo)
     }
 
     stage("Install ocdeployer") {
@@ -110,7 +113,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     }
 
     stage("Wipe test environment") {
-        sh "${pipelineVars.venvDir}/bin/ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+        sh "helm delete --purge $(helm ls --namespace ${project} --short)"
     }
 
     stage("Install e2e-tests") {
@@ -130,7 +133,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     }
 
     try {
-        deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
+        deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName)
     } catch (err) {
         openShift.collectLogs(project)
         throw err
