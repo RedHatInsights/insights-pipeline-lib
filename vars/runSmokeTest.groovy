@@ -53,15 +53,24 @@ def call(parameters = [:]) {
 private def deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName) {
     stage("Deploy test environment") {
         dir(pipelineVars.e2eDeployHelmDir) {
-            sh "cp values-dev.yaml values-smoketest.yaml"
-            sh "echo '' >> values-smoketest.yaml"
-            sh "echo '${helmComponentChartName}:' >> values-smoketest.yaml"
-            sh "echo '  build:' >> values-smoketest.yaml"
-            sh "echo '    install: true' >> values-smoketest.yaml"
-            sh "echo '    src_repository_ref: ${refspec}' >> values-smoketest.yaml"
-            sh "helm dep up smoke_test_charts/{$helmSmokeTestChartName}"
-            sh "helm install smoke_test_charts/${helmSmokeTestChartName} --name ${helmSmokeTestChartName}-smoke --values values-smoketest.yaml --values secrets.yaml --namespace ${project}"
+            // Edit values file to build this PR code locally in the test project
+            sh "cp values-smoketest.yaml values-thisrun.yaml"
+            sh "echo '' >> values-thisrun.yaml"
+            sh "echo '${helmComponentChartName}:' >> values-thisrun.yaml"
+            sh "echo '  build:' >> values-thisrun.yaml"
+            sh "echo '    install: true' >> values-thisrun.yaml"
+            sh "echo '    src_repository_ref: ${refspec}' >> values-thisrun.yaml"
 
+            // Decrypt the secrets config
+            withCredentials([string(credentialsId: 'helm-secrets-gpg-shared-key', variable: 'passphrase')]) {
+                sh "gpg --yes --passphrase ${passphrase} secrets.yaml.gpg"
+            }
+
+            // Install the smoke test chart
+            sh "helm install charts_smoke_test/${helmSmokeTestChartName} --dep-up --name ${helmSmokeTestChartName}-smoke --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
+
+           // Wait on all dc's to finish rolling out
+        sh "for dc in $(oc get dc | cut -f1 -d' ' | grep -v '^NAME.*'); do oc rollout status dc $dc -w; done"
         }
     }
 }
@@ -100,16 +109,6 @@ private def runPipeline(
     stage("Check out repos") {
         checkOutRepo(targetDir: pipelineVars.e2eTestsDir, repoUrl: pipelineVars.e2eTestsRepo)
         checkOutRepo(targetDir: pipelineVars.e2eDeployHelmDir, repoUrl: pipelineVars.e2eDeployHelmRepo)
-    }
-
-    stage("Install ocdeployer") {
-        sh """
-            python3.6 -m venv ${pipelineVars.venvDir}
-            ${pipelineVars.venvDir}/bin/pip install --upgrade pip
-        """
-        dir(pipelineVars.e2eDeployDir) {
-            sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
-        }
     }
 
     stage("Wipe test environment") {
