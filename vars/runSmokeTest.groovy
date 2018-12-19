@@ -71,26 +71,32 @@ private def deployEnvironment(refspec, project, helmComponentChartName, helmSmok
         // Wipe old environment
         wipe(project)
 
-        dir(pipelineVars.e2eDeployHelmDir) {
-            // Edit values file to build this PR code locally in the test project
-            sh "cp values-smoke-test.yaml values-thisrun.yaml"
-            sh "echo '' >> values-thisrun.yaml"
-            sh "echo '${helmComponentChartName}:' >> values-thisrun.yaml"
-            sh "echo '  build:' >> values-thisrun.yaml"
-            sh "echo '    install: true' >> values-thisrun.yaml"
-            sh "echo '    src_repository_ref: ${refspec}' >> values-thisrun.yaml"
-
-            // Decrypt the secrets config
-            withCredentials([string(credentialsId: 'helm-secrets-gpg-shared-key', variable: 'PASSPHRASE')]) {
-                sh 'gpg2 --decrypt --out secrets.yaml --passphrase $PASSPHRASE secrets.yaml.gpg'
+        // Decrypt the secrets config
+        withCredentials([file(credentialsId: 'ansible-vault-file', variable: 'FILE')]) {
+            dir(pipelineVars.e2eDeployHelmDir) {
+                sh '${pipelineVars.venvDir}/bin/ansible-vault decrypt --vault-password-file=$FILE secrets.yaml.encrypted --output=secrets.yaml'
             }
+        }
 
-            // Install the smoke test chart
-            helm "install charts_smoke_test/${helmSmokeTestChartName} --dep-up --name ${helmSmokeTestChartName}-smoke --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
+        dir(pipelineVars.e2eDeployHelmDir) {
+            try {
+                // Edit values file to build this PR code locally in the test project
+                sh "cp values-smoke-test.yaml values-thisrun.yaml"
+                sh "echo '' >> values-thisrun.yaml"
+                sh "echo '${helmComponentChartName}:' >> values-thisrun.yaml"
+                sh "echo '  build:' >> values-thisrun.yaml"
+                sh "echo '    install: true' >> values-thisrun.yaml"
+                sh "echo '    src_repository_ref: ${refspec}' >> values-thisrun.yaml"
 
-            // Wait on all dc's to finish rolling out
-            sh "oc project ${project}"
-            sh "for dc in \$(oc get dc | cut -f1 -d' ' | grep -v '^NAME.*'); do oc rollout status dc \$dc -w; done"
+                // Install the smoke test chart
+                helm "install charts_smoke_test/${helmSmokeTestChartName} --dep-up --name ${helmSmokeTestChartName}-smoke --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
+
+                // Wait on all dc's to finish rolling out
+                sh "oc project ${project}"
+                sh "for dc in \$(oc get dc | cut -f1 -d' ' | grep -v '^NAME.*'); do oc rollout status dc \$dc -w; done"
+            } finally {
+                sh "rm -f secrets.yaml"
+            }
         }
     }
 }
@@ -134,8 +140,8 @@ private def runPipeline(
     stage("Install python packages") {
         sh "python3.6 -m venv ${pipelineVars.venvDir}"
         sh "${pipelineVars.venvDir}/bin/pip install --upgrade pip setuptools"
-        // Install ocdeployer for its 'list routes' functionality
-        sh "${pipelineVars.venvDir}/bin/pip install ocdeployer"  
+        // Install ocdeployer for its 'list routes' functionality, and ansible for ansible-vault
+        sh "${pipelineVars.venvDir}/bin/pip install ocdeployer ansible"
 
         dir(pipelineVars.e2eTestsDir) {
             // Use sshagent so we can clone github private repos referenced in requirements.txt
