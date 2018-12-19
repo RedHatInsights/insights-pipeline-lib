@@ -51,7 +51,7 @@ def call(parameters = [:]) {
 
 
 def helm(String cmd) {
-    withEnv("TILLER_NAMESPACE=tiller") {
+    withEnv(["TILLER_NAMESPACE=tiller"]) {
         sh "helm ${cmd}"
     }
 }
