@@ -73,7 +73,7 @@ private def deployEnvironment(refspec, project, helmComponentChartName, helmSmok
 
         dir(pipelineVars.e2eDeployHelmDir) {
             // Edit values file to build this PR code locally in the test project
-            sh "cp values-smoketest.yaml values-thisrun.yaml"
+            sh "cp values-smoke-test.yaml values-thisrun.yaml"
             sh "echo '' >> values-thisrun.yaml"
             sh "echo '${helmComponentChartName}:' >> values-thisrun.yaml"
             sh "echo '  build:' >> values-thisrun.yaml"
