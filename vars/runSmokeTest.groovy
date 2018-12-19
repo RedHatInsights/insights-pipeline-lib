@@ -82,7 +82,7 @@ private def deployEnvironment(refspec, project, helmComponentChartName, helmSmok
 
             // Decrypt the secrets config
             withCredentials([string(credentialsId: 'helm-secrets-gpg-shared-key', variable: 'PASSPHRASE')]) {
-                sh 'gpg --decrypt --symmetric --yes --passphrase $PASSPHRASE secrets.yaml.gpg'
+                sh 'gpg --decrypt --out secrets.yaml --passphrase $PASSPHRASE secrets.yaml.gpg'
             }
 
             // Install the smoke test chart
