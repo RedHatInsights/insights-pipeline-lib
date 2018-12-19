@@ -52,16 +52,18 @@ def call(parameters = [:]) {
 
 def helm(String cmd) {
     withEnv(["TILLER_NAMESPACE=tiller"]) {
-        sh "helm ${cmd}"
+        output = sh "helm ${cmd}"
     }
+    return output
 }
 
 
 def wipe(String project) {
     charts = helm "ls --namespace ${project} --short"
     for (String chart : charts.split()) {
-        helm "delete --purge \$(helm ls --namespace ${project} --short)"
+        helm "delete --purge ${chart}"
     }
+    echo "wipe done"
 }
 
 
