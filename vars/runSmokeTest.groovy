@@ -116,9 +116,9 @@ private def runPipeline(
 
     stage("Install python packages") {
         sh "python3.6 -m venv ${pipelineVars.venvDir}"
-        sh "${pipelineVars.venvDir}/pip install --upgrade pip setuptools"
+        sh "${pipelineVars.venvDir}/bin/pip install --upgrade pip setuptools"
         // Install ocdeployer for its 'list routes' functionality
-        sh "${pipelineVars.venvDir}/pip install ocdeployer"  
+        sh "${pipelineVars.venvDir}/bin/pip install ocdeployer"  
 
         dir(pipelineVars.e2eTestsDir) {
             // Use sshagent so we can clone github private repos referenced in requirements.txt
