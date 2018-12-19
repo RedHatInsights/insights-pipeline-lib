@@ -74,7 +74,9 @@ private def deployEnvironment(refspec, project, helmComponentChartName, helmSmok
         // Decrypt the secrets config
         withCredentials([file(credentialsId: 'ansible-vault-file', variable: 'FILE')]) {
             dir(pipelineVars.e2eDeployHelmDir) {
-                sh '${pipelineVars.venvDir}/bin/ansible-vault decrypt --vault-password-file=$FILE secrets.yaml.encrypted --output=secrets.yaml'
+                withEnv(["ANSIBLE_VAULT_PASSWORD_FILE=$FILE"]) {
+                    sh "${pipelineVars.venvDir}/bin/ansible-vault decrypt secrets.yaml.encrypted --output=secrets.yaml"
+                }
             }
         }
 
