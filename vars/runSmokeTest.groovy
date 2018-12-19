@@ -50,10 +50,18 @@ def call(parameters = [:]) {
 }
 
 
+def helm(String cmd) {
+    withEnv("TILLER_NAMESPACE=tiller") {
+        sh "helm ${cmd}"
+    }
+}
+
+
 private def deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName) {
     stage("Deploy test environment") {
         // Wipe old environment
-        sh "helm delete --purge \$(helm ls --namespace ${project} --short)"
+        
+        helm "delete --purge \$(helm ls --namespace ${project} --short)"
 
         dir(pipelineVars.e2eDeployHelmDir) {
             // Edit values file to build this PR code locally in the test project
@@ -70,9 +78,10 @@ private def deployEnvironment(refspec, project, helmComponentChartName, helmSmok
             }
 
             // Install the smoke test chart
-            sh "helm install charts_smoke_test/${helmSmokeTestChartName} --dep-up --name ${helmSmokeTestChartName}-smoke --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
+            helm "install charts_smoke_test/${helmSmokeTestChartName} --dep-up --name ${helmSmokeTestChartName}-smoke --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
 
             // Wait on all dc's to finish rolling out
+            sh "oc project ${project}"
             sh "for dc in \$(oc get dc | cut -f1 -d' ' | grep -v '^NAME.*'); do oc rollout status dc \$dc -w; done"
         }
     }
@@ -173,7 +182,7 @@ private def runPipeline(
     openShift.collectLogs(project: project)
 
     stage("Wipe test environment") {
-        sh "${pipelineVars.venvDir}/bin/ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+        helm "delete --purge \$(helm ls --namespace ${project} --short)"
     }
 
     dir(pipelineVars.e2eTestsDir) {
