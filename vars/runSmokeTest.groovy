@@ -69,8 +69,8 @@ private def deployEnvironment(refspec, project, helmComponentChartName, helmSmok
             // Install the smoke test chart
             sh "helm install charts_smoke_test/${helmSmokeTestChartName} --dep-up --name ${helmSmokeTestChartName}-smoke --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
 
-           // Wait on all dc's to finish rolling out
-        sh "for dc in $(oc get dc | cut -f1 -d' ' | grep -v '^NAME.*'); do oc rollout status dc $dc -w; done"
+            // Wait on all dc's to finish rolling out
+            sh "for dc in \$(oc get dc | cut -f1 -d' ' | grep -v '^NAME.*'); do oc rollout status dc \$dc -w; done"
         }
     }
 }
