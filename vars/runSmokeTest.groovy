@@ -52,6 +52,9 @@ def call(parameters = [:]) {
 
 private def deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName) {
     stage("Deploy test environment") {
+        // Wipe old environment
+        sh "helm delete --purge \$(helm ls --namespace ${project} --short)"
+
         dir(pipelineVars.e2eDeployHelmDir) {
             // Edit values file to build this PR code locally in the test project
             sh "cp values-smoketest.yaml values-thisrun.yaml"
@@ -109,10 +112,6 @@ private def runPipeline(
     stage("Check out repos") {
         checkOutRepo(targetDir: pipelineVars.e2eTestsDir, repoUrl: pipelineVars.e2eTestsRepo)
         checkOutRepo(targetDir: pipelineVars.e2eDeployHelmDir, repoUrl: pipelineVars.e2eDeployHelmRepo)
-    }
-
-    stage("Wipe test environment") {
-        sh "helm delete --purge $(helm ls --namespace ${project} --short)"
     }
 
     stage("Install e2e-tests") {
