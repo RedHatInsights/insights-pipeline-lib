@@ -52,7 +52,15 @@ def call(parameters = [:]) {
 
 def helm(String cmd) {
     withEnv(["TILLER_NAMESPACE=tiller"]) {
-        sh "helm ${cmd}"
+        return sh "helm ${cmd}"
+    }
+}
+
+
+def wipe(String project) {
+    charts = helm "ls --namespace ${project} --short"
+    for (String chart : charts.split()) {
+        helm "delete --purge \$(helm ls --namespace ${project} --short)"
     }
 }
 
@@ -60,8 +68,7 @@ def helm(String cmd) {
 private def deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName) {
     stage("Deploy test environment") {
         // Wipe old environment
-        
-        helm "delete --purge \$(helm ls --namespace ${project} --short)"
+        wipe(project)
 
         dir(pipelineVars.e2eDeployHelmDir) {
             // Edit values file to build this PR code locally in the test project
@@ -182,7 +189,7 @@ private def runPipeline(
     openShift.collectLogs(project: project)
 
     stage("Wipe test environment") {
-        helm "delete --purge \$(helm ls --namespace ${project} --short)"
+        wipe(project)
     }
 
     dir(pipelineVars.e2eTestsDir) {
