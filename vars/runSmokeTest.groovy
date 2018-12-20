@@ -57,6 +57,7 @@ def helm(String cmd, Boolean returnStdout = false) {
         } else {
             sh "helm ${cmd}"
         }
+    }
 }
 
 
