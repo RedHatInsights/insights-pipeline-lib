@@ -50,16 +50,18 @@ def call(parameters = [:]) {
 }
 
 
-def helm(String cmd) {
+def helm(String cmd, Boolean returnStdout = false) {
     withEnv(["TILLER_NAMESPACE=tiller"]) {
-        output = sh(script: "helm ${cmd}", returnStdout: true)
-    }
-    return output.trim()
+        if (returnStdout) {
+            return sh(script: "helm ${cmd}", returnStdout: true).trim()
+        } else {
+            sh "helm ${cmd}"
+        }
 }
 
 
 def wipe(String project) {
-    charts = helm "ls --namespace ${project} --short"
+    charts = helm("ls --namespace ${project} --short", true)
     for (String chart : charts.split()) {
         helm "delete --purge ${chart}"
     }
