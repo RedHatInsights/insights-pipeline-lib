@@ -161,6 +161,7 @@ private def runPipeline(
     }
 
     try {
+        helm "init --client-only"
         deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName)
     } catch (err) {
         openShift.collectLogs(project)
