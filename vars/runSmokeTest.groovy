@@ -66,14 +66,12 @@ def wipe(String project) {
     for (String chart : charts.split()) {
         helm "delete --purge ${chart}"
     }
-    sh 'while [[ $(oc get pvc | wc -l) -gt 0 ]]; do echo "Waiting for PVC deletion..."; sleep 2; done'
 }
 
 
 private def deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName) {
     stage("Deploy test environment") {
-        // Wipe old environment
-        wipe(project)
+        sh 'while [[ $(oc get dc,bc,pvc,is,rs,deploy | wc -l) -gt 0 ]]; do echo "Waiting for deployed resources that are still terminating..."; sleep 2; done'
 
         // Decrypt the secrets config
         withCredentials([file(credentialsId: 'ansible-vault-file', variable: 'FILE')]) {
@@ -129,6 +127,11 @@ private def runPipeline(
     // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
     def refspec
 
+    stage("Wipe test environment pre-test") {
+        helm "init --client-only"
+        wipe(project)
+    }
+
     stage("Get refspec") {
         refspec = "refs/pull/${env.CHANGE_ID}/merge"
         def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refspec}").trim()
@@ -165,7 +168,6 @@ private def runPipeline(
     }
 
     try {
-        helm "init --client-only"
         deployEnvironment(refspec, project, helmComponentChartName, helmSmokeTestChartName)
     } catch (err) {
         openShift.collectLogs(project)
@@ -202,7 +204,7 @@ private def runPipeline(
 
     openShift.collectLogs(project: project)
 
-    stage("Wipe test environment") {
+    stage("Wipe test environment post-test") {
         wipe(project)
     }
 
