@@ -66,6 +66,7 @@ def wipe(String project) {
     for (String chart : charts.split()) {
         helm "delete --purge ${chart}"
     }
+    sh 'while [[ $(oc get pvc | wc -l) -gt 0 ]]; do echo "Waiting for PVC deletion..."; sleep 2; done'
 }
 
 
@@ -94,7 +95,7 @@ private def deployEnvironment(refspec, project, helmComponentChartName, helmSmok
                 sh "echo '    src_repository_ref: ${refspec}' >> values-thisrun.yaml"
 
                 // Install the smoke test chart
-                helm "install charts_smoke_test/${helmSmokeTestChartName} --dep-up --name ${helmSmokeTestChartName}-smoke-${UUID.randomUUID().toString()} --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
+                helm "install charts_smoke_test/${helmSmokeTestChartName} --wait --dep-up --name ${helmSmokeTestChartName}-smoke-${UUID.randomUUID().toString()} --values values-thisrun.yaml --values secrets.yaml --namespace ${project}"
 
                 // Wait on all dc's to finish rolling out
                 sh "oc project ${project}"
