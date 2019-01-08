@@ -132,7 +132,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     try {
         deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
     } catch (err) {
-        openShift.collectLogs(project)
+        openShift.collectLogs(project: project)
         throw err
     }
 
