@@ -63,7 +63,7 @@ private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeploye
             // Now deploy the full env, set the image for this app to be pulled from this local project instead of buildfactory
             sh "echo \"${ocDeployerComponentPath}:\" > env.yml"
             sh "echo \"  IMAGE_NAMESPACE: ${project}\" >> env.yml"   
-            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env.yml --scale-resources 0.5 ${project}"
+            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env.yml --scale-resources 0.75 ${project}"
         }
     }
 }
