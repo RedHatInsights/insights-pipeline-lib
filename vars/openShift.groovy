@@ -1,6 +1,6 @@
 // Helpers involving jenkins slaves running on openshift
 
-
+@NonCPS
 def withNode(Map parameters = [:], Closure body = null) {
     image = parameters.get('image', pipelineVars.defaultNodeImage)
     namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
@@ -48,6 +48,7 @@ def withNode(Map parameters = [:], Closure body = null) {
 }
 
 
+@NonCPS
 def collectLogs(parameters = [:]) {
     project = parameters['project']
 
