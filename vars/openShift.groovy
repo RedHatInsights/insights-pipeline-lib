@@ -19,7 +19,7 @@ def withNode(parameters = [:], Closure body = null) {
         label: label,
         slaveConnectTimeout: 120,
         serviceAccount: pipelineVars.jenkinsSvcAccount,
-        cloud: 'openshift',
+        cloud: 'cmqe',
         namespace: namespace
     ]
     if (yaml) {
