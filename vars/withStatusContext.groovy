@@ -4,15 +4,15 @@
 
 private def dry(String context, Closure body) {
     // Don't Repeat Yourself...
-    ghNotify context: context, status: "PENDING"
+    // ghNotify context: context, status: "PENDING"
 
     try {
         body()
-        ghNotify context: context, status: "SUCCESS"
+        // ghNotify context: context, status: "SUCCESS"
     } catch (err) {
         echo err.getMessage()
         currentBuild.result = "UNSTABLE"
-        ghNotify context: context, status: "FAILURE"
+        // ghNotify context: context, status: "FAILURE"
     }
 }
 
@@ -23,6 +23,10 @@ def lint(Closure body) {
 
 def unitTest(Closure body) {
     dry(pipelineVars.unitTestContext, body)
+}
+
+def integrationTest(Closure body) {
+    dry(pipelineVars.integrationTestContext, body)
 }
 
 def coverage(Closure body) {

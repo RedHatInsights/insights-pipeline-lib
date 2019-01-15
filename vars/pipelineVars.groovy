@@ -1,12 +1,14 @@
 class pipelineVars implements Serializable {
     String lintContext = "continuous-integration/jenkins/lint"
     String unitTestContext = "continuous-integration/jenkins/unittest"
+    String integrationTestContext = "continuous-integration/jenkins/integrationtest"
     String pipInstallContext = "continuous-integration/jenkins/pipinstall"
     String bundleInstallContext = "continuous-integration/jenkins/bundleinstall"
     String swaggerContext = "continuous-integration/jenkins/swagger"
     String coverageContext = "continuous-integration/jenkins/coverage"
     String smokeContext = "continuous-integration/jenkins/e2e-smoke"
     String dbMigrateContext = "continuous-integration/jenkins/dbmigrate"
+    String waitForFrontendContext = "continuous-integration/jenkins/waitforfrontend"
 
     String jenkinsSvcAccount = "jenkins"
     String defaultNameSpace = "jenkins"
