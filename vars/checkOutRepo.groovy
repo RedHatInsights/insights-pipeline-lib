@@ -5,6 +5,7 @@ def call(parameters = [:]){
     targetDir = parameters['targetDir']
     repoUrl = parameters['repoUrl']
     branch = parameters.get('branch', 'master')
+    credentialsId = parameters.get('credentialsId', 'github')
 
     checkout([
         $class: 'GitSCM',
@@ -15,7 +16,7 @@ def call(parameters = [:]){
         ],
         submoduleCfg: [],
         userRemoteConfigs: [
-            [credentialsId: 'github', url: repoUrl]
+            [credentialsId: credentialsId, url: repoUrl]
         ]
     ])
 }

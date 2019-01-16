@@ -5,7 +5,7 @@ def call(params = [:]) {
     secretsSrcProject = params.get('secretsSrcProject', "secrets")
     skip = params.get('skip')
 
-    checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
+    checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepoSsh, credentialsId: pipelineVars.gitSshCreds)
     sh "python3.6 -m venv ${pipelineVars.venvDir}"
     sh "${pipelineVars.venvDir}/bin/pip install --upgrade pip"
     dir(pipelineVars.e2eDeployDir) {
