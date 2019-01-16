@@ -17,7 +17,7 @@ def call(parameters = [:]) {
     if (srcImages.size() != dstImages.size()) error("srcImages and dstImages are not the same size")
 
     srcRegistry = srcCluster.replace("api", "registry")
-    dstRegistry = dstCluster.replace("dst", "registry")
+    dstRegistry = dstCluster.replace("api", "registry")
     imageFormat = "docker://%s/%s/%s"
 
     openShift.withNode(defaults: true) {
