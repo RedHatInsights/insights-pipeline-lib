@@ -1,7 +1,7 @@
 // Helpers involving jenkins slaves running on openshift
 
 
-def withNode(Map parameters = [:], Closure body = null) {
+def withNode(parameters = [:], Closure body = null) {
     image = parameters.get('image', pipelineVars.defaultNodeImage)
     namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
     requestCpu = parameters.get('resourceRequestCpu', "200m")

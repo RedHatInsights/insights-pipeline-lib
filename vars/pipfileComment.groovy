@@ -15,7 +15,7 @@ def removeAll() {
 }
 
 
-def post(Map parameters = [:]) {
+def post(parameters = [:]) {
     commitId = parameters['commitId']
     str = parameters['str']
 

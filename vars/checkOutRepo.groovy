@@ -1,7 +1,7 @@
 // Helper to check out a github repo
 
 
-def call(Map parameters = [:]){ 
+def call(parameters = [:]){ 
     targetDir = parameters['targetDir']
     repoUrl = parameters['repoUrl']
     branch = parameters.get('branch', 'master')
