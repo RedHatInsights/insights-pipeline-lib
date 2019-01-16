@@ -3,7 +3,7 @@ def call(params = [:]) {
     env = params['env']
     project = params['project']
     secretsSrcProject = params.get('secretsSrcProject', "secrets")
-    skip = params.get['skip']
+    skip = params.get('skip')
 
     checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
     sh "python3.6 -m venv ${pipelineVars.venvDir}"
