@@ -2,6 +2,9 @@
 
 
 def withNode(parameters = [:], Closure body = null) {
+    // parameters must always be present when calling 'withNode', so pass 'defaults: true' if you want defaults
+    defaults = parameters.get('defaults')
+
     image = parameters.get('image', pipelineVars.defaultNodeImage)
     namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
     requestCpu = parameters.get('resourceRequestCpu', "200m")
