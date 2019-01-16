@@ -21,7 +21,7 @@ def call(parameters = [:]) {
     imageFormat = "docker://%s/%s/%s"
 
     openShift.withNode(defaults: true) {
-        withCredentials([string(credentialsId: 'srcCredentialsId', variable: 'SRC_CREDS'), string(credentialsId: 'dstCredentialsId', variable: 'DST_CREDS')])
+        withCredentials([string(credentialsId: srcCredentialsId, variable: 'SRC_CREDS'), string(credentialsId: dstCredentialsId, variable: 'DST_CREDS')])
         srcImages.eachWithIndex { srcImage, i ->
             srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
             dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
