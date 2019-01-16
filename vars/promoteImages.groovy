@@ -20,7 +20,7 @@ def call(parameters = [:]) {
     dstRegistry = dstCluster.replace("dst", "registry")
     imageFormat = "docker://%s/%s/%s"
 
-    openShift.withNode() {
+    openShift.withNode(defaults: true) {
         withCredentials([string(credentialsId: 'srcCredentialsId', variable: 'SRC_CREDS'), string(credentialsId: 'dstCredentialsId', variable: 'DST_CREDS')])
         srcImages.eachWithIndex { srcImage, i ->
             srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
