@@ -5,16 +5,16 @@ def call(parameters = [:]) {
     dstImages = parameters.get('dstImages')
     // where to pull source images from
     srcProject = parameters.get('srcProject', "buildfactory")
-    srcCluster = parameters.get('srcCluster', "api.insights-dev.openshift.com")
+    srcCluster = parameters.get('srcCluster', pipelineVars.devCluster)
     // where to copy images to
     dstProject = parameters['dstProject']
-    dstCluster = parameters.get('dstCluster', "api.insights.openshift.com")
+    dstCluster = parameters.get('dstCluster', pipelineVars.prodCluster)
     // credentials to use
     srcCredentialsId = parameters.get('srcCredentialsId', "buildfactoryBuilderCreds")
     dstCredentialsId = parameters['dstCredentialsId']
 
     if (!dstImages) dstImages = srcImages
-    if (srcImages.size() != dstImages.size()) error("srcImages and dstImages are not the same size")
+    if (srcImages.size() != dstImages.size()) error("srcImages and dstImages lists are not the same size")
 
     srcRegistry = srcCluster.replace("api", "registry")
     dstRegistry = dstCluster.replace("api", "registry")
