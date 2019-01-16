@@ -25,7 +25,7 @@ def call(parameters = [:]) {
             srcImages.eachWithIndex { srcImage, i ->
                 srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
                 dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
-                sh "skopeo copy --src-creds=${SRC_CREDS} --dst-creds=${DST_CREDS} ${srcImageUri} ${dstImageUri}"
+                sh "skopeo copy --src-creds=${SRC_CREDS} --dest-creds=${DST_CREDS} ${srcImageUri} ${dstImageUri}"
             }
         }
     }
