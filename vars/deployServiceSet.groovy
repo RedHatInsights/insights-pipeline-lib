@@ -10,7 +10,7 @@ def call(params = [:]) {
     sh "${pipelineVars.venvDir}/bin/pip install --upgrade pip"
     dir(pipelineVars.e2eDeployDir) {
         sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
-        cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -s ${serviceSet} -e ${env}.yml ${project} --secrets-src-project ${secretsSrcProject}"
+        cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -s ${serviceSet} -e env/${env}.yml ${project} --secrets-src-project ${secretsSrcProject}"
         if (skip) cmd = "${cmd} --skip ${skip}"
         sh cmd
     }

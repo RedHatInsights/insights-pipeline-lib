@@ -9,6 +9,6 @@ def call(params = [:]) {
     sh "${pipelineVars.venvDir}/bin/pip install --upgrade pip"
     dir(pipelineVars.e2eDeployDir) {
         sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
-        sh "${pipelineVars.venvDir}/bin/ocdeployer deploy -f --pick ${service} -e ${env}.yml ${project} --secrets-src-project ${secretsSrcProject}"
+        sh "${pipelineVars.venvDir}/bin/ocdeployer deploy -f --pick ${service} -e env/${env}.yml ${project} --secrets-src-project ${secretsSrcProject}"
     }
 }
