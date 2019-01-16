@@ -20,13 +20,11 @@ def call(parameters = [:]) {
     dstRegistry = dstCluster.replace("api", "registry")
     imageFormat = "docker://%s/%s/%s"
 
-    openShift.withNode(defaults: true) {
-        withCredentials([string(credentialsId: srcCredentialsId, variable: 'SRC_CREDS'), string(credentialsId: dstCredentialsId, variable: 'DST_CREDS')]) {
-            srcImages.eachWithIndex { srcImage, i ->
-                srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
-                dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
-                sh "skopeo copy --src-creds=${SRC_CREDS} --dest-creds=${DST_CREDS} ${srcImageUri} ${dstImageUri}"
-            }
+    withCredentials([string(credentialsId: srcCredentialsId, variable: 'SRC_CREDS'), string(credentialsId: dstCredentialsId, variable: 'DST_CREDS')]) {
+        srcImages.eachWithIndex { srcImage, i ->
+            srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
+            dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
+            sh "skopeo copy --src-creds=${SRC_CREDS} --dest-creds=${DST_CREDS} ${srcImageUri} ${dstImageUri}"
         }
     }
 }
