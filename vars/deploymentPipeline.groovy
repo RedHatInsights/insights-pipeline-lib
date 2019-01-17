@@ -50,25 +50,31 @@ def call(p = [:]) {
 
     openShift.withNode(defaults: true) {
         if (imagesToCopy) {
-            promoteImages(
-                srcImages: parsed['imagesToCopy'],
-                dstProject: envConfig['project'],
-                dstCredentialsId: envConfig['builderSecretId'],
+            stage('Copy images') {
+                promoteImages(
+                    srcImages: parsed['imagesToCopy'],
+                    dstProject: envConfig['project'],
+                    dstCredentialsId: envConfig['builderSecretId'],
+                )
+            }
+        }
+
+        stage('Login as deployer account') {
+            withCredentials([string(credentialsId: envConfig['deployerSecretId'], variable: 'TOKEN')]) {
+                sh "oc login https://${envConfig['cluster']} --token=${TOKEN}"
+            }
+
+            sh "oc project ${envConfig['project']}"
+        }
+
+        stage('Run e2e-deploy') {
+            deployServiceSet(
+                serviceSet: envConfig['serviceSet'],
+                skip: servicesToSkip,
+                env: envConfig['env'],
+                project: envConfig['project'],
+                secretsSrcProject: envConfig['secretsSrcProject'],
             )
         }
-
-        withCredentials([string(credentialsId: envConfig['deployerSecretId'], variable: 'TOKEN')]) {
-            sh "oc login https://${envConfig['cluster']} --token=${TOKEN}"
-        }
-
-        sh "oc project ${envConfig['project']}"
-
-        deployServiceSet(
-            serviceSet: envConfig['serviceSet'],
-            skip: servicesToSkip,
-            env: envConfig['env'],
-            project: envConfig['project'],
-            secretsSrcProject: envConfig['secretsSrcProject'],
-        )
     }
 }
