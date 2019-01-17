@@ -46,6 +46,8 @@ def call(p = [:]) {
     echo "servicesToSkip: ${servicesToSkip}"
     echo "envConfig:      ${envConfig}"
 
+    currentBuild.description = "env: ${envConfig['env']}"
+
     openShift.withNode(defaults: true) {
         if (imagesToCopy) {
             promoteImages(
@@ -55,12 +57,8 @@ def call(p = [:]) {
             )
         }
 
-        if (envConfig['deployerSecretId']) {
-            withCredentials([string(credentialsId: envConfig['deployerSecretId'], variable: 'TOKEN')]) {
-                sh "oc login https://${envConfig['cluster']} --token=${TOKEN}"
-            }
-        } else {
-            sh "oc login https://${envConfig['cluster']}"
+        withCredentials([string(credentialsId: envConfig['deployerSecretId'], variable: 'TOKEN')]) {
+            sh "oc login https://${envConfig['cluster']} --token=${TOKEN}"
         }
 
         sh "oc project ${envConfig['project']}"
