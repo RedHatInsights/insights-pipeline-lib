@@ -55,7 +55,7 @@ def call(p = [:]) {
                     srcImages: parsed['imagesToCopy'],
                     dstProject: envConfig['project'],
                     dstSaUsername: envConfig['saUsername'],
-                    dstSaTokenSecretId: envConfig['saTokenCredentialsId'],
+                    dstSaTokenCredentialsId: envConfig['saTokenCredentialsId'],
                     dstCluster: envConfig['cluster']
                 )
             }
