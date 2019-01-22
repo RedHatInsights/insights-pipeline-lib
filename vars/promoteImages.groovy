@@ -10,8 +10,10 @@ def call(parameters = [:]) {
     dstProject = parameters['dstProject']
     dstCluster = parameters.get('dstCluster', pipelineVars.prodCluster)
     // credentials to use
-    srcCredentialsId = parameters.get('srcCredentialsId', "buildfactoryBuilderCreds")
-    dstCredentialsId = parameters['dstCredentialsId']
+    srcSaUsername = parameters.get('srcSaUsername', "jenkins-deployer")
+    srcSaTokenCredentialsId = parameters.get('srcSaTokenCredentialsId', "buildfactoryDeployerToken")
+    dstSaUsername = parameters.get('dstSaUsername', "jenkins-deployer")
+    dstSaTokenCredentialsId = parameters['dstSaTokenCredentialsId']
 
     if (!dstImages) dstImages = srcImages
     if (srcImages.size() != dstImages.size()) error("srcImages and dstImages lists are not the same size")
@@ -20,11 +22,16 @@ def call(parameters = [:]) {
     dstRegistry = dstCluster.replace("api", "registry")
     imageFormat = "docker://%s/%s/%s"
 
-    withCredentials([string(credentialsId: srcCredentialsId, variable: 'SRC_CREDS'), string(credentialsId: dstCredentialsId, variable: 'DST_CREDS')]) {
+    withCredentials(
+        [
+            string(credentialsId: srcSaTokenCredentialsId, variable: 'SRC_TOKEN'),
+            string(credentialsId: dstSaTokenCredentialsId, variable: 'DST_TOKEN')
+        ]
+    ) {
         srcImages.eachWithIndex { srcImage, i ->
             srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
             dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
-            sh "skopeo copy --src-creds=${SRC_CREDS} --dest-creds=${DST_CREDS} ${srcImageUri} ${dstImageUri}"
+            sh "skopeo copy --src-creds=\"${srcSaUsername}:${SRC_TOKEN}\" --dest-creds=\"${dstSaUsername}:${DST_TOKEN}\" ${srcImageUri} ${dstImageUri}"
         }
     }
 }

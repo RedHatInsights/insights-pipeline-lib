@@ -54,14 +54,15 @@ def call(p = [:]) {
                 promoteImages(
                     srcImages: parsed['imagesToCopy'],
                     dstProject: envConfig['project'],
-                    dstCredentialsId: envConfig['builderSecretId'],
+                    dstSaUsername: envConfig['saUsername'],
+                    dstSaTokenSecretId: envConfig['saTokenSecretId'],
                     dstCluster: envConfig['cluster']
                 )
             }
         }
 
         stage('Login as deployer account') {
-            withCredentials([string(credentialsId: envConfig['deployerSecretId'], variable: 'TOKEN')]) {
+            withCredentials([string(credentialsId: envConfig['saTokenSecretId'], variable: 'TOKEN')]) {
                 sh "oc login https://${envConfig['cluster']} --token=${TOKEN}"
             }
 
