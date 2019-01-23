@@ -13,7 +13,7 @@ def call(params = [:]) {
         sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
         def envArg = " "
         if (env) envArg = " -e env/${env}.yml"
-        cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
+        cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -t ${templateDir} -s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
         if (skip) cmd = "${cmd} --skip ${skip.join(",")}"
         sh cmd
     }
