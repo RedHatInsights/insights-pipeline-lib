@@ -12,7 +12,7 @@ def call(params = [:]) {
     dir(pipelineVars.e2eDeployDir) {
         sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
         def envArg = " "
-        if (env) envArg = " -e env/${env}.yml"
+        if (env) envArg = " -e env/${env}.yml "
         cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -t ${templateDir} -s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
         if (skip) cmd = "${cmd} --skip ${skip.join(",")}"
         sh cmd
