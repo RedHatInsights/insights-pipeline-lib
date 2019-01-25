@@ -41,7 +41,7 @@ def call(p = [:]) {
     imagesToCopy = parsed['imagesToCopy']
     servicesToSkip = parsed['servicesToSkip']
     envConfig = parsed['envConfig']
-    deployServices = parsed.get('deployServices', true)
+    deployServices = parsed['deployServices']
 
     echo "imagesToCopy:   ${imagesToCopy}"
     echo "servicesToSkip: ${servicesToSkip}"
