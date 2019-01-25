@@ -28,7 +28,7 @@ private def parseParams(envs, svcs) {
         }
     }
 
-    return [envConfig: envs[params.ENV], imagesToCopy: imagesToCopy, servicesToSkip: servicesToSkip]
+    return [envConfig: envs[params.ENV], imagesToCopy: imagesToCopy, servicesToSkip: servicesToSkip, deployServices: envs[params.ENV['deployServices']]
 }
 
 // Create a deployment pipeline job given an environment and service config
@@ -41,6 +41,7 @@ def call(p = [:]) {
     imagesToCopy = parsed['imagesToCopy']
     servicesToSkip = parsed['servicesToSkip']
     envConfig = parsed['envConfig']
+    deployServices = parsed.get('deployServices', true)
 
     echo "imagesToCopy:   ${imagesToCopy}"
     echo "servicesToSkip: ${servicesToSkip}"
@@ -69,14 +70,16 @@ def call(p = [:]) {
             sh "oc project ${envConfig['project']}"
         }
 
-        stage('Run e2e-deploy') {
-            deployServiceSet(
-                serviceSet: envConfig['serviceSet'],
-                skip: servicesToSkip,
-                env: envConfig['env'],
-                project: envConfig['project'],
-                secretsSrcProject: envConfig['secretsSrcProject'],
-            )
+        if (deployServices) {
+            stage('Run e2e-deploy') {
+                deployServiceSet(
+                    serviceSet: envConfig['serviceSet'],
+                    skip: servicesToSkip,
+                    env: envConfig['env'],
+                    project: envConfig['project'],
+                    secretsSrcProject: envConfig['secretsSrcProject'],
+                )
+            }
         }
     }
 }
