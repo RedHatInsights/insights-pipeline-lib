@@ -28,7 +28,7 @@ private def parseParams(envs, svcs) {
         }
     }
 
-    return [envConfig: envs[params.ENV], imagesToCopy: imagesToCopy, servicesToSkip: servicesToSkip, deployServices: envs[params.ENV['deployServices']]]
+    return [envConfig: envs[params.ENV], imagesToCopy: imagesToCopy, servicesToSkip: servicesToSkip, deployServices: envs[params.ENV]['deployServices']]
 }
 
 // Create a deployment pipeline job given an environment and service config
