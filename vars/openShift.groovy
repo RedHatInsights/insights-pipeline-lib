@@ -11,6 +11,7 @@ def withNode(parameters = [:], Closure body = null) {
     limitCpu = parameters.get('resourceLimitCpu', "500m")
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     limitMemory = parameters.get('resourceLimitMemory', "650Mi")
+    cloud = parameters.get('cloud', "openshift")
     yaml = parameters.get('yaml')
 
     label = "test-${UUID.randomUUID().toString()}"
@@ -19,7 +20,7 @@ def withNode(parameters = [:], Closure body = null) {
         label: label,
         slaveConnectTimeout: 120,
         serviceAccount: pipelineVars.jenkinsSvcAccount,
-        cloud: 'cmqe',
+        cloud: cloud,
         namespace: namespace
     ]
     if (yaml) {
@@ -50,6 +51,40 @@ def withNode(parameters = [:], Closure body = null) {
     }
 }
 
+
+def withUINode(Map parameters = [:], Closure body = null) {
+    namespace = parameters.get('namespace', pipelineVars.defaultUINameSpace)
+    cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
+
+    label = "test-${UUID.randomUUID().toString()}"
+
+    podParameters = [
+        label: label,
+        slaveConnectTimeout: 120,
+        serviceAccount: 'iqe',
+        cloud: cloud,
+        namespace: namespace,
+        containers: [
+            containerTemplate(
+                name: 'jnlp',
+                image: pipelineVars.jenkinsSlaveIqeImage,
+                args: '${computer.jnlpmac} ${computer.name}',
+                workingDir: ''
+            ),
+            containerTemplate(
+                name: 'selenium',
+                image: pipelineVars.seleniumImage,
+                workingDir: ''
+            ),
+        ]
+    ]
+
+    podTemplate(podParameters) {
+        node(label) {
+            body()
+        }
+    }
+}
 
 def collectLogs(parameters = [:]) {
     project = parameters['project']
