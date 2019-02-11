@@ -37,15 +37,16 @@ def call(parameters = [:]) {
     def ocDeployerComponentPath = parameters['ocDeployerComponentPath']
     def ocDeployerServiceSets = parameters['ocDeployerServiceSets']
     def pytestMarker = parameters['pytestMarker']
+    def iqePlugins = parameters.get('iqePlugins')
     def extraEnvVars = parameters.get('extraEnvVars', [:])
 
     withStatusContext.smoke {
         lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
             echo "Using project: ${env.PROJECT}"
 
-            openShift.withNode(namespace: env.PROJECT) {
+            openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
                 runPipeline(env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
-                            ocDeployerServiceSets, pytestMarker, extraEnvVars)
+                            ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars)
             }
         }
     }
@@ -57,20 +58,22 @@ private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeploye
         dir(pipelineVars.e2eDeployDir) {
             // First, deploy the builder for only this app to build the PR image in this project
             sh "echo \"${ocDeployerBuilderPath}:\" > env.yml"
-            sh "echo \"  SOURCE_REPOSITORY_REF: ${refspec}\" >> env.yml"
-            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env.yml ${project}"
+            sh "echo \"  parameters:\" >> env.yaml"
+            sh "echo \"    SOURCE_REPOSITORY_REF: ${refspec}\" >> env.yml"
+            sh  "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env.yml ${project}"
 
             // Now deploy the full env, set the image for this app to be pulled from this local project instead of buildfactory
             sh "echo \"${ocDeployerComponentPath}:\" > env.yml"
-            sh "echo \"  IMAGE_NAMESPACE: ${project}\" >> env.yml"   
-            sh  "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env.yml --scale-resources 0.75 ${project}"
+            sh "echo \"  parameters:\" >> env.yaml"
+            sh "echo \"    IMAGE_NAMESPACE: ${project}\" >> env.yml"   
+            sh  "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env.yml --scale-resources 0.75 ${project}"
         }
     }
 }
 
 
 private def runPipeline(String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-                        String ocDeployerServiceSets, String pytestMarker, Map extraEnvVars) {
+                        String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars) {
     cancelPriorBuilds()
 
     currentBuild.result = "SUCCESS"
@@ -93,39 +96,29 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
         }
     }
 
-    // check out e2e-tests
+    // check out e2e-deploy
     stage("Check out repos") {
-        checkOutRepo(targetDir: pipelineVars.e2eTestsDir, repoUrl: pipelineVars.e2eTestsRepo)
         checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
     }
 
     stage("Install ocdeployer") {
-        sh """
-            python3.6 -m venv ${pipelineVars.venvDir}
-            ${pipelineVars.venvDir}/bin/pip install --upgrade pip
-        """
+        sh "devpi use http://devpi.devpi.svc:3141/root/psav --set-cfg"
+        sh "devpi refresh ocdeployer"
+
         dir(pipelineVars.e2eDeployDir) {
-            sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
+            sh "pip install -r requirements.txt"
         }
     }
 
     stage("Wipe test environment") {
-        sh "${pipelineVars.venvDir}/bin/ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
-    stage("Install e2e-tests") {
-        dir(pipelineVars.e2eTestsDir) {
-            // Use sshagent so we can clone github private repos referenced in requirements.txt
-            sshagent(credentials: [pipelineVars.gitSshCreds]) {
-                sh """
-                    mkdir -p ~/.ssh
-                    touch ~/.ssh/known_hosts
-                    cp ~/.ssh/known_hosts ~/.ssh/known_hosts.backup
-                    ssh-keyscan -t rsa github.com > ~/.ssh/known_hosts
-                    ${pipelineVars.venvDir}/bin/pip install -r requirements.txt
-                    cp ~/.ssh/known_hosts.backup ~/.ssh/known_hosts
-                """
-            }
+    stage("Install iqe and plugins") {
+        sh "pip install --upgrade iqe-integration-tests"
+        sh "pip install --upgrade iqe-red-hat-internal-envs-plugin"
+        for (String plugin : iqePlugins) {
+            sh "pip install ${plugin}"
         }
     }
 
@@ -137,42 +130,32 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     }
 
     stage("Run tests (pytest marker: ${pytestMarker})") {
-        /*
-         * Set up the proper env vars for the tests by getting current routes from the OpenShfit project,
-         * then run the tests with the proper smoke marker for this app/service.
-         *
-         * NOTE: 'tee' is used when running pytest so we always get a "0" return code. The 'junit' step
-         * will take care of failing the build if any tests fail...
-         */
-        dir(pipelineVars.e2eTestsDir) {
-            extraEnvVars.each { key, val ->
-                sh "export ${key}=${val}"
-            }
-
-            sh """
-                ${pipelineVars.venvDir}/bin/ocdeployer list-routes ${project} --output json > routes.json
-                cat routes.json
-                ${pipelineVars.venvDir}/bin/python envs/convert-from-ocdeployer.py routes.json env_vars.sh
-                cat env_vars.sh
-                . ./env_vars.sh
-                export OCP_ENV=${project}
-
-                ${pipelineVars.venvDir}/bin/python -m pytest --junitxml=junit.xml -s -v -m ${pytestMarker} 2>&1 | tee pytest.log
-            """
-
-            archiveArtifacts "pytest.log"
+        extraEnvVars.each { key, val ->
+            sh "export ${key}=${val}"
         }
+
+        // defining the URLs here is temporary until we have a better solution
+        sh """
+            export ENV_FOR_DYNACONF=smoke
+            export DYNACONF_OCPROJECT=${project}
+            export DYNACONF_LOGGING='@json {"log_root": "."}'
+
+            set +e
+            iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} 2>&1 | tee pytest-stdout.log
+            set -e
+        """
+
+        archiveArtifacts "pytest-stdout.log"
+        archiveArtifacts "iqe.log"
     }
 
     openShift.collectLogs(project: project)
 
     stage("Wipe test environment") {
-        sh "${pipelineVars.venvDir}/bin/ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
-    dir(pipelineVars.e2eTestsDir) {
-        junit "junit.xml"
-    }
+    junit "junit.xml"
 
     if (currentBuild.result != "SUCCESS") {
         throw new Exception("Smoke test failed");
