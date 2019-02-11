@@ -53,7 +53,7 @@ def withNode(parameters = [:], Closure body = null) {
 
 
 def withUINode(Map parameters = [:], Closure body = null) {
-    namespace = parameters.get('namespace', pipelineVars.defaultUINameSpace)
+    namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
     cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
 
     label = "test-${UUID.randomUUID().toString()}"
@@ -61,7 +61,7 @@ def withUINode(Map parameters = [:], Closure body = null) {
     podParameters = [
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: 'iqe',
+        serviceAccount: pipelineVars.jenkinsSvcAccount,
         cloud: cloud,
         namespace: namespace,
         containers: [
