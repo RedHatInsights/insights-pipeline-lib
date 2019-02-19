@@ -82,17 +82,21 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
 
     // cache creds so we can git 'ls-remote' below...
     sh "git config --global credential.helper cache"
-    checkout scm
+    
+    sh "mkdir pr_source"
+    dir("pr_source") {
+        checkout scm
 
-    // get refspec so we can set up the OpenShift build config to point to this PR
-    // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
-    def refspec
+        // get refspec so we can set up the OpenShift build config to point to this PR
+        // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
+        def refspec
 
-    stage("Get refspec") {
-        refspec = "refs/pull/${env.CHANGE_ID}/merge"
-        def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refspec}").trim()
-        if (!refspecExists) {
-            error("Unable to find git refspec: ${refspec}")
+        stage("Get refspec") {
+            refspec = "refs/pull/${env.CHANGE_ID}/merge"
+            def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refspec}").trim()
+            if (!refspecExists) {
+                error("Unable to find git refspec: ${refspec}")
+            }
         }
     }
 
