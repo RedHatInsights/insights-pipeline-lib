@@ -135,13 +135,14 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
         }
 
         // defining the URLs here is temporary until we have a better solution
+        // TODO: switch back to 'iqe tests all' after iqe collection issue is fixed
         sh """
             export ENV_FOR_DYNACONF=smoke
             export DYNACONF_OCPROJECT=${project}
             export DYNACONF_LOGGING='@json {"log_root": "."}'
 
             set +e
-            iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} 2>&1 | tee pytest-stdout.log
+            iqe tests plugin advisor --junitxml=junit.xml -s -v -m ${pytestMarker} 2>&1 | tee pytest-stdout.log
             set -e
         """
 
