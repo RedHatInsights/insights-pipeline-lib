@@ -129,6 +129,8 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
     try {
         deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
     } catch (err) {
+        echo("Hit error during deploy!")
+        echo(err.toString())
         openShift.collectLogs(project: project)
         throw err
     }
