@@ -68,6 +68,7 @@ def call(p = [:]) {
             }
 
             sh "oc project ${envConfig['project']}"
+            sh "oc delete dc insights-inventory"
         }
 
         if (deployServices) {
