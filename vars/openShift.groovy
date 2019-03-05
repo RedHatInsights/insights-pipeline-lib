@@ -13,6 +13,7 @@ def withNode(parameters = [:], Closure body = null) {
     limitMemory = parameters.get('resourceLimitMemory', "650Mi")
     cloud = parameters.get('cloud', "openshift")
     yaml = parameters.get('yaml')
+    workingDir = parameters.get('workingDir', "/home/jenkins")
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -36,6 +37,7 @@ def withNode(parameters = [:], Closure body = null) {
                 resourceLimitCpu: limitCpu,
                 resourceRequestMemory: requestMemory,
                 resourceLimitMemory: limitMemory,
+                workingDir: workingDir,
                 envVars: [
                     envVar(key: 'LC_ALL', value: 'en_US.utf-8'),
                     envVar(key: 'LANG', value: 'en_US.utf-8'),
