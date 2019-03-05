@@ -57,18 +57,18 @@ private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeploye
     stage("Deploy test environment") {
         dir(pipelineVars.e2eDeployDir) {
             // First, deploy the builder for only this app to build the PR image in this project
-            sh "cp -f env/smoke.yml env.yml"
-            sh "echo \"${ocDeployerBuilderPath}:\" >> env.yml"
+            sh "echo \"${ocDeployerBuilderPath}:\" > env.yml"
             sh "echo \"  parameters:\" >> env.yaml"
             sh "echo \"    SOURCE_REPOSITORY_REF: ${refspec}\" >> env.yml"
-            sh  "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env.yml ${project}"
+            sh "cat env.yml"
+            sh "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e env.yml ${project}"
 
             // Now deploy the full env, set the image for this app to be pulled from this local project instead of buildfactory
-            sh "cp -f env/smoke.yml env.yml"
-            sh "echo \"${ocDeployerComponentPath}:\" >> env.yml"
+            sh "echo \"${ocDeployerComponentPath}:\" > env.yml"
             sh "echo \"  parameters:\" >> env.yaml"
-            sh "echo \"    IMAGE_NAMESPACE: ${project}\" >> env.yml"   
-            sh  "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env.yml --scale-resources 0.75 ${project}"
+            sh "echo \"    IMAGE_NAMESPACE: ${project}\" >> env.yml"
+            sh "cat env.yml"   
+            sh "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env/smoke.yml -e env.yml --scale-resources 0.75 ${project}"
         }
     }
 }
