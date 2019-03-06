@@ -17,40 +17,40 @@ private def dry(String context, Boolean shortenURL, Closure body) {
 }
 
 
-def lint(Closure body) {
-    dry(pipelineVars.lintContext, body)
+def lint(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.lintContext, shortenURL, body)
 }
 
-def unitTest(Closure body) {
-    dry(pipelineVars.unitTestContext, body)
+def unitTest(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.unitTestContext, shortenURL, body)
 }
 
-def integrationTest(Closure body) {
-    dry(pipelineVars.integrationTestContext, body)
+def integrationTest(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.integrationTestContext, shortenURL, body)
 }
 
-def coverage(Closure body) {
-    dry(pipelineVars.coverageContext, body)
+def coverage(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.coverageContext, shortenURL, body)
 }
 
-def pipInstall(Closure body) {
-    dry(pipelineVars.pipInstallContext, body)
+def pipInstall(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.pipInstallContext, shortenURL, body)
 }
 
-def bundleInstall(Closure body) {
-    dry(pipelineVars.bundleInstallContext, body)
+def bundleInstall(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.bundleInstallContext, shortenURL, body)
 }
 
-def swagger(Closure body) {
-    dry(pipelineVars.swaggerContext, body)
+def swagger(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.swaggerContext, shortenURL, body)
 }
 
-def smoke(Closure body) {
-    dry(pipelineVars.smokeContext, body)
+def smoke(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.smokeContext, shortenURL, body)
 }
 
-def dbMigrate(Closure body) {
-    dry(pipelineVars.dbMigrateContext, body)
+def dbMigrate(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.dbMigrateContext, shortenURL, body)
 }
 
 
