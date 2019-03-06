@@ -1,9 +1,19 @@
 // Notifies a github context with a certain status. Replaces URLs with blue ocean URLs
 
 
+private def URLShortener(String url) {
+    // we would prefer to not expose internal hostnames
+    def get = new URL("https://url.corp.redhat.com/new?${url}").openConnection()
+    if (get.getResponseCode() == 200) {
+        return get.getInputStream().getText()
+    }
+}
+
+
 def call(parameters = [:]) {
     def context = parameters['context']
     def status = parameters['status']
+    def shortenURL = parameters.get('shortenURL', false)
 
     def targetUrl
 
@@ -34,6 +44,7 @@ def call(parameters = [:]) {
     }
 
     try {
+        targetUrl = URLShortener(targetUrl) ? shortenURL : targetUrl
         githubNotify context: context, status: status, targetUrl: targetUrl
     } catch (err) {
         msg = err.getMessage()
