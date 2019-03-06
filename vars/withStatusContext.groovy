@@ -2,17 +2,17 @@
 // Example: withStatusContext.swagger { do swagger stuff }
 
 
-private def dry(String context, Closure body) {
+private def dry(String context, Boolean shortenURL, Closure body) {
     // Don't Repeat Yourself...
-    ghNotify context: context, status: "PENDING"
+    ghNotify context: context, shortenURL: shortenURL, status: "PENDING"
 
     try {
         body()
-        ghNotify context: context, status: "SUCCESS"
+        ghNotify context: context, shortenURL: shortenURL, status: "SUCCESS"
     } catch (err) {
         echo err.getMessage()
         currentBuild.result = "UNSTABLE"
-        ghNotify context: context, status: "FAILURE"
+        ghNotify context: context, shortenURL: shortenURL, status: "FAILURE"
     }
 }
 
@@ -51,4 +51,14 @@ def smoke(Closure body) {
 
 def dbMigrate(Closure body) {
     dry(pipelineVars.dbMigrateContext, body)
+}
+
+
+/**
+ * You can define your own context here. If you don't want to reveal jenkins hostname set
+ * shortenURL to true and job url will be replaced by url.corp.redhat.com shortener.
+ */
+def custom(String context, Boolean shortenURL = false, Closure body) {
+    def customContext = "continuous-integration/jenkins/${context.toLowerCase().replaceAll('\\s','')}"
+    dry(customContext, shortenURL, body)
 }
