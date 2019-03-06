@@ -44,7 +44,7 @@ def call(parameters = [:]) {
     }
 
     try {
-        targetUrl = URLShortener(targetUrl) ? shortenURL : targetUrl
+        targetUrl = shortenURL ? URLShortener(targetUrl) : targetUrl
         githubNotify context: context, status: status, targetUrl: targetUrl
     } catch (err) {
         msg = err.getMessage()
