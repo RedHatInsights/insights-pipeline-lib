@@ -19,7 +19,7 @@ private def getJobParams(envs, svcs) {
 // Parse the parameters for a specific job run
 private def parseParams(envs, svcs) {
     imagesToCopy = []
-    servicesToSkip = envs[params.ENV]['skip']
+    servicesToSkip = envs[params.ENV].get('skip', [])
 
     if (envs[params.ENV]['copyImages']) {
         svcs.each { key, data ->
@@ -46,6 +46,14 @@ def call(p = [:]) {
     echo "imagesToCopy:   ${imagesToCopy}"
     echo "servicesToSkip: ${servicesToSkip}"
     echo "envConfig:      ${envConfig}"
+
+    // For build #1, only load the pipeline and exit
+    // This is so the next time the job is built, "Build with parameters" will be available
+    if (${env.BUILD_NUMBER}.toString() == "1") {
+        echo "Initial run, loaded pipeline job and now exiting."
+        currentBuild.description = "loaded params"
+        return
+    }
 
     currentBuild.description = "env: ${envConfig['env']}"
 
