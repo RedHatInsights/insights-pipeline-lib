@@ -49,7 +49,7 @@ def call(p = [:]) {
 
     // For build #1, only load the pipeline and exit
     // This is so the next time the job is built, "Build with parameters" will be available
-    if (${env.BUILD_NUMBER}.toString() == "1") {
+    if (env.BUILD_NUMBER.toString() == "1") {
         echo "Initial run, loaded pipeline job and now exiting."
         currentBuild.description = "loaded params"
         return
