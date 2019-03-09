@@ -53,6 +53,9 @@ def dbMigrate(Boolean shortenURL = false, Closure body) {
     dry(pipelineVars.dbMigrateContext, shortenURL, body)
 }
 
+def artifacts(Boolean shortenURL = false, Closure body) {
+    dry(pipelineVars.artifactsContext, shortenURL, body)
+}
 
 /**
  * You can define your own context here. If you don't want to reveal jenkins hostname set

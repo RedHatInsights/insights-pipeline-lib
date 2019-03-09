@@ -37,6 +37,9 @@ def call(parameters = [:]) {
             case pipelineVars.coverageContext:
                 targetUrl = "${env.BUILD_URL}artifact/htmlcov/index.html"
                 break
+            case pipelineVars.artifactsContext:
+                targetUrl = "${blueBuildUrl}artifacts"
+                break
             default:
                 targetUrl = env.RUN_DISPLAY_URL
                 break
