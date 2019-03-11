@@ -15,8 +15,8 @@ private def dry(String context, Boolean shortenURL, Closure body) {
         try {
             def trace = err.getStackTrace() as String[]
             echo trace.join('\n')
-        } catch (err) {
-            echo err.toString()
+        } catch (innerErr) {
+            echo innerErr.toString()
         } finally {
             currentBuild.result = "UNSTABLE"
             ghNotify context: context, shortenURL: shortenURL, status: "FAILURE"
