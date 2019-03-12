@@ -78,6 +78,9 @@ def withUINode(Map parameters = [:], Closure body = null) {
                 image: pipelineVars.seleniumImage,
                 workingDir: ''
             ),
+        ],
+        volumes: [
+            emptyDirVolume(mountPath: '/dev/shm', memory: false),
         ]
     ]
 
