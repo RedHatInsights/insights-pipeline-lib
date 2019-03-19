@@ -24,7 +24,7 @@ private def parseParams(envs, svcs) {
     if (envs[params.ENV]['copyImages']) {
         svcs.each { key, data ->
             if (params.get(data['paramName'])) imagesToCopy.add(data['srcImage'])
-            else servicesToSkip.add(data['templateName'])
+            else if (!data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
         }
     }
 
