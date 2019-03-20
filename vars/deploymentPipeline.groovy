@@ -2,7 +2,7 @@
 private def getJobParams(envs, svcs) {
     p = []
     svcs.each { key, data ->
-        p.add([$class: 'BooleanParameterDefinition', name: data['paramName'], defaultValue: true, description: "Deploy ${data['displayName']}"])
+        p.add([$class: 'BooleanParameterDefinition', name: data['paramName'], defaultValue: true, description: "Deploy/promote ${data['displayName']}"])
     }
 
     choices = []
@@ -12,7 +12,6 @@ private def getJobParams(envs, svcs) {
     p.add([$class: 'ChoiceParameterDefinition', name: 'ENV', choices: choices, description: 'The target environment'])
 
     return p
-    //return input(id: 'userInput', message: 'input parameters', parameters: parameters)
 }
 
 
@@ -23,8 +22,16 @@ private def parseParams(envs, svcs) {
 
     if (envs[params.ENV]['copyImages']) {
         svcs.each { key, data ->
+            // if the service was checked, add its image to the list of images we will copy
             if (params.get(data['paramName'])) imagesToCopy.add(data['srcImage'])
-            else if (!data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
+        }
+    }
+
+    if (envs[params.ENV]['deployServices']) {
+        svcs.each { key, data ->
+            // if a service was not checked, add it to the list of services to skip, but only
+            // if 'promoteImageOnly' is false (because this would indicate deployment doesn't apply for this component
+            if (!params.get(data['paramName']) && !data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
         }
     }
 
