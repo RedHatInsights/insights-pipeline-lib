@@ -153,9 +153,12 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
             iqe tests plugin advisor --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
             set -e
         """
-
-        archiveArtifacts "pytest-stdout.log"
-        archiveArtifacts "iqe.log"
+        try {
+            archiveArtifacts "pytest-stdout.log"
+            archiveArtifacts "iqe.log"
+        } catch (err) {
+            echo "Error archiving log files: ${err.toString()}"
+        }
     }
 
     openShift.collectLogs(project: project)
