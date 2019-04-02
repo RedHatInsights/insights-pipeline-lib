@@ -41,7 +41,7 @@ def call(parameters = [:]) {
     def extraEnvVars = parameters.get('extraEnvVars', [:])
 
     try {
-        if (env.CHANGE_TARGET == 'stable') pullRequest.addLabel('stable')
+        if (env.CHANGE_TARGET == 'stable') pullRequest.addLabels(['stable'])
     } catch (err) {
         echo "Failed to set 'stable' label: ${err.getMessage()}}"
     }
