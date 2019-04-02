@@ -43,7 +43,7 @@ def call(parameters = [:]) {
     try {
         if (env.CHANGE_TARGET == 'stable') pullRequest.addLabel('stable')
     } catch (err) {
-        echo "Failed to set 'stable' label: {$err.toString()}"
+        echo "Failed to set 'stable' label: ${err.getMessage()}}"
     }
 
     withStatusContext.smoke {
