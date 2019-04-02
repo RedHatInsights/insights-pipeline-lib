@@ -40,6 +40,12 @@ def call(parameters = [:]) {
     def iqePlugins = parameters.get('iqePlugins')
     def extraEnvVars = parameters.get('extraEnvVars', [:])
 
+    try {
+        if (env.CHANGE_TARGET == 'stable') pullRequest.addLabel('stable')
+    } catch (err) {
+        echo "Failed to set 'stable' label: {$err.toString()}"
+    }
+
     withStatusContext.smoke {
         lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
             echo "Using project: ${env.PROJECT}"
