@@ -157,7 +157,7 @@ private def runPipeline(String project, String ocDeployerBuilderPath, String ocD
             export DYNACONF_OCPROJECT=${project}
 
             set +e
-            iqe tests plugin advisor --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
+            iqe tests plugin ${plugin} --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
             set -e
         """
         try {
