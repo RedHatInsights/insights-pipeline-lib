@@ -1,22 +1,19 @@
+import groovy.transform.Field
+
 // The env files that are processed whenever a template change is detected
-defaultEnvFiles = ["ci.yml", "qa.yml", "dev.yml", "prod.yml"]
+@Field defaultEnvFiles = ["ci.yml", "qa.yml", "dev.yml", "prod.yml"]
 
 // A const which represents 'all templates should be processed'
-ALL_TEMPLATES = "__ALL__"
+@Field allTemplates = "__ALL__"
 
 // Jenkins location of build factory deployment job
-buildFactoryDeployJob = "/ops/deployBuildfactory"
+@Field buildFactoryDeployJob = "/ops/deployBuildfactory"
 
 // Map of service set name -> Jenkins location of deploy job for that serbvice set
-deployJobs = [
+@Field deployJobs = [
     advisor: "/ops/deployAdvisor",
     platform: "/ops/deployPlatform",
 ]
-
-
-def allTemplates(parameters = [:]) {
-    return ALL_TEMPLATES
-}
 
 
 def getChangeInfo(parameters = [:]) {
