@@ -75,7 +75,7 @@ private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeploye
             sh "echo \"    IMAGE_NAMESPACE: ${project}\" >> env.yml"
             sh "echo \"    IMAGE_TAG: latest\" >> env.yml"
             sh "cat env.yml"   
-            sh "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env/smoke.yml -e env.yml --scale-resources 0.75 ${project}"
+            sh "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env/smoke.yml -e env.yml ${project}"
         }
     }
 }
