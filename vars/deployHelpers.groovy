@@ -14,7 +14,7 @@ deployJobs = [
 ]
 
 
-def allTemplates() {
+def allTemplates(parameters = [:]) {
     return ALL_TEMPLATES
 }
 
@@ -86,7 +86,7 @@ def getDeployTasks(parameters = [:]) {
 
     // If the env yml was updated, or all templates are impacted by a change, re-deploy all services
     // TODO: in future parse the env yml to see if only specific portions changed?
-    if (changeInfo['envFiles'].contains("${env}.yml") || changeInfo['templates'].contains(ALL_TEMPLATES)) {
+    if (changeInfo['templates'].contains(ALL_TEMPLATES) || changeInfo['envFiles'].contains("${env}.yml")) {
         for (String serviceSet : deployJobs.keySet()) {
             parallelTasks[serviceSet] = { build job: deployJobs[serviceSet], parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
         }
