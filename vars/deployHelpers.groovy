@@ -33,7 +33,7 @@ def getChangeInfo(parameters = [:]) {
             // if an env yaml was changed, process all templates using that env file
             def envFile = l.split('/')[1]
             if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
-                changeInfo['templates'].add(ALL_TEMPLATES)
+                changeInfo['templates'].add(allTemplates)
                 changeInfo['envFiles'].add(envFile)
                 changeInfo['envFilesForDiff'].add(envFile)
             }
@@ -41,7 +41,7 @@ def getChangeInfo(parameters = [:]) {
         else if (dir == "buildfactory" || dir == "templates") {
             def serviceSet = l.split('/')[1]
             // If root _cfg.yml was edited, process all templates in this template dir
-            if (serviceSet.startsWith("_cfg")) changeInfo[dir].add(ALL_TEMPLATES)
+            if (serviceSet.startsWith("_cfg")) changeInfo[dir].add(allTemplates)
             // Otherwise process only this service set
             else changeInfo[dir].add(serviceSet)
             // Process all default env files any time templates change
@@ -55,8 +55,8 @@ def getChangeInfo(parameters = [:]) {
     changeInfo['buildfactory'] = changeInfo['buildfactory'].toSet()
 
     // If we are processing all templates for a template dir, then don't bother indicating specific sets  
-    if (changeInfo['templates'].contains(ALL_TEMPLATES)) changeInfo['templates'] = [ALL_TEMPLATES]
-    if (changeInfo['buildfactory'].contains(ALL_TEMPLATES)) changeInfo['buildfactory'] = [ALL_TEMPLATES]
+    if (changeInfo['templates'].contains(allTemplates)) changeInfo['templates'] = [allTemplates]
+    if (changeInfo['buildfactory'].contains(allTemplates)) changeInfo['buildfactory'] = [allTemplates]
 
     return changeInfo
 }
@@ -83,7 +83,7 @@ def getDeployTasks(parameters = [:]) {
 
     // If the env yml was updated, or all templates are impacted by a change, re-deploy all services
     // TODO: in future parse the env yml to see if only specific portions changed?
-    if (changeInfo['templates'].contains(ALL_TEMPLATES) || changeInfo['envFiles'].contains("${env}.yml")) {
+    if (changeInfo['templates'].contains(allTemplates) || changeInfo['envFiles'].contains("${env}.yml")) {
         for (String serviceSet : deployJobs.keySet()) {
             parallelTasks[serviceSet] = { build job: deployJobs[serviceSet], parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
         }
