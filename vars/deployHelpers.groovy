@@ -2,7 +2,7 @@
 defaultEnvFiles = ["ci.yml", "qa.yml", "dev.yml", "prod.yml"]
 
 // A const which represents 'all templates should be processed'
-ALL_TEMPLATES = "__ALL__"
+public ALL_TEMPLATES = "__ALL__"
 
 // Jenkins location of build factory deployment job
 buildFactoryDeployJob = "/ops/deployBuildfactory"
