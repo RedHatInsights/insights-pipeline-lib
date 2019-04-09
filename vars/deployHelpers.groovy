@@ -78,7 +78,7 @@ def createParallelTasks(parameters = [:]) {
     def tasks = [:]
 
     // Since looping while returning closures in groovy is a little wacky, we handle that in this method
-    serviceSets = parameters['sets']
+    serviceSets = parameters['serviceSets']
     env = parameters['env']
 
     for (String set : serviceSets) {
@@ -98,9 +98,6 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     // The destination env "ci, qa, prod"
     env = parameters.get('env')
 
-    // Now deploy services if their templates have changed...
-    parallelTasks = [:]
-
     // If checking for changes for CI or QA and a service set in buildfactory was updated, re-deploy it
     if ((env.equals("ci") || env.equals("qa")) && changeInfo['buildfactory']) {
         // there shouldn't be a case at the moment where we're needing to deploy all sets of buildfactory at once
@@ -113,6 +110,8 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
 
     // If the env yml was updated, or all templates are impacted by a change, re-deploy all services
     // TODO: in future parse the env yml to see if only specific portions changed?
+    def parallelTasks = [:]
+
     if (changeInfo['templates'].contains(allTemplates) || changeInfo['envFiles'].contains("${env}.yml")) {
         parallelTasks = createParallelTasks(serviceSets: deployJobs.keySet(), env: env)
     // Otherwise run deploy job for only the service sets that had changes
