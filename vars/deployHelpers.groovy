@@ -66,8 +66,9 @@ def getDeployTask(parameters = [:]) {
     // Given a service set and an 'env', return a single build job that will run as a parallel task
     serviceSet = parameters['serviceSet']
     env = parameters['env']
-    closure = { build job: deployJobs[serviceSet], parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
-    echo "getDeployTask(): service set \'${serviceSet}\' will trigger job \'${deployJobs[serviceSet]}\' with env \'${env}\' -- task is ${closure.toString()}"
+    buildJob = deployJobs[serviceSet]
+    closure = { build job: buildJob, parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
+    echo "getDeployTask(): service set \'${serviceSet}\' will trigger job \'${buildJob}\' with env \'${env}\' -- task is ${closure.toString()}"
     return closure
 }
 
