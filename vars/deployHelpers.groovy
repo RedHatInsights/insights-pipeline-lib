@@ -73,6 +73,22 @@ def getDeployTask(parameters = [:]) {
 }
 
 
+def createParallelTasks(parameters = [:]) {
+    // Generate a map to be used with 'parallel()' where key=service set name, value=closure containing a build job
+
+    // Since looping while returning closures in groovy is a little wacky, we handle that in this method
+    serviceSets = parameters['sets']
+    env = parameters['env']
+
+    for (String set : serviceSets) {
+        def thisSet = set  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
+        parallelTasks[thisSet] = getDeployTask(serviceSet: thisSet, env: env)
+    }
+
+    return parallelTasks
+}
+
+
 def getDeployTasksFromChangeInfo(parameters = [:]) {
     // By analyzing changeInfo and given an 'env', return a list of build jobs that will be run as parallel tasks
 
@@ -97,16 +113,16 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     // If the env yml was updated, or all templates are impacted by a change, re-deploy all services
     // TODO: in future parse the env yml to see if only specific portions changed?
     if (changeInfo['templates'].contains(allTemplates) || changeInfo['envFiles'].contains("${env}.yml")) {
-        for (String serviceSet : deployJobs.keySet()) {
-            parallelTasks[serviceSet] = getDeployTask(serviceSet: serviceSet, env: env)
-        }
+        parallelTasks = createParallelTasks(serviceSets: deployJobs.keySet(), env: env)
     // Otherwise run deploy job for only the service sets that had changes
     } else {
+        def serviceSets = []
         for (String serviceSet : changeInfo['templates']) {
             if (deployJobs.containsKey(serviceSet)) {
-                parallelTasks[serviceSet] = getDeployTask(serviceSet: serviceSet, env: env)
+                serviceSets.add(serviceSet)
             }
         }
+        parallelTasks = createParallelTasks(serviceSets: serviceSets, env: env)
     }
 
     // Return the map of parallelTasks
