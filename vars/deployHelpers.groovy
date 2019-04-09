@@ -75,6 +75,7 @@ def getDeployTask(parameters = [:]) {
 
 def createParallelTasks(parameters = [:]) {
     // Generate a map to be used with 'parallel()' where key=service set name, value=closure containing a build job
+    def tasks = [:]
 
     // Since looping while returning closures in groovy is a little wacky, we handle that in this method
     serviceSets = parameters['sets']
@@ -82,10 +83,10 @@ def createParallelTasks(parameters = [:]) {
 
     for (String set : serviceSets) {
         def thisSet = set  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
-        parallelTasks[thisSet] = getDeployTask(serviceSet: thisSet, env: env)
+        tasks[thisSet] = getDeployTask(serviceSet: thisSet, env: env)
     }
 
-    return parallelTasks
+    return tasks
 }
 
 
