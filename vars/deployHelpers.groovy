@@ -62,7 +62,18 @@ def getChangeInfo(parameters = [:]) {
 }
 
 
-def getDeployTasks(parameters = [:]) {
+def getDeployTask(parameters = [:]) {
+    // Given a service set and an 'env', return a single build job that will run as a parallel task
+    serviceSet = parameters['serviceSet']
+    env = parameters['env']
+
+    return { build job: deployJobs[serviceSet], parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
+}
+
+
+def getDeployTasksFromChangeInfo(parameters = [:]) {
+    // By analyzing changeInfo and given an 'env', return a list of build jobs that will be run as parallel tasks
+
     // Deploy repo change info as obtained by deployHelpers.getChangeInfo
     changeInfo = parameters.get('changeInfo')
     // The destination env "ci, qa, prod"
@@ -85,13 +96,13 @@ def getDeployTasks(parameters = [:]) {
     // TODO: in future parse the env yml to see if only specific portions changed?
     if (changeInfo['templates'].contains(allTemplates) || changeInfo['envFiles'].contains("${env}.yml")) {
         for (String serviceSet : deployJobs.keySet()) {
-            parallelTasks[serviceSet] = { build job: deployJobs[serviceSet], parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
+            parallelTasks[serviceSet] = getDeployTask(serviceSet: serviceSet, env: env)
         }
     // Otherwise run deploy job for only the service sets that had changes
     } else {
         for (String serviceSet : changeInfo['templates']) {
             if (deployJobs.containsKey(serviceSet)) {
-                parallelTasks[serviceSet] = { build job: deployJobs[serviceSet], parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
+                parallelTasks[serviceSet] = getDeployTask(serviceSet: serviceSet, env: env)
             }
         }
     }
