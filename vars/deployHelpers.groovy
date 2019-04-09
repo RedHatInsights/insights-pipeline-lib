@@ -64,10 +64,10 @@ def getChangeInfo(parameters = [:]) {
 
 def getDeployTask(parameters = [:]) {
     // Given a service set and an 'env', return a single build job that will run as a parallel task
-    serviceSet = parameters['serviceSet']
-    env = parameters['env']
-    buildJob = deployJobs[serviceSet]
-    closure = { build job: buildJob, parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
+    def setToDeploy = parameters['serviceSet']
+    def env = parameters['env']
+    def buildJob = deployJobs[setToDeploy]
+    def closure = { build job: buildJob, parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
     echo "getDeployTask(): service set \'${serviceSet}\' will trigger job \'${buildJob}\' with env \'${env}\' -- task is ${closure.toString()}"
     return closure
 }
@@ -78,8 +78,8 @@ def createParallelTasks(parameters = [:]) {
     def tasks = [:]
 
     // Since looping while returning closures in groovy is a little wacky, we handle that in this method
-    serviceSets = parameters['serviceSets']
-    env = parameters['env']
+    def serviceSets = parameters['serviceSets']
+    def env = parameters['env']
 
     for (String set : serviceSets) {
         def thisSet = new String(set)  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
@@ -94,14 +94,14 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     // By analyzing changeInfo and given an 'env', return a list of build jobs that will be run as parallel tasks
 
     // Deploy repo change info as obtained by deployHelpers.getChangeInfo
-    changeInfo = parameters.get('changeInfo')
+    def changeInfo = parameters.get('changeInfo')
     // The destination env "ci, qa, prod"
-    env = parameters.get('env')
+    def env = parameters.get('env')
 
     // If checking for changes for CI or QA and a service set in buildfactory was updated, re-deploy it
     if ((env.equals("ci") || env.equals("qa")) && changeInfo['buildfactory']) {
         // there shouldn't be a case at the moment where we're needing to deploy all sets of buildfactory at once
-        parameters = []
+        def parameters = []
         for (String serviceSet : changeInfo['buildfactory']) {
             parameters.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
         }
