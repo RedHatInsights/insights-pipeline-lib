@@ -82,7 +82,7 @@ def createParallelTasks(parameters = [:]) {
     def env = parameters['env']
 
     for (String set : serviceSets) {
-        def thisSet = new String(set)  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
+        def thisSet = set  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
         tasks[thisSet] = getDeployTask(serviceSet: thisSet, env: env)
     }
 
