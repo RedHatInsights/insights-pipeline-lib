@@ -68,7 +68,7 @@ def getDeployTask(parameters = [:]) {
     def env = parameters['env']
     def buildJob = deployJobs[setToDeploy]
     def closure = { build job: buildJob, parameters: [[$class: 'StringParameterValue', name: 'ENV', value: env]] }
-    echo "getDeployTask(): service set \'${serviceSet}\' will trigger job \'${buildJob}\' with env \'${env}\' -- task is ${closure.toString()}"
+    echo "getDeployTask(): service set \'${setToDeploy}\' will trigger job \'${buildJob}\' with env \'${env}\' -- task is ${closure.toString()}"
     return closure
 }
 
