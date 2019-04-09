@@ -101,11 +101,11 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     // If checking for changes for CI or QA and a service set in buildfactory was updated, re-deploy it
     if ((env.equals("ci") || env.equals("qa")) && changeInfo['buildfactory']) {
         // there shouldn't be a case at the moment where we're needing to deploy all sets of buildfactory at once
-        def parameters = []
+        def buildParams = []
         for (String serviceSet : changeInfo['buildfactory']) {
-            parameters.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
+            buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
         }
-        build job: buildFactoryDeployJob, parameters: parameters
+        build job: buildFactoryDeployJob, parameters: buildParams
     }
 
     // If the env yml was updated, or all templates are impacted by a change, re-deploy all services
