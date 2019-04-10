@@ -7,9 +7,10 @@ def call(parameters = [:]) {
     dir(repoDir) {
         sh "git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*"
         sh "git fetch"
-        sh "git diff --name-only ${oldCommit} ${newCommit} | cut -s -f1,2 -d'/' > .files_changed.txt"
-        def data = readFile("files_changed.txt").split('\n')
-        sh "rm .files_changed.txt"
+        data = sh(
+            script: "git diff --name-only ${oldCommit} ${newCommit} | cut -s -f1,2 -d'/'",
+            returnStdout: true
+        ).trim()
         return data
     }
 }
