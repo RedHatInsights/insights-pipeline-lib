@@ -1,6 +1,6 @@
 def call(parameters = [:]) {
     // Check out a repo and then return a list of which files/folders changed between oldCommit and newCommit
-    repoDir = parameters.get['repoDir']
+    repoDir = parameters['repoDir']
     oldCommit = parameters['oldCommit']
     newCommit = parameters.get['newCommit']
 
