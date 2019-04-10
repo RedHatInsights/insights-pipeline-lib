@@ -42,8 +42,9 @@ private def parseParams(envs, svcs) {
 def call(p = [:]) {
     envs = p['environments']
     svcs = p['services']
+    extraParams = p['extraParams'] ?: []
 
-    properties([parameters(getJobParams(envs, svcs))])
+    properties([parameters(getJobParams(envs, svcs) + extraParams)])
     parsed = parseParams(envs, svcs)
     imagesToCopy = parsed['imagesToCopy']
     servicesToSkip = parsed['servicesToSkip']
