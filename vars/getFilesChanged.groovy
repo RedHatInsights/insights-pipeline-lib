@@ -11,6 +11,6 @@ def call(parameters = [:]) {
             script: "git diff --name-only ${oldCommit} ${newCommit} | cut -s -f1,2 -d'/'",
             returnStdout: true
         ).trim()
-        return data
+        return data.split('\n')
     }
 }
