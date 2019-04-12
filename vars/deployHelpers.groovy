@@ -14,6 +14,11 @@ import groovy.transform.Field
 ]
 
 
+def getServiceDeployJobs() {
+    return deployJobs.findAll({ !it.key.equals("buildfactory") })
+}
+
+
 def getChangeInfo(parameters = [:]) {
     // Analyze the files changed in the e2e-deploy template folder and return data on what has changed
     // so we can determine what needs to be processed or deployed
