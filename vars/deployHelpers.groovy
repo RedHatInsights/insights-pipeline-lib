@@ -61,10 +61,10 @@ def getChangeInfo(parameters = [:]) {
 
 
 private def getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHostname) {
-    // Translate the params into a string
+    // Translate the params into a string, assume it is a list of Maps e.g. [[$class: StringParameterValue, name: "name", value: "value"]]
     def paramsString = ""
-    for (ParameterValue p : jobParameters) {
-        paramsString = paramsString + "\n${p.getName()}=${p.getValue}"
+    for (Map p : jobParameters) {
+        paramsString = paramsString + "\n${p['name']}=${p['value'].toString()}"
     }
 
     // Translate the build job name into its URL format
