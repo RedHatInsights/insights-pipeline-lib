@@ -1,4 +1,6 @@
 import groovy.transform.Field
+import com.redhat.insights.BearerTokenAuth
+
 
 // The env files that are processed whenever a template change is detected
 @Field defaultEnvFiles = ["ci.yml", "qa.yml", "dev.yml", "prod.yml"]
@@ -77,13 +79,14 @@ private def getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHost
 
     closure = {
         withCredentials([
-            usernamePassword(credentialsId: remoteCredentials, usernameVariable: "USER_NAME", passwordVariable: "API_TOKEN"),
+            string(credentialsId: remoteCredentials, variable: "TOKEN"),
             string(credentialsId: remoteHostname, variable: "REMOTE_HOSTNAME")
         ]) {
+            // userName isn't used by BearerTokenAuth, I'm just too lazy to override the constructor.
             triggerRemoteJob(
                 job: "https://${REMOTE_HOSTNAME}${fullUrlPath}",
                 parameters: paramsString,
-                auth: TokenAuth(apiToken: API_TOKEN, userName: USER_NAME)
+                auth: BearerTokenAuth(apiToken: TOKEN, userName: "na")
             )
         }
     }
