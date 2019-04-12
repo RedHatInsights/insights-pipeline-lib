@@ -1,4 +1,5 @@
 import groovy.transform.Field
+import com.redhat.insights.BearerTokenAuth
 
 
 // The env files that are processed whenever a template change is detected
