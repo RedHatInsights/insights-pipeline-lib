@@ -10,6 +10,7 @@ import org.jenkinsci.Symbol;
 import org.jenkinsci.plugins.ParameterizedRemoteTrigger.BuildContext;
 import org.jenkinsci.plugins.ParameterizedRemoteTrigger.utils.Base64Utils;
 import org.jenkinsci.plugins.ParameterizedRemoteTrigger.auth2.Auth2;
+import org.jenkinsci.plugins.ParameterizedRemoteTrigger.auth2.Auth2.Auth2Descriptor;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 
@@ -60,7 +61,7 @@ public class BearerTokenAuth extends Auth2 {
     }
 
     @Symbol("BearerTokenAuth")
-    public static class TokenAuthDescriptor extends Auth2Descriptor {
+    public static class BearerTokenAuthDescriptor extends Auth2Descriptor {
         @Override
         public String getDisplayName() {
             return "Bearer Token Authentication";
