@@ -9,7 +9,7 @@ import groovy.transform.Field
 
 // Map of service set name -> Jenkins location of deploy job for that serbvice set
 @Field deployJobs = [
-    buildfactory: "/ops/deployBuildFactory",
+    buildfactory: "/ops/deployBuildfactory",
     advisor: "/ops/deployAdvisor",
     platform: "/ops/deployPlatform",
 ]
