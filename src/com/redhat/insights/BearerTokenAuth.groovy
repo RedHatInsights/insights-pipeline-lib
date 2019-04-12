@@ -22,7 +22,7 @@ public class BearerTokenAuth extends Auth2 {
     private static final long serialVersionUID = 0513801413382879272L;
 
     @Extension
-    public static final Auth2Descriptor DESCRIPTOR = new TokenAuthDescriptor();
+    public static final Auth2Descriptor DESCRIPTOR = new BearerTokenAuthDescriptor();
 
     private String token;
 
