@@ -176,7 +176,7 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
 
     if (changeInfo['templates'].contains(allTemplates) || changeInfo['envFiles'].contains("${env}.yml")) {
         parallelTasks = createParallelTasks(
-            serviceSets: deployJobs.keySet(), env: env, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
+            serviceSets: getServiceDeployJobs().keySet(), env: env, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     // Otherwise run deploy job for only the service sets that had changes
     } else {
