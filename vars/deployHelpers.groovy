@@ -63,7 +63,7 @@ def getChangeInfo(parameters = [:]) {
 private def getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHostname) {
     // Translate the params into a string
     def paramsString = ""
-    for (p : jobParameters) {
+    for (ParameterValue p : jobParameters) {
         paramsString = paramsString + "\n${p.getName()}=${p.getValue}"
     }
 

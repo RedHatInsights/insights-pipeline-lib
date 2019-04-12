@@ -10,6 +10,8 @@ Required Jenkins plugins:
  * SSH Agent Plugin
  * Lockable Resources Plugin
  * Kubernetes Plugin
+ * Pipeline Utility Steps Plugin
+ * Parametrized Remote Job Trigger Plugin
 
 For `openShift.withNode`, add a 'jenkins' service account to the namespace and give it "Edit" access. Also add your service
 account used by Jenkins in the namespace it is deployed to as an editor (e.g.: "jenkins" svc account from the "jenkins" namespace should also be an editor)
