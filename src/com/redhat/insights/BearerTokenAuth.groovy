@@ -1,4 +1,4 @@
-package com.redhat;
+package com.redhat.insights;
 
 import java.io.IOException;
 import java.net.URLConnection;
