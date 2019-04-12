@@ -27,7 +27,7 @@ public class BearerTokenAuth extends Auth2 {
     private String token;
 
     @DataBoundConstructor
-    public TokenAuth() {
+    public BearerTokenAuth() {
         this.token = null;
     }
 
