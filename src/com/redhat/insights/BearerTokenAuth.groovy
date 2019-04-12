@@ -3,7 +3,7 @@ package com.redhat;
 import java.io.IOException;
 import java.net.URLConnection;
 
-@Grab('org.jenkins-ci.plugins:Parameterized-Remote-Trigger:3.0.7@jar')
+@Grab(group='org.jenkins-ci.plugins', module='Parameterized-Remote-Trigger')
 import org.jenkinsci.plugins.ParameterizedRemoteTrigger.BuildContext;
 import org.jenkinsci.plugins.ParameterizedRemoteTrigger.auth2.TokenAuth;
 
