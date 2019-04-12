@@ -9,6 +9,7 @@ import org.jenkinsci.Symbol;
 
 import org.jenkinsci.plugins.ParameterizedRemoteTrigger.BuildContext;
 import org.jenkinsci.plugins.ParameterizedRemoteTrigger.utils.Base64Utils;
+import org.jenkinsci.plugins.ParameterizedRemoteTrigger.auth2.Auth2;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
 

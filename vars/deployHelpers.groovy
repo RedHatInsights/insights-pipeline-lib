@@ -82,11 +82,10 @@ private def getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHost
             string(credentialsId: remoteCredentials, variable: "TOKEN"),
             string(credentialsId: remoteHostname, variable: "REMOTE_HOSTNAME")
         ]) {
-            // userName isn't used by BearerTokenAuth, I'm just too lazy to override the constructor.
             triggerRemoteJob(
                 job: "https://${REMOTE_HOSTNAME}${fullUrlPath}",
                 parameters: paramsString,
-                auth: BearerTokenAuth(apiToken: TOKEN, userName: "na")
+                auth: BearerTokenAuth(token: TOKEN)
             )
         }
     }
