@@ -70,12 +70,14 @@ def withUINode(Map parameters = [:], Closure body = null) {
             containerTemplate(
                 name: 'jnlp',
                 image: pipelineVars.jenkinsSlaveIqeImage,
+                alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
                 workingDir: ''
             ),
             containerTemplate(
                 name: 'selenium',
                 image: pipelineVars.seleniumImage,
+                alwaysPullImage: true,
                 workingDir: ''
             ),
         ],
