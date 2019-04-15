@@ -57,7 +57,7 @@ def withNode(parameters = [:], Closure body = null) {
 def withUINode(Map parameters = [:], Closure body = null) {
     namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
     cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
-    slaveImage = parameters.get('slaveImage', piplineVars.jenkinsSlaveIqeImage)
+    slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
 
     label = "test-${UUID.randomUUID().toString()}"
