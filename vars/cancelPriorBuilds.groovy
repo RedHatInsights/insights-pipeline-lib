@@ -1,11 +1,23 @@
-
+import hudson.model.Result
+import hudson.model.Run
+import jenkins.model.CauseOfInterruption.UserInterruption
 
 def call() {
-    milestone()
+    // https://stackoverflow.com/a/49901413/6476672
+    Run previousBuild = currentBuild.rawBuild.getPreviousBuildInProgress()
 
-    // trick to cancel previous builds, see https://issues.jenkins-ci.org/browse/JENKINS-40936
-    // avoids quick PR updates triggering too many concurrent tests
-    for (int i = 0; i < (env.BUILD_NUMBER as int); i++) {
-        milestone()
+    while (previousBuild != null) {
+        if (previousBuild.isInProgress()) {
+            def executor = previousBuild.getExecutor()
+            if (executor != null) {
+                echo ">> Aborting older build #${previousBuild.number}"
+                executor.interrupt(Result.ABORTED, new UserInterruption(
+                    "Aborted by newer build #${currentBuild.number}"
+                ))
+            }
+        }
+
+        previousBuild = previousBuild.getPreviousBuildInProgress()
     }
 }
+
