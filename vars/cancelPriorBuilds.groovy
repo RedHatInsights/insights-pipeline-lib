@@ -1,26 +1,17 @@
-import hudson.model.Result
-import hudson.model.Run
-import jenkins.model.CauseOfInterruption.UserInterruption
-
-def abortPreviousBuilds() {
-    // https://stackoverflow.com/a/49901413/6476672
-    Run previousBuild = currentBuild.rawBuild.getPreviousBuildInProgress()
-
-    while (previousBuild != null) {
-        if (previousBuild.isInProgress()) {
-            def executor = previousBuild.getExecutor()
-            if (executor != null) {
-                echo ">> Aborting older build #${previousBuild.number}"
-                executor.interrupt(Result.ABORTED, new UserInterruption(
-                    "Aborted by newer build #${currentBuild.number}"
-                ))
-            }
+@NonCPS
+void cancelPreviousRunningBuilds(int maxBuildsToSearch = 20) {
+    RunWrapper b = currentBuild
+    for (int i=0; i<maxBuildsToSearch; i++) {
+        b = b.getPreviousBuild();
+        if (b == null) break;
+        Run<?,?> rawBuild = b.rawBuild
+        if (rawBuild.isBuilding()) {
+            rawBuild.doStop()
         }
-
-        previousBuild = previousBuild.getPreviousBuildInProgress()
     }
 }
 
+
 def call() {
-    abortPreviousBuilds()
+    cancelPreviousRunningBuilds()
 }
