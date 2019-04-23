@@ -1,3 +1,7 @@
+import hudson.model.Run
+import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper
+
+
 @NonCPS
 void cancelPreviousRunningBuilds(int maxBuildsToSearch = 20) {
     RunWrapper b = currentBuild
