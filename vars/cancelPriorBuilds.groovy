@@ -1,21 +1,6 @@
-import hudson.model.Run
-import org.jenkinsci.plugins.workflow.support.steps.build.RunWrapper
-
-
-@NonCPS
-void cancelPreviousRunningBuilds(int maxBuildsToSearch = 20) {
-    RunWrapper b = currentBuild
-    for (int i=0; i<maxBuildsToSearch; i++) {
-        b = b.getPreviousBuild();
-        if (b == null) break;
-        Run<?,?> rawBuild = b.rawBuild
-        if (rawBuild.isBuilding()) {
-            rawBuild.doStop()
-        }
-    }
-}
-
-
 def call() {
-    cancelPreviousRunningBuilds()
+    milestone()
+    def buildNumber = env.BUILD_NUMBER as int
+    milestone(buildNumber - 1)
+    milestone(buildNumber)
 }
