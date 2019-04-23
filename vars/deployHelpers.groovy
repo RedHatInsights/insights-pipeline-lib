@@ -42,7 +42,7 @@ def getChangeInfo(parameters = [:]) {
                 changeInfo['envFilesForDiff'].add(envFile)
             }
         }
-        else if (dir == "buildfactory" || dir == "templates") {
+        else if (dir == "templates") {
             def serviceSet = l.split('/')[1]
             // If root _cfg.yml was edited, process all templates in this template dir
             if (serviceSet.startsWith("_cfg")) changeInfo[dir].add(allTemplates)
@@ -50,6 +50,10 @@ def getChangeInfo(parameters = [:]) {
             else changeInfo[dir].add(serviceSet)
             // Process all default env files any time templates change
             changeInfo['envFilesForDiff'].addAll(defaultEnvFiles)
+        }
+        else if (dir == "buildfactory") {
+            def serviceSet = l.split('/')[1]
+            changeInfo[dir].add(serviceSet)
         }
     }
     // De-dupe the lists
