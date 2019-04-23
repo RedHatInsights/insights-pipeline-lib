@@ -112,7 +112,7 @@ def getDeployTask(parameters = [:]) {
     if (remote) closure = getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHostname)
     else closure = { build job: buildJob, parameters: jobParameters }
 
-    echo "getDeployTask(): service set \'${setToDeploy}\' will trigger job \'${buildJob}\' with env \'${env}\' -- task is ${closure.toString()}"
+    echo "getDeployTask(): service set \'${setToDeploy}\' will trigger job \'${buildJob}\' with params \'${jobParameters.toString()}\' -- task is ${closure.toString()}"
     return closure
 }
 
