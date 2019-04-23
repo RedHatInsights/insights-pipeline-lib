@@ -1,23 +1,22 @@
-import hudson.model.Result
-import hudson.model.Run
-import jenkins.model.CauseOfInterruption.UserInterruption
+@NonCPS
+def cancelPreviousBuilds() {
+    // https://stackoverflow.com/a/48956028/6476672
+    def jobName = env.JOB_NAME
+    def buildNumber = env.BUILD_NUMBER.toInteger()
+    /* Get job name */
+    def currentJob = Jenkins.instance.getItemByFullName(jobName)
 
-def call() {
-    // https://stackoverflow.com/a/49901413/6476672
-    Run previousBuild = currentBuild.rawBuild.getPreviousBuildInProgress()
-
-    while (previousBuild != null) {
-        if (previousBuild.isInProgress()) {
-            def executor = previousBuild.getExecutor()
-            if (executor != null) {
-                echo ">> Aborting older build #${previousBuild.number}"
-                executor.interrupt(Result.ABORTED, new UserInterruption(
-                    "Aborted by newer build #${currentBuild.number}"
-                ))
-            }
+    /* Iterating over the builds for specific job */
+    for (def build : currentJob.builds) {
+        /* If there is a build that is currently running and it's not current build */
+        if (build.isBuilding() && build.number.toInteger() != buildsNumber) {
+            /* Then stop it */
+            build.doStop()
         }
-
-        previousBuild = previousBuild.getPreviousBuildInProgress()
     }
 }
 
+
+def call() {
+    cancelPreviousBuilds()
+}
