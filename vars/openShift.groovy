@@ -59,6 +59,7 @@ def withUINode(Map parameters = [:], Closure body = null) {
     cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
     slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
+    workingDir = parameters.get('workingDir', '/tmp')
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -74,7 +75,7 @@ def withUINode(Map parameters = [:], Closure body = null) {
                 image: slaveImage,
                 alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
-                workingDir: ''
+                workingDir: workingDir
             ),
             containerTemplate(
                 name: 'selenium',
