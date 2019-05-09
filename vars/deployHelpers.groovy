@@ -53,7 +53,7 @@ def getChangeInfo(parameters = [:]) {
         }
         else if (dir == "buildfactory") {
             def serviceSet = l.split('/')[1]
-            changeInfo[dir].add(serviceSet)
+            if (!serviceSet.startsWith("_cfg") changeInfo[dir].add(serviceSet)
         }
     }
     // De-dupe the lists
