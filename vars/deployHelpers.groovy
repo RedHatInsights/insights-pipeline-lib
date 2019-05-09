@@ -169,9 +169,11 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
         for (String serviceSet : changeInfo['buildfactory']) {
             buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
         }
-        getDeployTask(
-            serviceSet: "buildfactory", jobParameters: buildParams, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
-        ).call()
+        stage("Deploy changes to buildfactory") {
+            getDeployTask(
+                serviceSet: "buildfactory", jobParameters: buildParams, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
+            ).call()
+        }
     }
 
     // If the env yml was updated, or all templates are impacted by a change, re-deploy all services
