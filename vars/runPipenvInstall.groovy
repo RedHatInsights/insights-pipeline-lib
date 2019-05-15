@@ -9,9 +9,7 @@ installError = "\n* '`pipenv install`' has failed."
 def call(parameters = [:]) {
     scmVars = parameters['scmVars']
 
-    sh "pip install --user --no-warn-script-location pipenv"
-    sh "${pipelineVars.userPath}/pipenv run pip install --upgrade pip"
-
+    sh "pip install --user --upgrade pip setuptools wheel pipenv"
     // NOTE: Removing old comments won't work unless Pipeline Github Plugin >= v2.0
     pipfileComment.removeAll()
 
