@@ -5,7 +5,7 @@ def removeAll() {
     try {
         for (comment in pullRequest.comments) {
             if (comment.body.contains("Pipfile violation")) {
-                deleteComment(comment.id)
+                comment.delete()
             }
         }
     } catch (err) {
