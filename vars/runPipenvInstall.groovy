@@ -7,7 +7,7 @@ def call(parameters = [:]) {
     scmVars = parameters['scmVars']
 
     // Common errors we may hit ...
-    def lockErrorRegex = ~".*Your Pipfile.lock \(\S+\) is out of date. Expected: \(\S+\).*"
+    def lockErrorRegex = ~/.*Your Pipfile.lock \(\S+\) is out of date. Expected: \(\S+\).*/
     def lockError = "\n* `Pipfile.lock` is out of sync. Run '`pipenv lock`' and commit the changes."
     def installError = "\n* '`pipenv install`' has failed."
 
