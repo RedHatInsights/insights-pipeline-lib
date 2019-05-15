@@ -24,22 +24,21 @@ def call(parameters = [:]) {
     def installFailed = false
     def errorMsg = ""
     if (cmdStatus != 0) {
-        archiveArtifacts("pipenv_install_out.txt")
         if (readFile("pipenv_install_out.txt").trim() ==~ lockErrorRegex) {
             currentBuild.result = "UNSTABLE"
             errorMsg += lockError
             // try to install without the deploy flag to allow the other tests to run
-            try {
-                sh "${pipelineVars.userPath}/pipenv install --dev --verbose"
-            } catch (err) {
+            cmdStatus = sh(
+                script: "${pipelineVars.userPath}/pipenv install --dev --verbose > pipenv_install_out.txt",
+                returnStatus: true
+            )
+            if (cmdStatus != 0) {
                 // second try without --deploy failed too, fail this build.
-                echo err.getMessage()
                 installFailed = true
                 errorMsg += installError
             }
         } else {
             // something else failed (not a lock error), fail this build.
-            echo err.getMessage()
             installFailed = true
             errorMsg += installError
         }
@@ -54,4 +53,6 @@ def call(parameters = [:]) {
     } else {
         ghNotify context: pipelineVars.pipInstallContext, status: "SUCCESS"
     }
+
+    archiveArtifacts("pipenv_install_out.txt")
 }
