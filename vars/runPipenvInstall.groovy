@@ -44,15 +44,14 @@ def call(parameters = [:]) {
         }
     }
 
+    archiveArtifacts("pipenv_install_out.txt")
     if (errorMsg) {
-        pipfileComment.post(scmVars.GIT_COMMIT, errorMsg)
+        pipfileComment.post(commitId: scmVars.GIT_COMMIT, str: errorMsg)
     }
     if (installFailed) {
-        error("pipenv install has failed")
         ghNotify context: pipelineVars.pipInstallContext, status: "FAILURE"
+        error("pipenv install has failed")
     } else {
         ghNotify context: pipelineVars.pipInstallContext, status: "SUCCESS"
     }
-
-    archiveArtifacts("pipenv_install_out.txt")
 }
