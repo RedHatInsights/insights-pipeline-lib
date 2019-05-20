@@ -11,7 +11,11 @@ import groovy.transform.Field
 @Field deployJobs = [
     buildfactory: "/ops/deployBuildfactory",
     advisor: "/ops/deployAdvisor",
+    approval: "/ops/deployApproval",
+    catalog: "/ops/deployCatalog",
     platform: "/ops/deployPlatform",
+    sources: "/ops/deploySources",
+    "topological-inventory": "/ops/deployTopologicalInventory",
 ]
 
 
