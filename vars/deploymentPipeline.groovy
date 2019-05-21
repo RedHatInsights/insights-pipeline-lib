@@ -42,6 +42,8 @@ private def parseParams(envs, svcs) {
 def call(p = [:]) {
     envs = p['environments']
     svcs = p['services']
+    // optional extra env file -- ocdeployer will run with '-e <environment>.yml -e <extra env file>'
+    extraEnvFile = p.get('extraEnvFile')
     extraParams = p['extraParams'] ?: []
 
     properties([parameters(getJobParams(envs, svcs) + extraParams)])
@@ -92,6 +94,7 @@ def call(p = [:]) {
                     serviceSet: envConfig['serviceSet'],
                     skip: servicesToSkip,
                     env: envConfig['env'],
+                    extraEnvFile: extraEnvFile,
                     project: envConfig['project'],
                     secretsSrcProject: envConfig['secretsSrcProject'],
                 )

@@ -3,6 +3,8 @@ def call(params = [:]) {
     env = params.get('env')
     project = params['project']
     secretsSrcProject = params.get('secretsSrcProject', "secrets")
+    // optional extra env file -- ocdeployer will run with '-e <environment>.yml -e <extra env file>'
+    extraEnvFile = params.get('extraEnvFile')
     templateDir = params.get('templateDir', "templates")
     skip = params.get('skip')
 
@@ -13,6 +15,7 @@ def call(params = [:]) {
         sh "${pipelineVars.venvDir}/bin/pip install -r requirements.txt"
         def envArg = " "
         if (env) envArg = " -e env/${env}.yml "
+        if (extraEnvFile) envArg = "${envArg}-e ${extraEnvFile} "
         cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -t ${templateDir} -s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
         if (skip) cmd = "${cmd} --skip ${skip.join(",")}"
         sh cmd
