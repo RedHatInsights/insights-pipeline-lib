@@ -30,6 +30,10 @@ def getChangeInfo(parameters = [:]) {
 
     // list of files that have changed in the repo (obtained via getFilesChanged)
     def filesChanged = parameters['filesChanged']
+    // get change info that applies to a specific environment (default: all environments)
+    def env = parameters.get('env')
+    // do not process all templates if the root _cfg.yaml was changed (default: false)
+    def ignoreRoot = parameters.get('ignoreRoot')
 
     def changeInfo = [buildfactory: [], templates: [], envFiles: [], envFilesForDiff: []]
 
@@ -40,6 +44,11 @@ def getChangeInfo(parameters = [:]) {
         if (dir == "env") {
             // if an env yaml was changed, process all templates using that env file
             def envFile = l.split('/')[1]
+            def envName = envFile.split('.')[0]
+
+            // if we are only analyzing a specific env, ignore other changed env files
+            if (envName != null && !envName.equals(env)) continue
+
             if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
                 changeInfo['templates'].add(allTemplates)
                 changeInfo['envFiles'].add(envFile)
@@ -48,8 +57,8 @@ def getChangeInfo(parameters = [:]) {
         }
         else if (dir == "templates") {
             def serviceSet = l.split('/')[1]
-            // If root _cfg.yml was edited, process all templates in this template dir
-            if (serviceSet.startsWith("_cfg")) changeInfo[dir].add(allTemplates)
+            // If root _cfg.yml was edited, and we are not ignoring changes to the root cfg, process all templates
+            if (serviceSet.startsWith("_cfg") && !ignoreRoot) changeInfo[dir].add(allTemplates)
             // Otherwise process only this service set
             else changeInfo[dir].add(serviceSet)
             // Process all default env files any time templates change
