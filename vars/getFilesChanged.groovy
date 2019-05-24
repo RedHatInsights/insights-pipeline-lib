@@ -17,7 +17,7 @@ def call(parameters = [:]) {
         data = sh(
             script: "git diff --name-only ${oldCommit} ${newCommit} | cut -s -f1,2 -d'/'",
             returnStdout: true
-        ).trim().split('\n').unique()
+        ).trim().split('\n').toUnique()
         echo "filesChanged: ${data}"
         return data
     }
