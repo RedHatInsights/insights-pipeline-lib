@@ -7,11 +7,17 @@ def call(parameters = [:]) {
     dir(repoDir) {
         sh "git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*"
         sh "git fetch"
+        dataNoCut = sh(
+            script: "git diff --name-only ${oldCommit} ${newCommit}",
+            returnStdout: true
+        ).trim().split('\n')
+        echo "git commit files changed: ${dataNoCut}"
+
+        // Cut to narrow things down to only template dir name and service set
         data = sh(
             script: "git diff --name-only ${oldCommit} ${newCommit} | cut -s -f1,2 -d'/'",
             returnStdout: true
-        ).trim()
-        data = data.split('\n')
+        ).trim().split('\n').unique()
         echo "filesChanged: ${data}"
         return data
     }
