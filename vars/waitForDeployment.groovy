@@ -19,18 +19,18 @@ def call(parameters = [:]) {
                     finished = false
                     waitUntil {
                         try {
-                            pod = openshift.selector("pod", [(label): value]).names()[0]
-                            def podGitCommit = openshift.rsh("${pod} git rev-parse HEAD").out.trim()
+                            def pod = openshift.selector("pod", [(label): value]).names()[0]
+                            def podGitCommit = openshift.rsh("$pod git rev-parse HEAD").out.trim()
                             // Once a new code appeared in a pod we need to wait until it will be fully
                             // deployed.
                             if (podGitCommit == gitCommit) {
-                                echo "Pod (${pod.name()}) with commit hash $podGitCommit has been spawned"
+                                echo "Pod ($pod) with commit hash $podGitCommit has been spawned"
                                 waitUntil {
                                     // Get the latest replication controller and check its status
                                     def lastRc = openshift.selector("rc", [(label): value]).objects()[-1]
                                     finished = lastRc.status.replicas == lastRc.status.readyReplicas
                                     if (finished) {
-                                        echo "Pod (${pod.name()}) has been deployed"
+                                        echo "Pod ($pod) has been deployed"
                                     }
                                     return finished
                                 }
