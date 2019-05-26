@@ -7,7 +7,7 @@ import groovy.transform.Field
 // A const which represents 'all templates should be processed'
 @Field allTemplates = "__ALL__"
 
-// Map of service set name -> Jenkins location of deploy job for that serbvice set
+// Map of service set name -> Jenkins location of deploy job for that service set
 @Field deployJobs = [
     buildfactory: "/ops/deployBuildfactory",
     advisor: "/ops/deployAdvisor",
@@ -16,6 +16,7 @@ import groovy.transform.Field
     platform: "/ops/deployPlatform",
     sources: "/ops/deploySources",
     "topological-inventory": "/ops/deployTopologicalInventory",
+    compliance: "/ops/deployCompliance",
 ]
 
 
