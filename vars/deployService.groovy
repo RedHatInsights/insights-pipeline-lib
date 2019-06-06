@@ -1,9 +1,9 @@
 def call(params = [:]) {
-    service = params['service']
-    env = params['env']
-    project = params['project']
-    secretsSrcProject = params.get('secretsSrcProject', "secrets")
-    pipInstall = params.get('pipInstall', true)
+    def service = params['service']
+    def env = params['env']
+    def project = params['project']
+    def secretsSrcProject = params.get('secretsSrcProject', "secrets")
+    def pipInstall = params.get('pipInstall', true)
 
     if (pipInstall) {
         checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepoSsh, credentialsId: pipelineVars.gitSshCreds)
