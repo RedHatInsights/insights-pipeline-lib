@@ -6,7 +6,7 @@ def call(params = [:]) {
     templateDir = params.get('templateDir', "templates")
     skip = params.get('skip')
 
-    if (!fileExists(piplineVars.e2eDeployDir)) {
+    if (!fileExists(pipelineVars.e2eDeployDir)) {
         checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepoSsh, credentialsId: pipelineVars.gitSshCreds)
     }
     sh "python3.6 -m venv ${pipelineVars.venvDir}"
