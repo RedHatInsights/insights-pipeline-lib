@@ -6,7 +6,9 @@ def call(params = [:]) {
     templateDir = params.get('templateDir', "templates")
     skip = params.get('skip')
 
-    checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepoSsh, credentialsId: pipelineVars.gitSshCreds)
+    if (!fileExists(piplineVars.e2eDeployDir)) {
+        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepoSsh, credentialsId: pipelineVars.gitSshCreds)
+    }
     sh "python3.6 -m venv ${pipelineVars.venvDir}"
     sh "${pipelineVars.venvDir}/bin/pip install --upgrade pip"
     dir(pipelineVars.e2eDeployDir) {
