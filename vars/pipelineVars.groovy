@@ -32,8 +32,8 @@ class pipelineVars implements Serializable {
     String prodCluster = "api.insights.openshift.com"
     String devCluster = "api.insights-dev.openshift.com"
 
-    String jenkinsSlaveIqeImage = 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest'
-    String seleniumImage = 'docker-registry.default.svc:5000/jenkins/selenium-fc29:latest'
-    String defaultUICloud = 'cmqe'
+    String jenkinsSlaveIqeImage = 'jenkins-slave-iqe:latest'
+    String seleniumImage = 'selenium-fc29:latest'
+    String defaultUICloud = 'upshift'
 
 }

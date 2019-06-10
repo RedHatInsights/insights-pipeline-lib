@@ -55,7 +55,7 @@ def withNode(parameters = [:], Closure body = null) {
 
 
 def withUINode(Map parameters = [:], Closure body = null) {
-    namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
+    namespace = parameters.get('namespace', 'insights-qe-ci')
     cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
     slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
