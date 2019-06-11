@@ -26,7 +26,6 @@ class pipelineVars implements Serializable {
     String e2eDeployRepoSsh = 'git@github.com:RedHatInsights/e2e-deploy.git'
     String e2eTestsDir = 'e2e-tests'
     String e2eTestsRepo = 'https://github.com/RedHatInsights/e2e-tests.git'
-
     String e2eTestsRepoSsh = 'git@github.com:RedHatInsights/e2e-tests.git'
 
     String prodCluster = "api.insights.openshift.com"
@@ -34,6 +33,9 @@ class pipelineVars implements Serializable {
 
     String jenkinsSlaveIqeImage = 'jenkins-slave-iqe:latest'
     String seleniumImage = 'selenium-fc29:latest'
+
+    String defaultCloud = 'openshift'
     String defaultUICloud = 'upshift'
+    String defaultUINameSpace = 'insights-qe-ci'
 
 }
