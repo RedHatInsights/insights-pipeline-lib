@@ -4,14 +4,16 @@
 def withNode(parameters = [:], Closure body = null) {
     // parameters must always be present when calling 'withNode', so pass 'defaults: true' if you want defaults
     defaults = parameters.get('defaults')
-
     image = parameters.get('image', pipelineVars.defaultNodeImage)
-    namespace = parameters.get('namespace', pipelineVars.defaultNameSpace)
+    cloud = parameters.get('cloud', pipelineVars.defaultCloud)
+    namespace = parameters.get(
+        'namespace',
+        cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
+    )
     requestCpu = parameters.get('resourceRequestCpu', "200m")
     limitCpu = parameters.get('resourceLimitCpu', "500m")
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     limitMemory = parameters.get('resourceLimitMemory', "650Mi")
-    cloud = parameters.get('cloud', "openshift")
     yaml = parameters.get('yaml')
     workingDir = parameters.get('workingDir', "/home/jenkins")
 
@@ -55,8 +57,11 @@ def withNode(parameters = [:], Closure body = null) {
 
 
 def withUINode(Map parameters = [:], Closure body = null) {
-    namespace = parameters.get('namespace', 'insights-qe-ci')
     cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
+    namespace = parameters.get(
+        'namespace',
+        cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
+    )
     slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
     workingDir = parameters.get('workingDir', '/tmp')
