@@ -187,6 +187,19 @@ private def allocateResourcesAndRun(
 }
 
 
+private def setParamDefaults(String refSpec) {
+    properties(
+        [parameters([
+            string(
+                name: 'GIT_REF',
+                defaultValue: refSpec,
+                description: 'The git ref to deploy for this app during the smoke test'
+            )
+        ])]
+    )
+}
+
+
 def call(p = [:]) {
     def ocDeployerBuilderPath = p['ocDeployerBuilderPath']
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
@@ -194,17 +207,6 @@ def call(p = [:]) {
     def pytestMarker = p['pytestMarker']
     def iqePlugins = p.get('iqePlugins')
     def extraEnvVars = p.get('extraEnvVars', [:])
-
-    // Define a string parameter to set the git ref on manual runs
-    properties(
-        [parameters([
-            string(
-                name: 'GIT_REF',
-                defaultValue: 'master',
-                description: 'The git ref to deploy for this app during the smoke test'
-            )
-        ])]
-    )
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
@@ -218,6 +220,9 @@ def call(p = [:]) {
         // Get the refspec of the PR
         def refSpec = getRefSpec()
 
+        // Define a string parameter to set the git ref on manual runs
+        setParamDefaults(refSpec)
+
         // Run the job using github status notifications so the test status is reported to the PR
         withStatusContext.smoke {
             allocateResourcesAndRun(
@@ -227,6 +232,9 @@ def call(p = [:]) {
         }
     // If testing via a manual trigger... we have no PR, so don't notify github or interact with a github PR
     } else {
+        // Define a string parameter to set the git ref on manual runs
+        setParamDefaults(env.BRANCH_NAME ? env.BRANCH_NAME : "master")
+        // Grab the value of the parameter passed in by the user
         def refSpec = params["GIT_REF"]
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
