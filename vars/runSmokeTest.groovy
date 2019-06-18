@@ -42,12 +42,11 @@ def call(parameters = [:]) {
 
     // Define a string parameter to set the git ref on manual runs
     properties([parameters(
-        [[
-            $class: 'StringParameterDefinition',
+        [string(
             name: 'GIT_REF',
             defaultValue: 'master',
             description: 'The git ref to deploy for this app during the smoke test'
-        ]]
+        )]
     )])
 
     // If testing via a PR webhook trigger
