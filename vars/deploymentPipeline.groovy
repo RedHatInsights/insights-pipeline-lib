@@ -2,7 +2,9 @@
 private def getJobParams(envs, svcs) {
     p = []
     svcs.each { key, data ->
-        p.add([$class: 'BooleanParameterDefinition', name: data['paramName'], defaultValue: true, description: "Deploy/promote ${data['displayName']}"])
+        def paramName = data.get('paramName', "DEPLOY_${key.toString()}")
+        def displayName = data.get('displayName', "${key.toString()}")
+        p.add([$class: 'BooleanParameterDefinition', name: paramName, defaultValue: true, description: "Deploy/promote ${displayName}"])
     }
 
     choices = []
