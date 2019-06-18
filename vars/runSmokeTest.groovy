@@ -41,13 +41,15 @@ def call(p = [:]) {
     def extraEnvVars = p.get('extraEnvVars', [:])
 
     // Define a string parameter to set the git ref on manual runs
-    properties([parameters([
-        string(
-            name: 'GIT_REF',
-            defaultValue: 'master',
-            description: 'The git ref to deploy for this app during the smoke test'
-        ])
-    )])
+    properties(
+        [parameters([
+            string(
+                name: 'GIT_REF',
+                defaultValue: 'master',
+                description: 'The git ref to deploy for this app during the smoke test'
+            )
+        ])]
+    )
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
