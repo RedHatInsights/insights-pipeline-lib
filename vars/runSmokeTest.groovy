@@ -103,7 +103,7 @@ private def runPipeline(
 
     // check out e2e-deploy
     stage("Check out repos") {
-        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
+        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo, credentialsId: "InsightsDroidGitHubHTTP")
     }
 
     stage("Install ocdeployer") {
