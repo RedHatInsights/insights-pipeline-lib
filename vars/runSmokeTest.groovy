@@ -32,6 +32,161 @@
  *
  */
 
+
+private def getRefSpec() {
+    // cache creds so we can git 'ls-remote' below...
+    sh "git config --global credential.helper cache"
+    
+    def refSpec
+    sh "mkdir pr_source"
+    
+    dir("pr_source") {
+        checkout scm
+
+        // get refspec so we can set up the OpenShift build config to point to this PR
+        // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
+
+        stage("Get refspec") {
+            refSpec = "refs/pull/${env.CHANGE_ID}/merge"
+            def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refSpec}").trim()
+            if (!refspecExists) {
+                error("Unable to find git refspec: ${refSpec}")
+            }
+        }
+    }
+
+    return refSpec
+}
+
+
+private def deployEnvironment(refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets) {
+    stage("Deploy test environment") {
+        dir(pipelineVars.e2eDeployDir) {
+            // Deploy the builder for only this app to build the PR image in this project
+            def builderTask = {
+                sh "echo \"${ocDeployerBuilderPath}:\" > builder-env.yml"
+                sh "echo \"  parameters:\" >> builder-env.yml"
+                sh "echo \"    SOURCE_REPOSITORY_REF: ${refSpec}\" >> builder-env.yml"
+                sh "cat builder-env.yml"
+                sh "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
+            }
+
+            // Also deploy the test env apps, but set the image for the PR app to be pulled from this local project instead of buildfactory
+            def serviceTask = {
+                sh "echo \"${ocDeployerComponentPath}:\" > env.yml"
+                sh "echo \"  parameters:\" >> env.yml"
+                sh "echo \"    IMAGE_NAMESPACE: ${project}\" >> env.yml"
+                sh "echo \"    IMAGE_TAG: latest\" >> env.yml"
+                sh "cat env.yml"   
+                sh "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env/smoke.yml -e env.yml ${project}"
+            }
+
+            // Run the deployments in parallel
+            parallel([
+                "Deploy custom buildConfig": builderTask,
+                "Deploy service sets: ${ocDeployerServiceSets}": serviceTask
+            ])
+        }
+    }
+}
+
+
+private def runPipeline(
+    String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
+    String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars
+) {
+    cancelPriorBuilds()
+
+    currentBuild.result = "SUCCESS"
+
+    /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
+
+    // check out e2e-deploy
+    stage("Check out repos") {
+        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
+    }
+
+    stage("Install ocdeployer") {
+        sh "devpi use http://devpi.devpi.svc:3141/root/psav --set-cfg"
+        sh "devpi refresh ocdeployer"
+
+        dir(pipelineVars.e2eDeployDir) {
+            sh "pip install -r requirements.txt"
+        }
+    }
+
+    stage("Wipe test environment") {
+        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+    }
+
+    stage("Install iqe and plugins") {
+        sh "pip install --upgrade iqe-integration-tests"
+        sh "pip install --upgrade iqe-red-hat-internal-envs-plugin"
+        for (String plugin : iqePlugins) {
+            sh "pip install ${plugin}"
+        }
+    }
+
+    try {
+        deployEnvironment(refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
+    } catch (err) {
+        echo("Hit error during deploy!")
+        echo(err.toString())
+        openShift.collectLogs(project: project)
+        throw err
+    }
+
+    stage("Run tests (pytest marker: ${pytestMarker})") {
+        extraEnvVars.each { key, val ->
+            sh "export ${key}=${val}"
+        }
+
+        sh """
+            export ENV_FOR_DYNACONF=smoke
+            export DYNACONF_OCPROJECT=${project}
+
+            set +e
+            iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
+            set -e
+        """
+        try {
+            archiveArtifacts "pytest-stdout.log"
+            archiveArtifacts "iqe.log"
+        } catch (err) {
+            echo "Error archiving log files: ${err.toString()}"
+        }
+    }
+
+    openShift.collectLogs(project: project)
+
+    stage("Wipe test environment") {
+        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+    }
+
+    junit "junit.xml"
+
+    if (currentBuild.result != "SUCCESS") {
+        throw new Exception("Smoke test failed");
+    }
+}
+
+
+private def allocateResourcesAndRun(
+    String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath, String ocDeployerServiceSets,
+    String pytestMarker, List<String> iqePlugins, Map extraEnvVars
+) {
+    // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
+    lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
+        echo "Using project: ${env.PROJECT}"
+
+        openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
+            runPipeline(refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
+                        ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars)
+        }
+    }
+}
+
+
 def call(p = [:]) {
     def ocDeployerBuilderPath = p['ocDeployerBuilderPath']
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
@@ -77,160 +232,5 @@ def call(p = [:]) {
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
             pytestMarker, iqePlugins, extraEnvVars
         )
-    }
-}
-
-
-private def getRefSpec() {
-    // cache creds so we can git 'ls-remote' below...
-    sh "git config --global credential.helper cache"
-    
-    def refSpec
-    sh "mkdir pr_source"
-    
-    dir("pr_source") {
-        checkout scm
-
-        // get refspec so we can set up the OpenShift build config to point to this PR
-        // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
-
-        stage("Get refspec") {
-            refSpec = "refs/pull/${env.CHANGE_ID}/merge"
-            def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refspec}").trim()
-            if (!refspecExists) {
-                error("Unable to find git refspec: ${refspec}")
-            }
-        }
-    }
-
-    return refSpec
-}
-
-
-
-private def allocateResourcesAndRun(
-    String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath, String ocDeployerServiceSets,
-    String pytestMarker, List<String> iqePlugins, Map extraEnvVars
-) {
-    // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
-    lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
-        echo "Using project: ${env.PROJECT}"
-
-        openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
-            runPipeline(env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
-                        ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars)
-        }
-    }
-}
-
-
-private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets) {
-    stage("Deploy test environment") {
-        dir(pipelineVars.e2eDeployDir) {
-            // Deploy the builder for only this app to build the PR image in this project
-            def builderTask = {
-                sh "echo \"${ocDeployerBuilderPath}:\" > builder-env.yml"
-                sh "echo \"  parameters:\" >> builder-env.yml"
-                sh "echo \"    SOURCE_REPOSITORY_REF: ${refspec}\" >> builder-env.yml"
-                sh "cat builder-env.yml"
-                sh "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
-            }
-
-            // Also deploy the test env apps, but set the image for the PR app to be pulled from this local project instead of buildfactory
-            def serviceTask = {
-                sh "echo \"${ocDeployerComponentPath}:\" > env.yml"
-                sh "echo \"  parameters:\" >> env.yml"
-                sh "echo \"    IMAGE_NAMESPACE: ${project}\" >> env.yml"
-                sh "echo \"    IMAGE_TAG: latest\" >> env.yml"
-                sh "cat env.yml"   
-                sh "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env/smoke.yml -e env.yml ${project}"
-            }
-
-            // Run the deployments in parallel
-            parallel([
-                "Deploy custom buildConfig": builderTask,
-                "Deploy service sets: ${ocDeployerServiceSets}": serviceTask
-            ])
-        }
-    }
-}
-
-
-private def runPipeline(
-    String refspec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars
-) {
-    cancelPriorBuilds()
-
-    currentBuild.result = "SUCCESS"
-
-    /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
-
-    // check out e2e-deploy
-    stage("Check out repos") {
-        checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo)
-    }
-
-    stage("Install ocdeployer") {
-        sh "devpi use http://devpi.devpi.svc:3141/root/psav --set-cfg"
-        sh "devpi refresh ocdeployer"
-
-        dir(pipelineVars.e2eDeployDir) {
-            sh "pip install -r requirements.txt"
-        }
-    }
-
-    stage("Wipe test environment") {
-        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-    }
-
-    stage("Install iqe and plugins") {
-        sh "pip install --upgrade iqe-integration-tests"
-        sh "pip install --upgrade iqe-red-hat-internal-envs-plugin"
-        for (String plugin : iqePlugins) {
-            sh "pip install ${plugin}"
-        }
-    }
-
-    try {
-        deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets)
-    } catch (err) {
-        echo("Hit error during deploy!")
-        echo(err.toString())
-        openShift.collectLogs(project: project)
-        throw err
-    }
-
-    stage("Run tests (pytest marker: ${pytestMarker})") {
-        extraEnvVars.each { key, val ->
-            sh "export ${key}=${val}"
-        }
-
-        sh """
-            export ENV_FOR_DYNACONF=smoke
-            export DYNACONF_OCPROJECT=${project}
-
-            set +e
-            iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
-            set -e
-        """
-        try {
-            archiveArtifacts "pytest-stdout.log"
-            archiveArtifacts "iqe.log"
-        } catch (err) {
-            echo "Error archiving log files: ${err.toString()}"
-        }
-    }
-
-    openShift.collectLogs(project: project)
-
-    stage("Wipe test environment") {
-        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-    }
-
-    junit "junit.xml"
-
-    if (currentBuild.result != "SUCCESS") {
-        throw new Exception("Smoke test failed");
     }
 }
