@@ -40,20 +40,84 @@ def call(parameters = [:]) {
     def iqePlugins = parameters.get('iqePlugins')
     def extraEnvVars = parameters.get('extraEnvVars', [:])
 
-    try {
-        if (env.CHANGE_TARGET == 'stable') pullRequest.addLabels(['stable'])
-    } catch (err) {
-        echo "Failed to set 'stable' label: ${err.getMessage()}}"
+    // Define a string parameter to set the git ref on manual runs
+    properties([parameters(
+        [
+            $class: 'StringParameterDefinition',
+            name: 'GIT_REF',
+            defaultValue: 'master',
+            description: 'The git ref to deploy for this app during the smoke test'
+        ]
+    )])
+
+    // If testing via a PR webhook trigger
+    if (env.CHANGE_ID) {
+        // Set the 'stable' label on the PR
+        try {
+            if (env.CHANGE_TARGET == 'stable') pullRequest.addLabels(['stable'])
+        } catch (err) {
+            echo "Failed to set 'stable' label: ${err.getMessage()}}"
+        }
+
+        // Get the refspec of the PR
+        def refSpec = getRefSpec()
+
+        // Run the job using github status notifications so the test status is reported to the PR
+        withStatusContext.smoke {
+            allocateResourcesAndRun(
+                refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
+                pytestMarker, iqePlugins, extraEnvVars
+            )
+        }
+    // If testing via a manual trigger... we have no PR, so don't notify github or interact with a github PR
+    } else {
+        def refSpec = params["GIT_REF"]
+        allocateResourcesAndRun(
+            refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
+            pytestMarker, iqePlugins, extraEnvVars
+        )
+    }
+}
+
+
+private def getRefSpec() {
+    // cache creds so we can git 'ls-remote' below...
+    sh "git config --global credential.helper cache"
+    
+    def refSpec
+    sh "mkdir pr_source"
+    
+    dir("pr_source") {
+        checkout scm
+
+        // get refspec so we can set up the OpenShift build config to point to this PR
+        // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
+
+        stage("Get refspec") {
+            refSpec = "refs/pull/${env.CHANGE_ID}/merge"
+            def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refspec}").trim()
+            if (!refspecExists) {
+                error("Unable to find git refspec: ${refspec}")
+            }
+        }
     }
 
-    withStatusContext.smoke {
-        lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
-            echo "Using project: ${env.PROJECT}"
+    return refSpec
+}
 
-            openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
-                runPipeline(env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
-                            ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars)
-            }
+
+
+private def allocateResourcesAndRun(
+    String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath, String ocDeployerServiceSets,
+    String pytestMarker, List<String> iqePlugins, Map extraEnvVars
+) {
+    // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
+    lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
+        echo "Using project: ${env.PROJECT}"
+
+        openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
+            runPipeline(env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
+                        ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars)
         }
     }
 }
@@ -91,34 +155,15 @@ private def deployEnvironment(refspec, project, ocDeployerBuilderPath, ocDeploye
 }
 
 
-private def runPipeline(String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-                        String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars) {
+private def runPipeline(
+    String refspec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
+    String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars
+) {
     cancelPriorBuilds()
 
     currentBuild.result = "SUCCESS"
 
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
-
-    // cache creds so we can git 'ls-remote' below...
-    sh "git config --global credential.helper cache"
-    
-    def refspec
-    sh "mkdir pr_source"
-    
-    dir("pr_source") {
-        checkout scm
-
-        // get refspec so we can set up the OpenShift build config to point to this PR
-        // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
-
-        stage("Get refspec") {
-            refspec = "refs/pull/${env.CHANGE_ID}/merge"
-            def refspecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refspec}").trim()
-            if (!refspecExists) {
-                error("Unable to find git refspec: ${refspec}")
-            }
-        }
-    }
 
     // check out e2e-deploy
     stage("Check out repos") {
