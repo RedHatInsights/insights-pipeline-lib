@@ -32,21 +32,21 @@
  *
  */
 
-def call(parameters = [:]) {
-    def ocDeployerBuilderPath = parameters['ocDeployerBuilderPath']
-    def ocDeployerComponentPath = parameters['ocDeployerComponentPath']
-    def ocDeployerServiceSets = parameters['ocDeployerServiceSets']
-    def pytestMarker = parameters['pytestMarker']
-    def iqePlugins = parameters.get('iqePlugins')
-    def extraEnvVars = parameters.get('extraEnvVars', [:])
+def call(p = [:]) {
+    def ocDeployerBuilderPath = p['ocDeployerBuilderPath']
+    def ocDeployerComponentPath = p['ocDeployerComponentPath']
+    def ocDeployerServiceSets = p['ocDeployerServiceSets']
+    def pytestMarker = p['pytestMarker']
+    def iqePlugins = p.get('iqePlugins')
+    def extraEnvVars = p.get('extraEnvVars', [:])
 
     // Define a string parameter to set the git ref on manual runs
-    properties([parameters(
+    properties([parameters([
         string(
             name: 'GIT_REF',
             defaultValue: 'master',
             description: 'The git ref to deploy for this app during the smoke test'
-        )
+        ])
     )])
 
     // If testing via a PR webhook trigger
