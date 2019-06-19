@@ -37,11 +37,14 @@ private def getRefSpec() {
     def refSpec
 
     // Need to allocate a node to store the source code ...
-    node {
-        // cache creds so we can git 'ls-remote' below...
+    node('master') {
+        // clean workspace to remove previously downloaded pr_source
+        cleanWs()
+
+        // cache creds so we can git 'ls-remote' below..
         sh "git config --global credential.helper cache"
-        sh "mkdir pr_source"
-        
+
+        sh "mkdir pr_source"        
         dir("pr_source") {
             checkout scm
 
