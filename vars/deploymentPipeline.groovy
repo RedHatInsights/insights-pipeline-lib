@@ -1,8 +1,15 @@
+
+// Auto-generate the param name for a service if it was not specified
+private def getParamNameForSvcKey(String key, Map svcData) {
+    return svcData.get('paramName', "DEPLOY_${key.toString().toUpperCase()}")
+}
+
+
 // Set up the job parameters
 private def getJobParams(envs, svcs) {
     p = []
     svcs.each { key, data ->
-        def paramName = data.get('paramName', "DEPLOY_${key.toString()}")
+        def paramName = getParamNameForSvcKey(key, data)
         def displayName = data.get('displayName', "${key.toString()}")
         p.add([$class: 'BooleanParameterDefinition', name: paramName, defaultValue: true, description: "Deploy/promote ${displayName}"])
     }
@@ -25,7 +32,7 @@ private def parseParams(envs, svcs) {
     if (envs[params.ENV]['copyImages']) {
         svcs.each { key, data ->
             // if the service was checked, add its image to the list of images we will copy
-            if (params.get(data['paramName'])) imagesToCopy.add(data['srcImage'])
+            if (params.get(getParamNameForSvcKey(key, data)) imagesToCopy.add(data['srcImage'])
         }
     }
 
@@ -33,7 +40,7 @@ private def parseParams(envs, svcs) {
         svcs.each { key, data ->
             // if a service was not checked, add it to the list of services to skip, but only
             // if 'promoteImageOnly' is false (because this would indicate deployment doesn't apply for this component
-            if (!params.get(data['paramName']) && !data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
+            if (params.get(getParamNameForSvcKey(key, data)) && !data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
         }
     }
 
