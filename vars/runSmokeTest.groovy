@@ -34,9 +34,10 @@
 
 
 private def getRefSpec() {
-    def refSpec
+    // get refspec so we can set up the OpenShift build config to point to this PR
+    def refSpec = "refs/pull/${env.CHANGE_ID}/merge"
 
-    // Need to allocate a node to store the source code ...
+    // Need to allocate a node to check out the repo...
     node('master') {
         // cache creds so we can git 'ls-remote' below..
         sh "git config --global credential.helper cache"
@@ -45,18 +46,14 @@ private def getRefSpec() {
         dir("pr_source_${BUILD_ID}") {
             checkout scm
 
-            // get refspec so we can set up the OpenShift build config to point to this PR
-            // there's gotta be a better way to get the refspec, somehow 'checkout scm' knows what it is ...
-
-            def refSpecExists
-            stage("Get refspec") {
-                refSpec = "refs/pull/${env.CHANGE_ID}/merge"
+            // Ensure that the refspec exists in the repo
+            stage("Check refspec") {
                 refSpecExists = sh(returnStdout: true, script: "git ls-remote | grep ${refSpec}").trim()
             }
         }
-    }
 
-    sh "rm -fr pr_source_${BUILD_ID}"
+        sh "rm -fr pr_source_${BUILD_ID}"
+    }
 
     if (!refSpecExists) {
         error("Unable to find git refspec: ${refSpec}")
