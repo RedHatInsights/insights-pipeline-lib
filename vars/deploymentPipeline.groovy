@@ -32,14 +32,14 @@ private def parseParams(envs, svcs) {
     if (envs[params.ENV]['copyImages']) {
         svcs.each { key, data ->
             // if the service was checked, add its image to the list of images we will copy
-            if (params.get(getParamNameForSvcKey(key, data)) imagesToCopy.add(data['srcImage'])
+            if (params.get(getParamNameForSvcKey(key, data))) imagesToCopy.add(data['srcImage'])
         }
     }
 
     if (envs[params.ENV]['deployServices']) {
         svcs.each { key, data ->
             // if a service was not checked, add it to the list of services to skip, but only
-            // if 'promoteImageOnly' is false (because this would indicate deployment doesn't apply for this component
+            // if 'promoteImageOnly' is false (because this would indicate deployment doesn't apply for this component)
             if (params.get(getParamNameForSvcKey(key, data)) && !data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
         }
     }
