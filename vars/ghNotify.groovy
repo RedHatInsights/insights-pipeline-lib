@@ -3,9 +3,9 @@
 
 private def URLShortener(String url) {
     // we would prefer to not expose internal hostnames
-    def get = new URL("https://url.corp.redhat.com/new?${url}").openConnection()
-    if (get.getResponseCode() == 200) {
-        return get.getInputStream().getText()
+    def response = httpRequest "https://url.corp.redhat.com/new?${url}"
+    if (response.status == 200) {
+        return response.content
     }
 }
 
