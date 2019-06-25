@@ -40,7 +40,7 @@ private def parseParams(envs, svcs) {
         svcs.each { key, data ->
             // if a service was not checked, add it to the list of services to skip, but only
             // if 'promoteImageOnly' is false (because this would indicate deployment doesn't apply for this component)
-            if (params.get(getParamNameForSvcKey(key, data)) && !data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
+            if (!params.get(getParamNameForSvcKey(key, data)) && !data.get('promoteImageOnly')) servicesToSkip.add(data['templateName'])
         }
     }
 
