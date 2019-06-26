@@ -97,7 +97,8 @@ private def deployEnvironment(refSpec, project, ocDeployerBuilderPath, ocDeploye
 
 private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars
+    String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars,
+    String configFileCredentialsId
 ) {
     cancelPriorBuilds()
 
@@ -140,6 +141,14 @@ private def runPipeline(
         throw err
     }
 
+    if (configFileCredentialsId) {
+        stage("Inject custom config") {
+            withCredentials([file(credentialsId: configFileCredentialsId, variable: 'SETTINGS_YAML')]) {
+                sh "cp \$SETTINGS_YAML `find /iqe_venv/ -type d -name 'conf' | grep '/iqe/'`/settings.local.yaml"
+            }
+        }
+    }
+
     stage("Run tests (pytest marker: ${pytestMarker})") {
         extraEnvVars.each { key, val ->
             sh "export ${key}=${val}"
@@ -177,7 +186,7 @@ private def runPipeline(
 
 private def allocateResourcesAndRun(
     String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath, String ocDeployerServiceSets,
-    String pytestMarker, List<String> iqePlugins, Map extraEnvVars
+    String pytestMarker, List<String> iqePlugins, Map extraEnvVars, String configFileCredentialsId
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
@@ -185,7 +194,7 @@ private def allocateResourcesAndRun(
 
         openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
             runPipeline(refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
-                        ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars)
+                        ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId)
         }
     }
 }
@@ -211,6 +220,7 @@ def call(p = [:]) {
     def pytestMarker = p['pytestMarker']
     def iqePlugins = p.get('iqePlugins')
     def extraEnvVars = p.get('extraEnvVars', [:])
+    def configFileCredentialsId = p.get('configFileCredentialsId', "")
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
@@ -231,7 +241,7 @@ def call(p = [:]) {
         withStatusContext.smoke {
             allocateResourcesAndRun(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                pytestMarker, iqePlugins, extraEnvVars
+                pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github or interact with a github PR
@@ -242,7 +252,7 @@ def call(p = [:]) {
         def refSpec = params["GIT_REF"]
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            pytestMarker, iqePlugins, extraEnvVars
+            pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId
         )
     }
 }
