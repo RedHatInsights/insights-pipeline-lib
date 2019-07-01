@@ -24,7 +24,11 @@ def withNode(parameters = [:], Closure body = null) {
         slaveConnectTimeout: 120,
         serviceAccount: pipelineVars.jenkinsSvcAccount,
         cloud: cloud,
-        namespace: namespace
+        namespace: namespace,
+        annotations: [
+           podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
+           podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
+        ]
     ]
     if (yaml) {
         podParameters['yaml'] = readTrusted(yaml)
@@ -91,6 +95,10 @@ def withUINode(Map parameters = [:], Closure body = null) {
         ],
         volumes: [
             emptyDirVolume(mountPath: '/dev/shm', memory: false),
+        ],
+        annotations: [
+           podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
+           podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
         ]
     ]
 
