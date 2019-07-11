@@ -17,6 +17,7 @@ import groovy.transform.Field
     sources: "/ops/deploySources",
     "topological-inventory": "/ops/deployTopologicalInventory",
     compliance: "/ops/deployCompliance",
+    "system-baseline": "/ops/deployBaseline",
 ]
 
 
