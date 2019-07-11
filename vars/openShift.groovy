@@ -69,6 +69,10 @@ def withUINode(Map parameters = [:], Closure body = null) {
     slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
     workingDir = parameters.get('workingDir', '/tmp')
+    requestCpu = parameters.get('resourceRequestCpu', "200m")
+    limitCpu = parameters.get('resourceLimitCpu', "750m")
+    requestMemory = parameters.get('resourceRequestMemory', "1Gi")
+    limitMemory = parameters.get('resourceLimitMemory', "4Gi")
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -84,13 +88,21 @@ def withUINode(Map parameters = [:], Closure body = null) {
                 image: slaveImage,
                 alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
-                workingDir: workingDir
+                workingDir: workingDir,
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
             ),
             containerTemplate(
                 name: 'selenium',
                 image: seleniumImage,
                 alwaysPullImage: true,
-                workingDir: ''
+                workingDir: '',
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
             ),
         ],
         volumes: [
