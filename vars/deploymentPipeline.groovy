@@ -27,6 +27,7 @@ private def getJobParams(envs, svcs) {
 // Parse the parameters for a specific job run
 private def parseParams(envs, svcs) {
     imagesToCopy = []
+    echo "Job params: ${params.toString()}"
     servicesToSkip = envs[params.ENV].get('skip', [])
 
     if (envs[params.ENV]['copyImages']) {
