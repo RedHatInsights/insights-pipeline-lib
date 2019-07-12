@@ -2,48 +2,46 @@
 
 
 def withNode(Map parameters = [:], Closure body) {
-    cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
-    def params = [
-        cloud: cloud,
-        namespace: cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace,
-        serviceAccount: pipelineVars.jenkinsSvcAccount,
-        image: pipelineVars.defaultNodeImage,
-        yaml: parameters.get('yaml'),
-        workingDir: '/home/jenkins',
-        requestCpu: '200m',
-        limitCpu: '500m',
-        requestMemory: '25Mi',
-        limitMemory: '650Mi',
-    ]
-    params << parameters
+    image = parameters.get('image', pipelineVars.defaultNodeImage)
+    cloud = parameters.get('cloud', pipelineVars.defaultCloud)
+    namespace = parameters.get(
+        'namespace',
+        cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
+    )
+    requestCpu = parameters.get('resourceRequestCpu', "200m")
+    limitCpu = parameters.get('resourceLimitCpu', "500m")
+    requestMemory = parameters.get('resourceRequestMemory', "256Mi")
+    limitMemory = parameters.get('resourceLimitMemory', "650Mi")
+    yaml = parameters.get('yaml')
+    workingDir = parameters.get('workingDir', "/home/jenkins")
 
-    label = 'test-${UUID.randomUUID().toString()}'
+    label = "test-${UUID.randomUUID().toString()}"
 
     podParameters = [
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: params['serviceAccount'],
-        cloud: params['cloud'],
-        namespace: params['namespace'],
+        serviceAccount: pipelineVars.jenkinsSvcAccount,
+        cloud: cloud,
+        namespace: namespace,
         annotations: [
-           podAnnotation(key: 'job-name', value: "${env.JOB_NAME}"),
-           podAnnotation(key: 'run-display-url', value: "${env.RUN_DISPLAY_URL}"),
+           podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
+           podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
         ]
     ]
-    if (params['yaml']) {
+    if (yaml) {
         podParameters['yaml'] = readTrusted(yaml)
     } else {
         podParameters['containers'] = [
             containerTemplate(
                 name: 'jnlp',
-                image: params['image'],
+                image: image,
                 alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
-                resourceRequestCpu: params['requestCpu'],
-                resourceLimitCpu: params['limitCpu'],
-                resourceRequestMemory: params['requestMemory'],
-                resourceLimitMemory: params['limitMemory'],
-                workingDir: params['workingDir'],
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
+                workingDir: workingDir,
                 envVars: [
                     envVar(key: 'LC_ALL', value: 'en_US.utf-8'),
                     envVar(key: 'LANG', value: 'en_US.utf-8'),
@@ -62,49 +60,47 @@ def withNode(Map parameters = [:], Closure body) {
 
 def withUINode(Map parameters = [:], Closure body) {
     cloud = parameters.get('cloud', pipelineVars.defaultUICloud)
-    def params = [
-        cloud: cloud,
-        namespace: cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace,
-        serviceAccount: pipelineVars.jenkinsSvcAccount,
-        slaveImage: pipelineVars.jenkinsSlaveIqeImage,
-        seleniumImage: pipelineVars.seleniumImage,
-        workingDir: '/tmp',
-        requestCpu: '200m',
-        limitCpu: '750m',
-        requestMemory: '1Gi',
-        limitMemory: '4Gi',
-    ]
-    params << parameters
+    namespace = parameters.get(
+        'namespace',
+        cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
+    )
+    slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
+    seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
+    workingDir = parameters.get('workingDir', '/tmp')
+    requestCpu = parameters.get('resourceRequestCpu', "200m")
+    limitCpu = parameters.get('resourceLimitCpu', "750m")
+    requestMemory = parameters.get('resourceRequestMemory', "1Gi")
+    limitMemory = parameters.get('resourceLimitMemory', "4Gi")
 
     label = "test-${UUID.randomUUID().toString()}"
 
     podParameters = [
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: params['serviceAccount'],
-        cloud: params["cloud"],
-        namespace: params["namespace"],
+        serviceAccount: pipelineVars.jenkinsSvcAccount,
+        cloud: cloud,
+        namespace: namespace,
         containers: [
             containerTemplate(
                 name: 'jnlp',
-                image: params['slaveImage'],
+                image: slaveImage,
                 alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
-                workingDir: params['workingDir'],
-                resourceRequestCpu: params['requestCpu'],
-                resourceLimitCpu: params['limitCpu'],
-                resourceRequestMemory: params['requestMemory'],
-                resourceLimitMemory: params['limitMemory'],
+                workingDir: workingDir,
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
             ),
             containerTemplate(
                 name: 'selenium',
-                image: params['seleniumImage'],
+                image: seleniumImage,
                 alwaysPullImage: true,
                 workingDir: '',
-                resourceRequestCpu: params['requestCpu'],
-                resourceLimitCpu: params['limitCpu'],
-                resourceRequestMemory: params['requestMemory'],
-                resourceLimitMemory: params['limitMemory'],
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
             ),
         ],
         volumes: [
