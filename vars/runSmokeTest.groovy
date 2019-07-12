@@ -37,6 +37,13 @@ private def getRefSpec() {
     // get refspec so we can set up the OpenShift build config to point to this PR
     def refSpec = "refs/pull/${env.CHANGE_ID}/merge"
 
+    /*
+    Intermittently running into this error when running git ls-remote:
+    fatal: could not read Username for 'https://github.com': No such device or address
+
+    so skipping this check for now ...
+
+
     // Need to allocate a node to check out the repo...
     node('master') {
         // cache creds so we can git 'ls-remote' below..
@@ -58,7 +65,7 @@ private def getRefSpec() {
     if (!refSpecExists) {
         error("Unable to find git refspec: ${refSpec}")
     }
-
+    */
     return refSpec
 }
 
