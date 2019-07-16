@@ -18,6 +18,7 @@ import groovy.transform.Field
     "topological-inventory": "/ops/deployTopologicalInventory",
     compliance: "/ops/deployCompliance",
     "system-baseline": "/ops/deployBaseline",
+    vulnerability: "/ops/deployVulnerability",
 ]
 
 
