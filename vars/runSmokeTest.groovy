@@ -79,7 +79,11 @@ private def deployEnvironment(refSpec, project, ocDeployerBuilderPath, ocDeploye
                 sh "echo \"  parameters:\" >> builder-env.yml"
                 sh "echo \"    SOURCE_REPOSITORY_REF: ${refSpec}\" >> builder-env.yml"
                 sh "cat builder-env.yml"
-                sh "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
+                if (ocDeployerBuilderPath.contains("/")) {
+                    sh "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
+                } else {
+                    sh "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
+                }
             }
 
             // Also deploy the test env apps, but set the image for the PR app to be pulled from this local project instead of buildfactory
