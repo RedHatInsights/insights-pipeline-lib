@@ -12,7 +12,7 @@ def call(parameters = [:]) {
     def installError = "\n* '`pipenv install`' has failed."
     
     // Modified version to pipenv because of https://github.com/pypa/pipenv/issues/3560
-    sh "pip install --user --upgrade pip setuptools wheel pipenv"
+    sh "pip install --user --upgrade pip setuptools wheel pipenv==2018.10.13"
     // NOTE: Removing old comments won't work unless Pipeline Github Plugin >= v2.0
     pipfileComment.removeAll()
 
