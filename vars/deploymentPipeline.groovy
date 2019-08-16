@@ -30,10 +30,20 @@ private def parseParams(envs, svcs) {
     echo "Job params: ${params.toString()}"
     servicesToSkip = envs[params.ENV].get('skip', [])
 
+    paramName = getParamNameForSvcKey(key, data)
+    echo "Checking if ${paramName} is checked and should be deployed..."
+    boxChecked = params.get(paramName.toString())
+    promoteImageOnly = data.get('promoteImageOnly')
+    disableImageCopy = data.get('disableImageCopy')
+
+    echo "${key} boxChecked: ${boxChecked}, promoteImageOnly: ${promoteImageOnly}, disableImageCopy: ${disableImageCopy}"
+
     if (envs[params.ENV]['copyImages']) {
         svcs.each { key, data ->
             // if the service was checked, add its image to the list of images we will copy
-            if (params.get(getParamNameForSvcKey(key, data))) imagesToCopy.add(data['srcImage'])
+            if (boxChecked) {
+                if (!disableImageCopy) imagesToCopy.add(data['srcImage'])
+            }
         }
     }
 
@@ -41,11 +51,6 @@ private def parseParams(envs, svcs) {
         svcs.each { key, data ->
             // if a service was not checked, add it to the list of services to skip, but only
             // if 'promoteImageOnly' is false (because this would indicate deployment doesn't apply for this component)
-            paramName = getParamNameForSvcKey(key, data)
-            echo "Checking if ${paramName} is checked and should be deployed..."
-            boxChecked = params.get(paramName.toString())
-            promoteImageOnly = data.get('promoteImageOnly')
-            echo "${key} boxChecked: ${boxChecked}, promoteImageOnly: ${promoteImageOnly}"
             if (!boxChecked && !promoteImageOnly) servicesToSkip.add(data['templateName'])
         }
     }
