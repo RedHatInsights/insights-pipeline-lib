@@ -37,17 +37,19 @@ private def parseParams(envs, svcs) {
         boxChecked = params.get(paramName.toString())
         promoteImageOnly = data.get('promoteImageOnly')
         disableImageCopy = data.get('disableImageCopy')
+        copyImages = envs[params.ENV]['copyImages']
+        deployServices = envs[params.ENV]['deployServices']
 
         echo "${key} boxChecked: ${boxChecked}, promoteImageOnly: ${promoteImageOnly}, disableImageCopy: ${disableImageCopy}"
 
-        if (envs[params.ENV]['copyImages']) {
+        if (copyImages) {
             // if the service was checked, add its image to the list of images we will copy
             if (boxChecked) {
                 if (!disableImageCopy) imagesToCopy.add(data['srcImage'])
             }
         }
 
-        if (envs[params.ENV]['deployServices']) {
+        if (deployServices) {
             // if a service was not checked, add it to the list of services to skip, but only
             // if 'promoteImageOnly' is false (because this would indicate deployment doesn't apply for this component)
             if (!boxChecked && !promoteImageOnly) servicesToSkip.add(data['templateName'])
@@ -70,8 +72,7 @@ def call(p = [:]) {
     envConfig = parsed['envConfig']
     deployServices = parsed['deployServices']
 
-    echo "imagesToCopy:   ${imagesToCopy}"
-    echo "servicesToSkip: ${servicesToSkip}"
+    echo "imagesToCopy:   ${imagesToCopy}, servicesToSkip: ${servicesToSkip}"
     echo "envConfig:      ${envConfig}"
 
     // For build #1, only load the pipeline and exit
