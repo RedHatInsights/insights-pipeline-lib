@@ -64,8 +64,9 @@ def withUINode(Map parameters = [:], Closure body) {
         'namespace',
         cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
     )
-    slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
+    slaveImage = parameters.get('slaveImage', pipelineVars.centralCIjenkinsSlaveImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
+    iqeTestsImage = parameters.get('iqeTestsImage', pipelineVars.iqeTestsImage)
     workingDir = parameters.get('workingDir', '/tmp')
     requestCpu = parameters.get('resourceRequestCpu', "200m")
     limitCpu = parameters.get('resourceLimitCpu', "750m")
@@ -96,7 +97,17 @@ def withUINode(Map parameters = [:], Closure body) {
                 name: 'selenium',
                 image: seleniumImage,
                 alwaysPullImage: true,
-                workingDir: '',
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
+            ),
+            containerTemplate(
+                name: 'iqe',
+                ttyEnabled: true,
+                command: 'cat',
+                image: iqeTestsImage,
+                alwaysPullImage: true,
                 resourceRequestCpu: requestCpu,
                 resourceLimitCpu: limitCpu,
                 resourceRequestMemory: requestMemory,
@@ -114,7 +125,9 @@ def withUINode(Map parameters = [:], Closure body) {
 
     podTemplate(podParameters) {
         node(label) {
-            body()
+            container('iqe') {
+                body()
+            }
         }
     }
 }
