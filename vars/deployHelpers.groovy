@@ -19,7 +19,8 @@ import groovy.transform.Field
     compliance: "/ops/deployCompliance",
     "system-baseline": "/ops/deployBaseline",
     vulnerability: "/ops/deployVulnerability",
-    rbac: "/ops/deployRbac"
+    rbac: "/ops/deployRbac",
+    subscriptions: "/ops/deploySubscriptions"
 ]
 
 
