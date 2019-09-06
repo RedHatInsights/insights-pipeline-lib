@@ -155,7 +155,7 @@ private def runPipeline(
     if (configFileCredentialsId) {
         stage("Inject custom config") {
             withCredentials([file(credentialsId: configFileCredentialsId, variable: 'SETTINGS_YAML')]) {
-                sh "cp \$SETTINGS_YAML `find /iqe_venv/ -type d -name 'conf' | grep '/iqe/'`/settings.local.yaml"
+                sh "cp \$SETTINGS_YAML \"\$WORKSPACE/settings.local.yaml\""
             }
         }
     }
@@ -168,6 +168,7 @@ private def runPipeline(
         sh """
             export ENV_FOR_DYNACONF=smoke
             export DYNACONF_OCPROJECT=${project}
+            export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE/settings.local.yaml"
 
             set +e
             iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
