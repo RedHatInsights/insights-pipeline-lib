@@ -18,7 +18,10 @@ private def getJobParams(envs, svcs) {
     envs.each { key, data ->
         choices.add(data['env'])
     }
-    p.add([$class: 'ChoiceParameterDefinition', name: 'ENV', choices: choices, description: 'The target environment'])
+    p.add(
+        [$class: 'ChoiceParameterDefinition', name: 'ENV', choices: choices, description: 'The target environment'],
+        [$class: 'BooleanParameterDefinition', name: 'RELOAD', defaultValue: false, description: "Do nothing, simply re-load this job's groovy file"])
+    )
 
     return p
 }
@@ -29,7 +32,6 @@ private def parseParams(envs, svcs) {
     imagesToCopy = []
     echo "Job params: ${params.toString()}"
     servicesToSkip = envs[params.ENV].get('skip', [])
-
 
     svcs.each { key, data ->
         paramName = getParamNameForSvcKey(key, data)
@@ -67,13 +69,13 @@ def call(p = [:]) {
 
     properties([parameters(getJobParams(envs, svcs) + extraParams)])
     parsed = parseParams(envs, svcs)
-    imagesToCopy = parsed['imagesToCopy']
-    servicesToSkip = parsed['servicesToSkip']
-    envConfig = parsed['envConfig']
-    deployServices = parsed['deployServices']
 
-    echo "imagesToCopy:   ${imagesToCopy}, servicesToSkip: ${servicesToSkip}"
-    echo "envConfig:      ${envConfig}"
+    // Exit the job if the "reload" box was checked
+    if (params.RELOAD) {
+        echo "Job is only reloading"
+        currentBuild.description = "reload"
+        return
+    }
 
     // For build #1, only load the pipeline and exit
     // This is so the next time the job is built, "Build with parameters" will be available
@@ -82,6 +84,14 @@ def call(p = [:]) {
         currentBuild.description = "loaded params"
         return
     }
+
+    imagesToCopy = parsed['imagesToCopy']
+    servicesToSkip = parsed['servicesToSkip']
+    envConfig = parsed['envConfig']
+    deployServices = parsed['deployServices']
+
+    echo "imagesToCopy:   ${imagesToCopy}, servicesToSkip: ${servicesToSkip}"
+    echo "envConfig:      ${envConfig}"
 
     currentBuild.description = "env: ${envConfig['env']}"
 
