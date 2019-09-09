@@ -20,7 +20,7 @@ private def getJobParams(envs, svcs) {
     }
     p.add(
         [$class: 'ChoiceParameterDefinition', name: 'ENV', choices: choices, description: 'The target environment'],
-        [$class: 'BooleanParameterDefinition', name: 'RELOAD', defaultValue: false, description: "Do nothing, simply re-load this job's groovy file"])
+        [$class: 'BooleanParameterDefinition', name: 'RELOAD', defaultValue: false, description: "Do nothing, simply re-load this job's groovy file"]
     )
 
     return p
