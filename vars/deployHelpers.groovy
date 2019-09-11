@@ -20,6 +20,7 @@ import groovy.transform.Field
     "system-baseline": "/ops/deployBaseline",
     vulnerability: "/ops/deployVulnerability",
     rbac: "/ops/deployRbac",
+    hccm: "/ops/deployHccm",
     subscriptions: "/ops/deploySubscriptions"
 ]
 
