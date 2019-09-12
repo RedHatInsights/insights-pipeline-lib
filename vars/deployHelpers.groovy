@@ -157,7 +157,7 @@ def createParallelTasks(parameters = [:]) {
 
     for (String set : serviceSets) {
         def thisSet = set  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
-        tasks[thisSet] = getDeployTask(
+        tasks["deploy ${thisSet}"] = getDeployTask(
             serviceSet: thisSet, env: env, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     }
@@ -190,7 +190,7 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
         for (String serviceSet : changeInfo['buildfactory']) {
             buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
         }
-        parallelTasks["buildfactory"] = getDeployTask(
+        parallelTasks["deploy buildfactory"] = getDeployTask(
             serviceSet: "buildfactory", jobParameters: buildParams, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     }

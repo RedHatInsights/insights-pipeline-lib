@@ -168,7 +168,7 @@ private def runPipeline(
         sh """
             export ENV_FOR_DYNACONF=smoke
             export DYNACONF_OCPROJECT=${project}
-            export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE/settings.local.yaml"
+            export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE"
 
             set +e
             iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
