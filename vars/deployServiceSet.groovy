@@ -18,7 +18,7 @@ def call(params = [:]) {
     }
     dir(pipelineVars.e2eDeployDir) {
         def watchArg = watch ? " -w " : " "
-        def envArg = envArg ? " -e env/${env}.yml " : " "
+        def envArg = env ? " -e env/${env}.yml " : " "
         def cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy${watchArg}-f -t ${templateDir} -s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
         if (skip) cmd = "${cmd} --skip ${skip.join(",")}"
         sh cmd
