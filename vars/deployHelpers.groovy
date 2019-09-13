@@ -188,9 +188,10 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
 
     // If checking for changes for CI or QA and a service set in buildfactory was updated, re-deploy it
     if ((envName.equals("ci") || envName.equals("qa")) && changeInfo['buildfactory']) {
-        // there shouldn't be a case at the moment where we're needing to deploy all sets of buildfactory at once
+        if (changeInfo['buildfactory'].contains(allTemplates)) changeInfo['buildfactory'] = getServiceDeployJobs.keySet()
+
         def buildParams = []
-            for (String serviceSet : changeInfo['buildfactory']) {
+        for (String serviceSet : changeInfo['buildfactory']) {
             // Only deploy a service set if:
             //   * it is listed in deployJobs
             //   * its dir still exists in e2e-deploy -- if not this means the dir was removed in the latest e2e-deploy commits
@@ -198,6 +199,7 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
                 buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
             }
         }
+
         parallelTasks["buildfactory"] = getDeployTask(
             serviceSet: "buildfactory", jobParameters: buildParams, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
