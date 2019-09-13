@@ -188,7 +188,7 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
 
     // If checking for changes for CI or QA and a service set in buildfactory was updated, re-deploy it
     if ((envName.equals("ci") || envName.equals("qa")) && changeInfo['buildfactory']) {
-        if (changeInfo['buildfactory'].contains(allTemplates)) changeInfo['buildfactory'] = getServiceDeployJobs.keySet()
+        if (changeInfo['buildfactory'].contains(allTemplates)) changeInfo['buildfactory'] = getServiceDeployJobs().keySet()
 
         def buildParams = []
         for (String serviceSet : changeInfo['buildfactory']) {
