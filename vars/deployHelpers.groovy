@@ -157,7 +157,7 @@ def createParallelTasks(parameters = [:]) {
 
     for (String set : serviceSets) {
         def thisSet = set  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
-        tasks["deploy ${thisSet}"] = getDeployTask(
+        tasks[thisSet] = getDeployTask(
             serviceSet: thisSet, env: env, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     }
@@ -181,16 +181,24 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     // Name of secret containing the remote Jenkins hostname
     def remoteHostname = parameters.get('remoteHostname', "remoteJenkinsHostname")
 
+    // e2e-deploy directory to analyze, by default we assume the repo has been checked out into $WORKSPACE
+    def e2eDeployDir = parameters.get('e2eDeployDir', env.WORKSPACE)
+
     def parallelTasks = [:]
 
     // If checking for changes for CI or QA and a service set in buildfactory was updated, re-deploy it
     if ((env.equals("ci") || env.equals("qa")) && changeInfo['buildfactory']) {
         // there shouldn't be a case at the moment where we're needing to deploy all sets of buildfactory at once
         def buildParams = []
-        for (String serviceSet : changeInfo['buildfactory']) {
-            buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
+            for (String serviceSet : changeInfo['buildfactory']) {
+            // Only deploy a service set if:
+            //   * it is listed in deployJobs
+            //   * its dir still exists in e2e-deploy -- if not this means the dir was removed in the latest e2e-deploy commits
+            if (fileExists("${e2edeployDir}/buildfactory/${serviceSet}")) {
+                buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
+            }
         }
-        parallelTasks["deploy buildfactory"] = getDeployTask(
+        parallelTasks["buildfactory"] = getDeployTask(
             serviceSet: "buildfactory", jobParameters: buildParams, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     }
@@ -206,7 +214,10 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     } else {
         def serviceSets = []
         for (String serviceSet : changeInfo['templates']) {
-            if (deployJobs.containsKey(serviceSet)) {
+            // Only deploy a service set if:
+            //   * it is listed in deployJobs
+            //   * its dir still exists in e2e-deploy -- if not this means the dir was removed in the latest e2e-deploy commits
+            if (deployJobs.containsKey(serviceSet) && fileExists("${e2edeployDir}/templates/${serviceSet}")) {
                 serviceSets.add(serviceSet)
             }
         }
