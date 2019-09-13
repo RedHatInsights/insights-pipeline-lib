@@ -194,7 +194,7 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
             // Only deploy a service set if:
             //   * it is listed in deployJobs
             //   * its dir still exists in e2e-deploy -- if not this means the dir was removed in the latest e2e-deploy commits
-            if (fileExists("${e2edeployDir}/buildfactory/${serviceSet}")) {
+            if (fileExists("${e2eDeployDir}/buildfactory/${serviceSet}")) {
                 buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
             }
         }
@@ -217,7 +217,7 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
             // Only deploy a service set if:
             //   * it is listed in deployJobs
             //   * its dir still exists in e2e-deploy -- if not this means the dir was removed in the latest e2e-deploy commits
-            if (deployJobs.containsKey(serviceSet) && fileExists("${e2edeployDir}/templates/${serviceSet}")) {
+            if (deployJobs.containsKey(serviceSet) && fileExists("${e2eDeployDir}/templates/${serviceSet}")) {
                 serviceSets.add(serviceSet)
             }
         }
