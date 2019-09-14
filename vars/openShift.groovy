@@ -66,12 +66,11 @@ def withUINode(Map parameters = [:], Closure body) {
     )
     slaveImage = parameters.get('slaveImage', pipelineVars.centralCIjenkinsSlaveImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
-    iqeTestsImage = parameters.get('iqeTestsImage', pipelineVars.iqeTestsImage)
-    workingDir = parameters.get('workingDir', '/tmp')
+    iqeCoreImage = parameters.get('iqeCoreImage', pipelineVars.iqeCoreImage)
     requestCpu = parameters.get('resourceRequestCpu', "200m")
     limitCpu = parameters.get('resourceLimitCpu', "750m")
-    requestMemory = parameters.get('resourceRequestMemory', "1Gi")
-    limitMemory = parameters.get('resourceLimitMemory', "4Gi")
+    requestMemory = parameters.get('resourceRequestMemory', "512Mi")
+    limitMemory = parameters.get('resourceLimitMemory', "2Gi")
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -85,28 +84,25 @@ def withUINode(Map parameters = [:], Closure body) {
             containerTemplate(
                 name: 'jnlp',
                 image: slaveImage,
-                alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
-                workingDir: workingDir,
-                resourceRequestCpu: requestCpu,
-                resourceLimitCpu: limitCpu,
-                resourceRequestMemory: requestMemory,
-                resourceLimitMemory: limitMemory,
+                resourceRequestCpu: '100m',
+                resourceLimitCpu: '300m',
+                resourceRequestMemory: '512Mi',
+                resourceLimitMemory: '1Gi',
             ),
             containerTemplate(
                 name: 'selenium',
                 image: seleniumImage,
-                alwaysPullImage: true,
-                resourceRequestCpu: requestCpu,
-                resourceLimitCpu: limitCpu,
-                resourceRequestMemory: requestMemory,
-                resourceLimitMemory: limitMemory,
+                resourceRequestCpu: '500m',
+                resourceLimitCpu: '1',
+                resourceRequestMemory: '1Gi',
+                resourceLimitMemory: '4Gi',
             ),
             containerTemplate(
                 name: 'iqe',
                 ttyEnabled: true,
                 command: 'cat',
-                image: iqeTestsImage,
+                image: iqeCoreImage,
                 alwaysPullImage: true,
                 resourceRequestCpu: requestCpu,
                 resourceLimitCpu: limitCpu,
