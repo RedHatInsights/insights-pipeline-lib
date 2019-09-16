@@ -97,6 +97,9 @@ def withUINode(Map parameters = [:], Closure body) {
                 resourceLimitCpu: '1',
                 resourceRequestMemory: '1Gi',
                 resourceLimitMemory: '4Gi',
+                envVars: [
+                    envVar(key: 'HOME', value: '/home/selenium'),
+                ],
             ),
             containerTemplate(
                 name: 'iqe',
@@ -111,7 +114,7 @@ def withUINode(Map parameters = [:], Closure body) {
             ),
         ],
         volumes: [
-            emptyDirVolume(mountPath: '/dev/shm', memory: false),
+            emptyDirVolume(mountPath: '/dev/shm', memory: true),
         ],
         annotations: [
            podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),

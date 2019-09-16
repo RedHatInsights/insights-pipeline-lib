@@ -34,7 +34,7 @@ class pipelineVars implements Serializable {
     String centralCIjenkinsSlaveImage = 'docker-registry.engineering.redhat.com/centralci/jnlp-slave-base:1.5'
     String iqeCoreImage = 'quay.io/cloudservices/iqe-core'
     String iqeTestsImage = 'quay.io/cloudservices/iqe-tests'
-    String seleniumImage = 'selenium-fc29:latest'
+    String seleniumImage = 'quay.io/redhatqe/selenium:openshift'
 
     String defaultCloud = 'openshift'
     String defaultUICloud = 'upshift'
