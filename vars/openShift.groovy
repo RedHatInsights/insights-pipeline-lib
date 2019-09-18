@@ -69,8 +69,8 @@ def withUINode(Map parameters = [:], Closure body) {
     iqeCoreImage = parameters.get('iqeCoreImage', pipelineVars.iqeCoreImage)
     requestCpu = parameters.get('resourceRequestCpu', "200m")
     limitCpu = parameters.get('resourceLimitCpu', "750m")
-    requestMemory = parameters.get('resourceRequestMemory', "512Mi")
-    limitMemory = parameters.get('resourceLimitMemory', "2Gi")
+    requestMemory = parameters.get('resourceRequestMemory', "256Mi")
+    limitMemory = parameters.get('resourceLimitMemory', "1Gi")
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -87,16 +87,16 @@ def withUINode(Map parameters = [:], Closure body) {
                 args: '${computer.jnlpmac} ${computer.name}',
                 resourceRequestCpu: '100m',
                 resourceLimitCpu: '300m',
-                resourceRequestMemory: '512Mi',
-                resourceLimitMemory: '1Gi',
+                resourceRequestMemory: '256Mi',
+                resourceLimitMemory: '512Mi',
             ),
             containerTemplate(
                 name: 'selenium',
                 image: seleniumImage,
                 resourceRequestCpu: '500m',
                 resourceLimitCpu: '1',
-                resourceRequestMemory: '1Gi',
-                resourceLimitMemory: '4Gi',
+                resourceRequestMemory: '256Mi',
+                resourceLimitMemory: '3Gi',
                 envVars: [
                     envVar(key: 'HOME', value: '/home/selenium'),
                 ],
