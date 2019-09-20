@@ -5,13 +5,15 @@
 
 def call(parameters = [:]) {
     scmVars = parameters['scmVars']
+    installPipenv = parameters.get('installPipenv', true)
 
     // Common errors we may hit ...
     def lockErrorRegex = ~/.*Your Pipfile.lock \(\S+\) is out of date. Expected: \(\S+\).*/
     def lockError = "\n* `Pipfile.lock` is out of sync. Run '`pipenv lock`' and commit the changes."
     def installError = "\n* '`pipenv install`' has failed."
 
-    sh "pip install --user --upgrade pip setuptools wheel pipenv"
+    if (installPipenv) sh "pip install --user --upgrade pip setuptools wheel pipenv"
+
     // NOTE: Removing old comments won't work unless Pipeline Github Plugin >= v2.0
     pipfileComment.removeAll()
 
