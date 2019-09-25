@@ -153,7 +153,7 @@ def call(p = [:]) {
     try {
         runDeploy(parsed)
     } catch (err) {
-        sendSlackMsg(":static_rotating_light: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER$}> failed for env *${envName}*, "danger")
+        sendSlackMsg(":static_rotating_light: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER$}> failed for env *${envName}*", "danger")
         throw err
     }
     sendSlackMsg(":heavy_check_mark: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER$}> successful for env *${envName}*", "good")
