@@ -146,13 +146,15 @@ def call(p = [:]) {
         return
     }
 
-    sendSlackMsg(":warning: ${env.JOB_NAME} started for env *${parsed['envConfig']['env']}*")
+    def envName = parsed['envConfig']['env']
+
+    sendSlackMsg(":information_source: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER$}> started for env *${envName}*")
 
     try {
         runDeploy(parsed)
     } catch (err) {
-        sendSlackMsg(":static_rotating_light: ${env.JOB_NAME} failed for env *${parsed['envConfig']['env']}* -- see ${env.RUN_DISPLAY_URL}", "danger")
+        sendSlackMsg(":static_rotating_light: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER$}> failed for env *${envName}*, "danger")
         throw err
     }
-    sendSlackMsg(":heavy_check_mark: ${env.JOB_NAME} successful for env *${parsed['envConfig']['env']}*", "good")
+    sendSlackMsg(":heavy_check_mark: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER$}> successful for env *${envName}*", "good")
 }
