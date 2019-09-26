@@ -2,7 +2,11 @@
 
 
 def withNode(Map parameters = [:], Closure body) {
-    image = parameters.get('image', pipelineVars.defaultNodeImage)
+    jenkinsSlaveImage = parameters.get(
+        'namespace',
+        cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.centralCIjenkinsSlaveImage : pipelineVars.jenkinsSlaveImage
+    )
+    image = parameters.get('image', pipelineVars.iqeCoreImage)
     cloud = parameters.get('cloud', pipelineVars.defaultCloud)
     namespace = parameters.get(
         'namespace',
@@ -13,7 +17,6 @@ def withNode(Map parameters = [:], Closure body) {
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     limitMemory = parameters.get('resourceLimitMemory', "650Mi")
     yaml = parameters.get('yaml')
-    workingDir = parameters.get('workingDir', "/home/jenkins")
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -31,9 +34,28 @@ def withNode(Map parameters = [:], Closure body) {
     if (yaml) {
         podParameters['yaml'] = readTrusted(yaml)
     } else {
+        if (image == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
+            envVars = [
+                envVar(key: 'PIP_TRUSTED_HOST', value: 'devpi.devpi.svc'),
+                envVar(key: 'PIP_INDEX_URL', value: 'http://devpi.devpi.svc:3141/root/psav'),
+            ]
+        } else {
+            envVars = []
+        }
         podParameters['containers'] = [
             containerTemplate(
                 name: 'jnlp',
+                    image: jenkinsSlaveImage,
+                    args: '${computer.jnlpmac} ${computer.name}',
+                    resourceRequestCpu: '100m',
+                    resourceLimitCpu: '300m',
+                    resourceRequestMemory: '256Mi',
+                    resourceLimitMemory: '512Mi',
+                ),
+            containerTemplate(
+                name: 'builder',
+                ttyEnabled: true,
+                command: 'cat',
                 image: image,
                 alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
@@ -41,18 +63,16 @@ def withNode(Map parameters = [:], Closure body) {
                 resourceLimitCpu: limitCpu,
                 resourceRequestMemory: requestMemory,
                 resourceLimitMemory: limitMemory,
-                workingDir: workingDir,
-                envVars: [
-                    envVar(key: 'LC_ALL', value: 'en_US.utf-8'),
-                    envVar(key: 'LANG', value: 'en_US.utf-8'),
-                ],
+                envVars: envVars,
             ),
         ]
     }
 
     podTemplate(podParameters) {
         node(label) {
-            body()
+            container('builder') {
+                body()
+            }
         }
     }
 }
@@ -73,6 +93,15 @@ def withUINode(Map parameters = [:], Closure body) {
     limitMemory = parameters.get('resourceLimitMemory', "1Gi")
 
     label = "test-${UUID.randomUUID().toString()}"
+
+    if (iqeCoreImage == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
+        envVars = [
+            envVar(key: 'PIP_TRUSTED_HOST', value: 'devpi.devpi.svc'),
+            envVar(key: 'PIP_INDEX_URL', value: 'http://devpi.devpi.svc:3141/root/psav'),
+        ]
+    } else {
+        envVars = []
+    }
 
     podParameters = [
         label: label,
@@ -111,6 +140,7 @@ def withUINode(Map parameters = [:], Closure body) {
                 resourceLimitCpu: limitCpu,
                 resourceRequestMemory: requestMemory,
                 resourceLimitMemory: limitMemory,
+                envVars: envVars,
             ),
         ],
         volumes: [
