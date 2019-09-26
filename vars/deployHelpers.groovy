@@ -50,15 +50,17 @@ def getChangeInfo(parameters = [:]) {
         if (dir == "env") {
             // if an env yaml was changed, process all templates using that env file
             def envFile = l.split('/')[1]
-            def envFileSplit = envFile.split('.')
-
-            // if we are only analyzing a specific env, ignore other changed env files
-            if (envFileSplit && !envFileSplit[0].equals(envName)) continue
 
             if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
-                changeInfo['templates'].add(allTemplates)
-                changeInfo['envFiles'].add(envFile)
-                changeInfo['envFilesForDiff'].add(envFile)
+                def envFileSplit = envFile.split('.')
+                // if we are only analyzing a specific env, ignore other changed env files
+                if (!envName || envFileSplit[0].equals(envName)) {
+                    changeInfo['templates'].add(allTemplates)
+                    changeInfo['envFiles'].add(envFile)
+                    changeInfo['envFilesForDiff'].add(envFile)
+                } else {
+                    echo "Ignoring changes for ${envFile} -- only analyzing changes for env ${envName}"
+                }
             }
         }
         else if (dir == "templates") {
