@@ -204,7 +204,7 @@ private def allocateResourcesAndRun(
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
         echo "Using project: ${env.PROJECT}"
 
-        openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
+        openShift.withNode(namespace: env.PROJECT) {
             runPipeline(refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                         ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId)
         }

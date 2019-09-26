@@ -45,12 +45,12 @@ def withNode(Map parameters = [:], Closure body) {
         podParameters['containers'] = [
             containerTemplate(
                 name: 'jnlp',
-                    image: jenkinsSlaveImage,
-                    args: '${computer.jnlpmac} ${computer.name}',
-                    resourceRequestCpu: '100m',
-                    resourceLimitCpu: '300m',
-                    resourceRequestMemory: '256Mi',
-                    resourceLimitMemory: '512Mi',
+                image: jenkinsSlaveImage,
+                args: '${computer.jnlpmac} ${computer.name}',
+                resourceRequestCpu: '100m',
+                resourceLimitCpu: '300m',
+                resourceRequestMemory: '256Mi',
+                resourceLimitMemory: '512Mi',
                 ),
             containerTemplate(
                 name: 'builder',
@@ -58,7 +58,6 @@ def withNode(Map parameters = [:], Closure body) {
                 command: 'cat',
                 image: image,
                 alwaysPullImage: true,
-                args: '${computer.jnlpmac} ${computer.name}',
                 resourceRequestCpu: requestCpu,
                 resourceLimitCpu: limitCpu,
                 resourceRequestMemory: requestMemory,
