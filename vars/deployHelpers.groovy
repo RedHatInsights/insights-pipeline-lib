@@ -54,7 +54,7 @@ def getChangeInfo(parameters = [:]) {
             if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
                 def envFileSplit = envFile.split('.')
                 // if we are only analyzing a specific env, ignore other changed env files
-                if (!envName || envFileSplit[0].equals(envName)) {
+                if (!envName || envFileSplit.size() && envFileSplit[0].equals(envName)) {
                     changeInfo['templates'].add(allTemplates)
                     changeInfo['envFiles'].add(envFile)
                     changeInfo['envFilesForDiff'].add(envFile)
