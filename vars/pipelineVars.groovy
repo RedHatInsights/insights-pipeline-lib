@@ -30,7 +30,7 @@ class pipelineVars implements Serializable {
     String prodCluster = "api.insights.openshift.com"
     String devCluster = "api.insights-dev.openshift.com"
 
-    String jenkinsSlaveImage = 'openshift/jenkins-slave-base-centos7:v3.11'
+    String jenkinsSlaveImage = 'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'
     String centralCIjenkinsSlaveImage = 'docker-registry.engineering.redhat.com/centralci/jnlp-slave-base:1.5'
     String iqeCoreImage = 'quay.io/cloudservices/iqe-core'
     String iqeTestsImage = 'quay.io/cloudservices/iqe-tests'
