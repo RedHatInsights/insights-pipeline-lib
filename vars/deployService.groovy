@@ -14,6 +14,6 @@ def call(params = [:]) {
         }
     }
     dir(pipelineVars.e2eDeployDir) {
-        sh "${pipelineVars.venvDir}/bin/ocdeployer deploy -f --pick ${service} -e env/${env}.yml ${project} --secrets-src-project ${secretsSrcProject}"
+        sh "${pipelineVars.venvDir}/bin/ocdeployer deploy -w -f --pick ${service} -e env/${env}.yml ${project} --secrets-src-project ${secretsSrcProject}"
     }
 }

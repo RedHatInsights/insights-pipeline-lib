@@ -79,7 +79,11 @@ private def deployEnvironment(refSpec, project, ocDeployerBuilderPath, ocDeploye
                 sh "echo \"  parameters:\" >> builder-env.yml"
                 sh "echo \"    SOURCE_REPOSITORY_REF: ${refSpec}\" >> builder-env.yml"
                 sh "cat builder-env.yml"
-                sh "ocdeployer deploy -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
+                if (ocDeployerBuilderPath.contains("/")) {
+                    sh "ocdeployer deploy -w -f -l e2esmoke=true -p ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
+                } else {
+                    sh "ocdeployer deploy -w -f -l e2esmoke=true -s ${ocDeployerBuilderPath} -t buildfactory -e env/smoke.yml -e builder-env.yml ${project}"
+                }
             }
 
             // Also deploy the test env apps, but set the image for the PR app to be pulled from this local project instead of buildfactory
@@ -89,7 +93,7 @@ private def deployEnvironment(refSpec, project, ocDeployerBuilderPath, ocDeploye
                 sh "echo \"    IMAGE_NAMESPACE: ${project}\" >> env.yml"
                 sh "echo \"    IMAGE_TAG: latest\" >> env.yml"
                 sh "cat env.yml"   
-                sh "ocdeployer deploy -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env/smoke.yml -e env.yml ${project}"
+                sh "ocdeployer deploy -w -f -l e2esmoke=true -s ${ocDeployerServiceSets} -e env/smoke.yml -e env.yml ${project}"
             }
 
             // Run the deployments in parallel
@@ -151,7 +155,7 @@ private def runPipeline(
     if (configFileCredentialsId) {
         stage("Inject custom config") {
             withCredentials([file(credentialsId: configFileCredentialsId, variable: 'SETTINGS_YAML')]) {
-                sh "cp \$SETTINGS_YAML `find /iqe_venv/ -type d -name 'conf' | grep '/iqe/'`/settings.local.yaml"
+                sh "cp \$SETTINGS_YAML \"\$WORKSPACE/settings.local.yaml\""
             }
         }
     }
@@ -164,6 +168,7 @@ private def runPipeline(
         sh """
             export ENV_FOR_DYNACONF=smoke
             export DYNACONF_OCPROJECT=${project}
+            export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE"
 
             set +e
             iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log

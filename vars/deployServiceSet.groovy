@@ -6,6 +6,7 @@ def call(params = [:]) {
     def templateDir = params.get('templateDir', "templates")
     def skip = params.get('skip')
     def pipInstall = params.get('pipInstall', true)
+    def watch = params.get('watch', true)
 
     if (pipInstall) {
         checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepoSsh, credentialsId: pipelineVars.gitSshCreds)
@@ -16,9 +17,9 @@ def call(params = [:]) {
         }
     }
     dir(pipelineVars.e2eDeployDir) {
-        def envArg = " "
-        if (env) envArg = " -e env/${env}.yml "
-        def cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy -f -t ${templateDir} -s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
+        def watchArg = watch ? " -w " : " "
+        def envArg = env ? " -e env/${env}.yml " : " "
+        def cmd = "${pipelineVars.venvDir}/bin/ocdeployer deploy${watchArg}-f -t ${templateDir} -s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
         if (skip) cmd = "${cmd} --skip ${skip.join(",")}"
         sh cmd
     }

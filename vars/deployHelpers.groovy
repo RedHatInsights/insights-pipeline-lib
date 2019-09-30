@@ -19,6 +19,9 @@ import groovy.transform.Field
     compliance: "/ops/deployCompliance",
     "system-baseline": "/ops/deployBaseline",
     vulnerability: "/ops/deployVulnerability",
+    rbac: "/ops/deployRbac",
+    hccm: "/ops/deployHccm",
+    subscriptions: "/ops/deploySubscriptions"
 ]
 
 
@@ -34,7 +37,7 @@ def getChangeInfo(parameters = [:]) {
     // list of files that have changed in the repo (obtained via getFilesChanged)
     def filesChanged = parameters['filesChanged']
     // get change info that applies to a specific environment (default: all environments)
-    def env = parameters.get('env')
+    def envName = parameters.get('env')
     // do not process all templates if the root _cfg.yaml was changed (default: false)
     def ignoreRoot = parameters.get('ignoreRoot')
 
@@ -47,15 +50,17 @@ def getChangeInfo(parameters = [:]) {
         if (dir == "env") {
             // if an env yaml was changed, process all templates using that env file
             def envFile = l.split('/')[1]
-            def envFileSplit = envFile.split('.')
-
-            // if we are only analyzing a specific env, ignore other changed env files
-            if (envFileSplit && !envFileSplit[0].equals(env)) continue
 
             if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
-                changeInfo['templates'].add(allTemplates)
-                changeInfo['envFiles'].add(envFile)
-                changeInfo['envFilesForDiff'].add(envFile)
+                def envFileSplit = envFile.split('.')
+                // if we are only analyzing a specific env, ignore other changed env files
+                if (!envName || envFileSplit.size() && envFileSplit[0].equals(envName)) {
+                    changeInfo['templates'].add(allTemplates)
+                    changeInfo['envFiles'].add(envFile)
+                    changeInfo['envFilesForDiff'].add(envFile)
+                } else {
+                    echo "Ignoring changes for ${envFile} -- only analyzing changes for env ${envName}"
+                }
             }
         }
         else if (dir == "templates") {
@@ -116,7 +121,7 @@ private def getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHost
 def getDeployTask(parameters = [:]) {
     // Given a service set and an 'env', return a single build job that will run as a parallel task
     def setToDeploy = parameters['serviceSet']
-    def env = parameters['env']
+    def envName = parameters['env']
 
     // Boolean parameter used to indicate the build job is triggered on remote jenkins
     def remote = parameters['remote']
@@ -125,7 +130,7 @@ def getDeployTask(parameters = [:]) {
     // Name of secret containing the remote Jenkins hostname
     def remoteHostname = parameters.get('remoteHostname', "remoteJenkinsHostname")
     // Parameters to pass on to the job
-    def jobParameters = parameters.get('jobParameters', [[$class: 'StringParameterValue', name: 'ENV', value: env]])
+    def jobParameters = parameters.get('jobParameters', [[$class: 'StringParameterValue', name: 'ENV', value: envName]])
 
     def buildJob = deployJobs[setToDeploy]
     def closure
@@ -143,7 +148,7 @@ def createParallelTasks(parameters = [:]) {
 
     // Since looping while returning closures in groovy is a little wacky, we handle that in this method
     def serviceSets = parameters['serviceSets']
-    def env = parameters['env']
+    def envName = parameters['env']
 
     // Boolean parameter used to indicate the build job is triggered on remote jenkins
     def remote = parameters['remote']
@@ -155,7 +160,7 @@ def createParallelTasks(parameters = [:]) {
     for (String set : serviceSets) {
         def thisSet = set  // re-define the loop variable, see http://blog.freeside.co/2013/03/29/groovy-gotcha-for-loops-and-closure-scope/
         tasks[thisSet] = getDeployTask(
-            serviceSet: thisSet, env: env, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
+            serviceSet: thisSet, env: envName, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     }
 
@@ -169,7 +174,7 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     // Deploy repo change info as obtained by deployHelpers.getChangeInfo
     def changeInfo = parameters.get('changeInfo')
     // The destination env "ci, qa, prod"
-    def env = parameters.get('env')
+    def envName = parameters.get('env')
 
     // Boolean parameter used to indicate the build job is triggered on remote jenkins
     def remote = parameters['remote']
@@ -178,15 +183,25 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
     // Name of secret containing the remote Jenkins hostname
     def remoteHostname = parameters.get('remoteHostname', "remoteJenkinsHostname")
 
+    // e2e-deploy directory to analyze, by default we assume the repo has been checked out into $WORKSPACE
+    def e2eDeployDir = parameters.get('e2eDeployDir', env.WORKSPACE)
+
     def parallelTasks = [:]
 
     // If checking for changes for CI or QA and a service set in buildfactory was updated, re-deploy it
-    if ((env.equals("ci") || env.equals("qa")) && changeInfo['buildfactory']) {
-        // there shouldn't be a case at the moment where we're needing to deploy all sets of buildfactory at once
+    if ((envName.equals("ci") || envName.equals("qa")) && changeInfo['buildfactory']) {
+        if (changeInfo['buildfactory'].contains(allTemplates)) changeInfo['buildfactory'] = getServiceDeployJobs().keySet()
+
         def buildParams = []
         for (String serviceSet : changeInfo['buildfactory']) {
-            buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
+            // Only deploy a service set if:
+            //   * it is listed in deployJobs
+            //   * its dir still exists in e2e-deploy -- if not this means the dir was removed in the latest e2e-deploy commits
+            if (fileExists("${e2eDeployDir}/buildfactory/${serviceSet}")) {
+                buildParams.add([$class: 'BooleanParameterValue', name: "deploy_${serviceSet}_builds", value: true])
+            }
         }
+
         parallelTasks["buildfactory"] = getDeployTask(
             serviceSet: "buildfactory", jobParameters: buildParams, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
@@ -197,18 +212,21 @@ def getDeployTasksFromChangeInfo(parameters = [:]) {
 
     if (changeInfo['templates'].contains(allTemplates) || changeInfo['envFiles'].contains("${env}.yml")) {
         parallelTasks = parallelTasks + createParallelTasks(
-            serviceSets: getServiceDeployJobs().keySet(), env: env, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
+            serviceSets: getServiceDeployJobs().keySet(), env: envName, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     // Otherwise run deploy job for only the service sets that had changes
     } else {
         def serviceSets = []
         for (String serviceSet : changeInfo['templates']) {
-            if (deployJobs.containsKey(serviceSet)) {
+            // Only deploy a service set if:
+            //   * it is listed in deployJobs
+            //   * its dir still exists in e2e-deploy -- if not this means the dir was removed in the latest e2e-deploy commits
+            if (deployJobs.containsKey(serviceSet) && fileExists("${e2eDeployDir}/templates/${serviceSet}")) {
                 serviceSets.add(serviceSet)
             }
         }
         parallelTasks = parallelTasks + createParallelTasks(
-            serviceSets: serviceSets, env: env, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
+            serviceSets: serviceSets, env: envName, remote: remote, remoteCredentials: remoteCredentials, remoteHostname: remoteHostname
         )
     }
 
