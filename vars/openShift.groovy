@@ -16,6 +16,7 @@ def withNode(Map parameters = [:], Closure body) {
     limitCpu = parameters.get('resourceLimitCpu', "500m")
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     limitMemory = parameters.get('resourceLimitMemory', "650Mi")
+    buildingContainer = parameters.get('buildingContainer', "builder")
     yaml = parameters.get('yaml')
 
     label = "test-${UUID.randomUUID().toString()}"
@@ -69,7 +70,7 @@ def withNode(Map parameters = [:], Closure body) {
 
     podTemplate(podParameters) {
         node(label) {
-            container('builder') {
+            container(buildingContainer) {
                 body()
             }
         }
