@@ -5,7 +5,7 @@ def withNode(Map parameters = [:], Closure body) {
     image = parameters.get('image', pipelineVars.iqeCoreImage)
     cloud = parameters.get('cloud', pipelineVars.defaultCloud)
     jenkinsSlaveImage = parameters.get(
-        'namespace',
+        'jenkinsSlaveImage',
         cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.centralCIjenkinsSlaveImage : pipelineVars.jenkinsSlaveImage
     )
     namespace = parameters.get(
