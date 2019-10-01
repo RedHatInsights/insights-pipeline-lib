@@ -43,28 +43,37 @@ def getChangeInfo(parameters = [:]) {
 
     def changeInfo = [buildfactory: [], templates: [], envFiles: [], envFilesForDiff: []]
 
+    echo "getChangeInfo: analyzing ${filesChanged}"
+
     for (String l : filesChanged) {
+        echo "getChangeInfo: analyzing file: ${l}"
+
         def dir = l.split('/')[0]
         def args = null
+
+        echo "getChangeInfo: dir is: ${dir}"
 
         if (dir == "env") {
             // if an env yaml was changed, process all templates using that env file
             def envFile = l.split('/')[1]
+            echo "getChangeInfo: envFile is: ${envFile}"
 
             if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
                 def envFileSplit = envFile.split('.')
+                echo "getChangeInfo: env file's name is: ${envFileSplit}"
                 // if we are only analyzing a specific env, ignore other changed env files
-                if (!envName || envFileSplit.size() && envFileSplit[0].equals(envName)) {
+                if (!envName || envFileSplit[0].equals(envName)) {
                     changeInfo['templates'].add(allTemplates)
                     changeInfo['envFiles'].add(envFile)
                     changeInfo['envFilesForDiff'].add(envFile)
                 } else {
-                    echo "Ignoring changes for ${envFile} -- only analyzing changes for env ${envName}"
+                    echo "getChangeInfo: ignoring changes for ${envFile} -- only analyzing changes for env ${envName}"
                 }
             }
         }
         else if (dir == "templates") {
             def serviceSet = l.split('/')[1]
+            echo "getChangeInfo: service set is ${serviceSet}"
             // If root _cfg.yml was edited, and we are not ignoring changes to the root cfg, process all templates
             if (serviceSet.startsWith("_cfg") && !ignoreRoot) changeInfo[dir].add(allTemplates)
             // Otherwise process only this service set
@@ -74,6 +83,7 @@ def getChangeInfo(parameters = [:]) {
         }
         else if (dir == "buildfactory") {
             def serviceSet = l.split('/')[1]
+            echo "getChangeInfo: service set is: ${serviceSet}"
             if (!serviceSet.startsWith("_cfg")) changeInfo[dir].add(serviceSet)
         }
     }
