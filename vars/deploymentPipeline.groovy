@@ -147,8 +147,11 @@ def call(p = [:]) {
     }
 
     def envName = parsed['envConfig']['env']
+    def verboseNotifications = parsed['envConfig'].get('verboseNotifications', true)
 
-    sendSlackMsg(":information_source: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> started for env *${envName}*")
+    if (verboseNotifications) {
+        sendSlackMsg(":information_source: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> started for env *${envName}*")
+    }
 
     try {
         runDeploy(parsed)
@@ -156,5 +159,8 @@ def call(p = [:]) {
         sendSlackMsg(":static_rotating_light: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> failed for env *${envName}*", "danger")
         throw err
     }
-    sendSlackMsg(":heavy_check_mark: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> successful for env *${envName}*", "good")
+
+    if (verboseNotifications) {
+        sendSlackMsg(":heavy_check_mark: <${env.RUN_DISPLAY_URL}|${env.JOB_NAME} #${env.BUILD_NUMBER}> successful for env *${envName}*", "good")
+    }
 }
