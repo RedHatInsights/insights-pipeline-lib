@@ -1,11 +1,7 @@
-import groovy.transform.Field
-
-@Field
-def priorBuildsCancelled = false
 
 def call() {
 
-    if (! priorBuildsCancelled) {
+    if (! env.priorBuildsCancelled) {
 
         def buildNumber = env.BUILD_NUMBER as int
 
@@ -15,6 +11,6 @@ def call() {
 
         milestone(buildNumber)
 
-        priorBuildsCancelled = true
+        env.priorBuildsCancelled = true
     }
 }
