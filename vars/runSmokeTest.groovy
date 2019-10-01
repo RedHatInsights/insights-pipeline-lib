@@ -122,25 +122,8 @@ private def runPipeline(
         checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo, credentialsId: "InsightsDroidGitHubHTTP")
     }
 
-    stage("Install ocdeployer") {
-        sh "devpi use http://devpi.devpi.svc:3141/root/psav --set-cfg"
-        sh "devpi refresh ocdeployer"
-
-        dir(pipelineVars.e2eDeployDir) {
-            sh "pip install -r requirements.txt"
-        }
-    }
-
     stage("Wipe test environment") {
         sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-    }
-
-    stage("Install iqe and plugins") {
-        sh "pip install --upgrade iqe-integration-tests"
-        sh "pip install --upgrade iqe-red-hat-internal-envs-plugin"
-        for (String plugin : iqePlugins) {
-            sh "pip install ${plugin}"
-        }
     }
 
     try {
@@ -169,6 +152,8 @@ private def runPipeline(
             export ENV_FOR_DYNACONF=smoke
             export DYNACONF_OCPROJECT=${project}
             export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE"
+            export PIP_TRUSTED_HOST=devpi.devpi.svc
+            export PIP_INDEX_URL=http://devpi.devpi.svc:3141/root/psav
 
             set +e
             iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log
