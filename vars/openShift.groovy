@@ -12,10 +12,10 @@ def withNode(Map parameters = [:], Closure body) {
         'namespace',
         cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
     )
-    requestCpu = parameters.get('resourceRequestCpu', "200m")
+    requestCpu = parameters.get('resourceRequestCpu', "100m")
     limitCpu = parameters.get('resourceLimitCpu', "500m")
-    requestMemory = parameters.get('resourceRequestMemory', "256Mi")
-    limitMemory = parameters.get('resourceLimitMemory', "650Mi")
+    requestMemory = parameters.get('resourceRequestMemory', "100Mi")
+    limitMemory = parameters.get('resourceLimitMemory', "1Gi")
     buildingContainer = parameters.get('buildingContainer', "builder")
     yaml = parameters.get('yaml')
 
@@ -52,7 +52,7 @@ def withNode(Map parameters = [:], Closure body) {
                 resourceLimitCpu: '300m',
                 resourceRequestMemory: '256Mi',
                 resourceLimitMemory: '512Mi',
-                ),
+            ),
             containerTemplate(
                 name: 'builder',
                 ttyEnabled: true,

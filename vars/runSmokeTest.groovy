@@ -122,14 +122,15 @@ private def runPipeline(
         checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo, credentialsId: "InsightsDroidGitHubHTTP")
     }
 
+
+    stage("Wipe test environment") {
+        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+    }
+
     stage("Install plugins") {
         for (String plugin : iqePlugins) {
             sh "pip install ${plugin}"
         }
-    }
-
-    stage("Wipe test environment") {
-        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
     try {
