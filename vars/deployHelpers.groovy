@@ -59,7 +59,7 @@ def getChangeInfo(parameters = [:]) {
             echo "getChangeInfo: envFile is: ${envFile}"
 
             if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
-                def envFileSplit = envFile.split('.')
+                def envFileSplit = envFile.split('.')[0]
                 echo "getChangeInfo: env file's name is: ${envFileSplit}"
                 // if we are only analyzing a specific env, ignore other changed env files
                 if (!envName || envFileSplit[0].equals(envName)) {
