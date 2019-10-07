@@ -18,6 +18,7 @@ def withNode(Map parameters = [:], Closure body) {
     limitMemory = parameters.get('resourceLimitMemory', "1Gi")
     buildingContainer = parameters.get('buildingContainer', "builder")
     yaml = parameters.get('yaml')
+    envVars = parameters.get('envVars', [])
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -36,12 +37,10 @@ def withNode(Map parameters = [:], Closure body) {
         podParameters['yaml'] = readTrusted(yaml)
     } else {
         if (image == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
-            envVars = [
+            envVars += [
                 envVar(key: 'PIP_TRUSTED_HOST', value: 'devpi.devpi.svc'),
                 envVar(key: 'PIP_INDEX_URL', value: 'http://devpi.devpi.svc:3141/root/psav'),
             ]
-        } else {
-            envVars = []
         }
         podParameters['containers'] = [
             containerTemplate(
@@ -91,16 +90,15 @@ def withUINode(Map parameters = [:], Closure body) {
     limitCpu = parameters.get('resourceLimitCpu', "750m")
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    envVars = parameters.get('envVars', [])
 
     label = "test-${UUID.randomUUID().toString()}"
 
     if (iqeCoreImage == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
-        envVars = [
+        envVars += [
             envVar(key: 'PIP_TRUSTED_HOST', value: 'devpi.devpi.svc'),
             envVar(key: 'PIP_INDEX_URL', value: 'http://devpi.devpi.svc:3141/root/psav'),
         ]
-    } else {
-        envVars = []
     }
 
     podParameters = [

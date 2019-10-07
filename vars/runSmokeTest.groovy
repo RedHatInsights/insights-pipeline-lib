@@ -156,7 +156,6 @@ private def runPipeline(
         }
 
         sh """
-            export ENV_FOR_DYNACONF=smoke
             export DYNACONF_OCPROJECT=${project}
             export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE"
 
@@ -194,7 +193,8 @@ private def allocateResourcesAndRun(
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
         echo "Using project: ${env.PROJECT}"
 
-        openShift.withNode(image: pipelineVars.iqeCoreImage, namespace: env.PROJECT) {
+        envVars = [envVar(key: 'ENV_FOR_DYNACONF', value: 'smoke')]
+        openShift.withNode(image: pipelineVars.iqeCoreImage, namespace: env.PROJECT, envVars: envVars) {
             runPipeline(refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                         ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId)
         }
