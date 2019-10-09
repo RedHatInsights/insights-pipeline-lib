@@ -2,18 +2,23 @@
 
 
 def withNode(Map parameters = [:], Closure body) {
-    image = parameters.get('image', pipelineVars.defaultNodeImage)
+    image = parameters.get('image', pipelineVars.iqeCoreImage)
     cloud = parameters.get('cloud', pipelineVars.defaultCloud)
+    jenkinsSlaveImage = parameters.get(
+        'jenkinsSlaveImage',
+        cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.centralCIjenkinsSlaveImage : pipelineVars.jenkinsSlaveImage
+    )
     namespace = parameters.get(
         'namespace',
         cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
     )
-    requestCpu = parameters.get('resourceRequestCpu', "200m")
+    requestCpu = parameters.get('resourceRequestCpu', "100m")
     limitCpu = parameters.get('resourceLimitCpu', "500m")
-    requestMemory = parameters.get('resourceRequestMemory', "256Mi")
-    limitMemory = parameters.get('resourceLimitMemory', "650Mi")
+    requestMemory = parameters.get('resourceRequestMemory', "100Mi")
+    limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    buildingContainer = parameters.get('buildingContainer', "builder")
     yaml = parameters.get('yaml')
-    workingDir = parameters.get('workingDir', "/home/jenkins")
+    envVars = parameters.get('envVars', [])
 
     label = "test-${UUID.randomUUID().toString()}"
 
@@ -31,28 +36,42 @@ def withNode(Map parameters = [:], Closure body) {
     if (yaml) {
         podParameters['yaml'] = readTrusted(yaml)
     } else {
+        if (image == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
+            envVars += [
+                envVar(key: 'PIP_TRUSTED_HOST', value: 'devpi.devpi.svc'),
+                envVar(key: 'PIP_INDEX_URL', value: 'http://devpi.devpi.svc:3141/root/psav'),
+            ]
+        }
         podParameters['containers'] = [
             containerTemplate(
                 name: 'jnlp',
+                image: jenkinsSlaveImage,
+                args: '${computer.jnlpmac} ${computer.name}',
+                resourceRequestCpu: '100m',
+                resourceLimitCpu: '300m',
+                resourceRequestMemory: '256Mi',
+                resourceLimitMemory: '512Mi',
+            ),
+            containerTemplate(
+                name: 'builder',
+                ttyEnabled: true,
+                command: 'cat',
                 image: image,
                 alwaysPullImage: true,
-                args: '${computer.jnlpmac} ${computer.name}',
                 resourceRequestCpu: requestCpu,
                 resourceLimitCpu: limitCpu,
                 resourceRequestMemory: requestMemory,
                 resourceLimitMemory: limitMemory,
-                workingDir: workingDir,
-                envVars: [
-                    envVar(key: 'LC_ALL', value: 'en_US.utf-8'),
-                    envVar(key: 'LANG', value: 'en_US.utf-8'),
-                ],
+                envVars: envVars,
             ),
         ]
     }
 
     podTemplate(podParameters) {
         node(label) {
-            body()
+            container(buildingContainer) {
+                body()
+            }
         }
     }
 }
@@ -64,15 +83,23 @@ def withUINode(Map parameters = [:], Closure body) {
         'namespace',
         cloud.equals(pipelineVars.defaultUICloud) ? pipelineVars.defaultUINameSpace : pipelineVars.defaultNameSpace
     )
-    slaveImage = parameters.get('slaveImage', pipelineVars.jenkinsSlaveIqeImage)
+    slaveImage = parameters.get('slaveImage', pipelineVars.centralCIjenkinsSlaveImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
-    workingDir = parameters.get('workingDir', '/tmp')
+    iqeCoreImage = parameters.get('iqeCoreImage', pipelineVars.iqeCoreImage)
     requestCpu = parameters.get('resourceRequestCpu', "200m")
     limitCpu = parameters.get('resourceLimitCpu', "750m")
-    requestMemory = parameters.get('resourceRequestMemory', "1Gi")
-    limitMemory = parameters.get('resourceLimitMemory', "4Gi")
+    requestMemory = parameters.get('resourceRequestMemory', "256Mi")
+    limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    envVars = parameters.get('envVars', [])
 
     label = "test-${UUID.randomUUID().toString()}"
+
+    if (iqeCoreImage == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
+        envVars += [
+            envVar(key: 'PIP_TRUSTED_HOST', value: 'devpi.devpi.svc'),
+            envVar(key: 'PIP_INDEX_URL', value: 'http://devpi.devpi.svc:3141/root/psav'),
+        ]
+    }
 
     podParameters = [
         label: label,
@@ -84,27 +111,38 @@ def withUINode(Map parameters = [:], Closure body) {
             containerTemplate(
                 name: 'jnlp',
                 image: slaveImage,
-                alwaysPullImage: true,
                 args: '${computer.jnlpmac} ${computer.name}',
-                workingDir: workingDir,
-                resourceRequestCpu: requestCpu,
-                resourceLimitCpu: limitCpu,
-                resourceRequestMemory: requestMemory,
-                resourceLimitMemory: limitMemory,
+                resourceRequestCpu: '100m',
+                resourceLimitCpu: '300m',
+                resourceRequestMemory: '256Mi',
+                resourceLimitMemory: '512Mi',
             ),
             containerTemplate(
                 name: 'selenium',
                 image: seleniumImage,
+                resourceRequestCpu: '500m',
+                resourceLimitCpu: '1',
+                resourceRequestMemory: '256Mi',
+                resourceLimitMemory: '3Gi',
+                envVars: [
+                    envVar(key: 'HOME', value: '/home/selenium'),
+                ],
+            ),
+            containerTemplate(
+                name: 'iqe',
+                ttyEnabled: true,
+                command: 'cat',
+                image: iqeCoreImage,
                 alwaysPullImage: true,
-                workingDir: '',
                 resourceRequestCpu: requestCpu,
                 resourceLimitCpu: limitCpu,
                 resourceRequestMemory: requestMemory,
                 resourceLimitMemory: limitMemory,
+                envVars: envVars,
             ),
         ],
         volumes: [
-            emptyDirVolume(mountPath: '/dev/shm', memory: false),
+            emptyDirVolume(mountPath: '/dev/shm', memory: true),
         ],
         annotations: [
            podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
@@ -114,7 +152,9 @@ def withUINode(Map parameters = [:], Closure body) {
 
     podTemplate(podParameters) {
         node(label) {
-            body()
+            container('iqe') {
+                body()
+            }
         }
     }
 }

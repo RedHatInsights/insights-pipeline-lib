@@ -122,22 +122,12 @@ private def runPipeline(
         checkOutRepo(targetDir: pipelineVars.e2eDeployDir, repoUrl: pipelineVars.e2eDeployRepo, credentialsId: "InsightsDroidGitHubHTTP")
     }
 
-    stage("Install ocdeployer") {
-        sh "devpi use http://devpi.devpi.svc:3141/root/psav --set-cfg"
-        sh "devpi refresh ocdeployer"
-
-        dir(pipelineVars.e2eDeployDir) {
-            sh "pip install -r requirements.txt"
-        }
-    }
 
     stage("Wipe test environment") {
         sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
-    stage("Install iqe and plugins") {
-        sh "pip install --upgrade iqe-integration-tests"
-        sh "pip install --upgrade iqe-red-hat-internal-envs-plugin"
+    stage("Install plugins") {
         for (String plugin : iqePlugins) {
             sh "pip install ${plugin}"
         }
@@ -166,7 +156,6 @@ private def runPipeline(
         }
 
         sh """
-            export ENV_FOR_DYNACONF=smoke
             export DYNACONF_OCPROJECT=${project}
             export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE"
 
@@ -204,7 +193,8 @@ private def allocateResourcesAndRun(
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
         echo "Using project: ${env.PROJECT}"
 
-        openShift.withNode(image: 'docker-registry.default.svc:5000/jenkins/jenkins-slave-iqe:latest', namespace: env.PROJECT) {
+        envVars = [envVar(key: 'ENV_FOR_DYNACONF', value: 'smoke')]
+        openShift.withNode(image: pipelineVars.iqeCoreImage, namespace: env.PROJECT, envVars: envVars) {
             runPipeline(refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                         ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId)
         }

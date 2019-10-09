@@ -13,7 +13,6 @@ class pipelineVars implements Serializable {
 
     String jenkinsSvcAccount = "jenkins"
     String defaultNameSpace = "jenkins"
-    String defaultNodeImage = "docker-registry.default.svc:5000/jenkins/jenkins-slave-base-centos7-python36:latest"
 
     String gitSshCreds = "insightsdroid-ssh-git"
 
@@ -31,8 +30,11 @@ class pipelineVars implements Serializable {
     String prodCluster = "api.insights.openshift.com"
     String devCluster = "api.insights-dev.openshift.com"
 
-    String jenkinsSlaveIqeImage = 'jenkins-slave-iqe:latest'
-    String seleniumImage = 'selenium-fc29:latest'
+    String jenkinsSlaveImage = 'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'
+    String centralCIjenkinsSlaveImage = 'docker-registry.engineering.redhat.com/centralci/jnlp-slave-base:1.5'
+    String iqeCoreImage = 'quay.io/cloudservices/iqe-core'
+    String iqeTestsImage = 'quay.io/cloudservices/iqe-tests'
+    String seleniumImage = 'quay.io/redhatqe/selenium-standalone'
 
     String defaultCloud = 'openshift'
     String defaultUICloud = 'upshift'

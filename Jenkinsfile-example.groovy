@@ -24,7 +24,7 @@ node {
 
 def runStages() {
     // withNode is a helper to spin up a jnlp slave using the Kubernetes plugin, and run the body code on that slave
-    openShift.withNode(image: "docker-registry.default.svc:5000/jenkins/jenkins-slave-base-centos7-python36:latest") {
+    openShift.withNode(image: "centos/python-36-centos7") {
         // check out source again to get it in this node's workspace
         scmVars = checkout scm
 
