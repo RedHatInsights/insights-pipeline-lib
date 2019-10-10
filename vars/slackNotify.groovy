@@ -24,7 +24,7 @@ def call(Map parameters = [:]){
     slackSend ( baseUrl: baseUrl,
                 botUser: true,
                 channel: channel,
-                color: color_map[currentBuild.currentResult],
+                color: color_map[currentBuild.result],
                 message: "${message}; ${default_message[currentBuild.currentResult]}; " +
                          "stage: ${stage};  " +
                          "build: ${env.BUILD_URL}")
