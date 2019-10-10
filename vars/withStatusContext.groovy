@@ -9,6 +9,9 @@ private def dry(String context, Boolean shortenURL, Closure body) {
     try {
         body()
         ghNotify context: context, shortenURL: shortenURL, status: "SUCCESS"
+        if (!currentBuild.result.equals("SUCCESS")) {
+            error("Build status is no longer successful")
+        }
     } catch (err) {
         echo err.toString()
         echo err.getMessage()
