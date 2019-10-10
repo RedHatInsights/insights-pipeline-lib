@@ -21,11 +21,12 @@ def call(Map parameters = [:]){
                            'UNSTABLE': "tests have failed",
                            'ABORTED': "Current build have been aborted"]
 
+    current_result = (currentBuild.result != null) ? currentBuild.result : currentBuild.currentResult
     slackSend ( baseUrl: baseUrl,
                 botUser: true,
                 channel: channel,
-                color: color_map[currentBuild.result],
-                message: "${message}; ${default_message[currentBuild.currentResult]}; " +
+                color: color_map[current_result],
+                message: "${message}; ${default_message[current_result]}; " +
                          "stage: ${stage};  " +
                          "build: ${env.BUILD_URL}")
 }
