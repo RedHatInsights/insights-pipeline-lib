@@ -9,9 +9,6 @@ private def dry(String context, Boolean shortenURL, Closure body) {
     try {
         body()
         ghNotify context: context, shortenURL: shortenURL, status: "SUCCESS"
-        if (!currentBuild.result.equals("SUCCESS")) {
-            error("Build status is no longer successful")
-        }
     } catch (err) {
         echo err.toString()
         echo err.getMessage()
@@ -21,7 +18,7 @@ private def dry(String context, Boolean shortenURL, Closure body) {
         } catch (innerErr) {
             echo innerErr.toString()
         } finally {
-            currentBuild.result = "UNSTABLE"
+            currentBuild.result = "FAILURE"
             ghNotify context: context, shortenURL: shortenURL, status: "FAILURE"
         }
     }
