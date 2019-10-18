@@ -85,7 +85,7 @@ def withUINode(Map parameters = [:], Closure body) {
     )
     slaveImage = parameters.get('slaveImage', pipelineVars.centralCIjenkinsSlaveImage)
     seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
-    iqeCoreImage = parameters.get('iqeCoreImage', pipelineVars.iqeCoreImage)
+    image = parameters.get('image', pipelineVars.iqeCoreImage)
     requestCpu = parameters.get('resourceRequestCpu', "200m")
     limitCpu = parameters.get('resourceLimitCpu', "750m")
     requestMemory = parameters.get('resourceRequestMemory', "256Mi")
@@ -94,7 +94,7 @@ def withUINode(Map parameters = [:], Closure body) {
 
     label = "test-${UUID.randomUUID().toString()}"
 
-    if (iqeCoreImage == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
+    if (image == pipelineVars.iqeCoreImage && cloud == pipelineVars.defaultCloud) {
         envVars += [
             envVar(key: 'PIP_TRUSTED_HOST', value: 'devpi.devpi.svc'),
             envVar(key: 'PIP_INDEX_URL', value: 'http://devpi.devpi.svc:3141/root/psav'),
@@ -132,7 +132,7 @@ def withUINode(Map parameters = [:], Closure body) {
                 name: 'iqe',
                 ttyEnabled: true,
                 command: 'cat',
-                image: iqeCoreImage,
+                image: image,
                 alwaysPullImage: true,
                 resourceRequestCpu: requestCpu,
                 resourceLimitCpu: limitCpu,
