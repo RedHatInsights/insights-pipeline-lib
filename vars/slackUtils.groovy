@@ -48,6 +48,10 @@ def getDefaultMsg() {
 def sendMsg(parameters = [:]) {
     def slackChannel = parameters.get('slackChannel', pipelineVars.slackDefaultChannel)
     def slackUrl = parameters.get('slackUrl', pipelineVars.slackDefaultUrl)
+    // check if the value passed in for the parameter was 'null'
+    if (!slackChannel) slackChannel = pipelineVars.slackDefaultChannel
+    if (!slackUrl) slackUrl = pipelineVars.slackDefaultUrl
+
     def msg = parameters.get('msg')
     def color = parameters.get('color')
     def stage = parameters.get('stage')
