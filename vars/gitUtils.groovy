@@ -182,7 +182,7 @@ def stageWithContext(String name, Boolean shortenURL = true, Closure body) {
     * }
     */
     stage(name) {
-        gitUtils.withStatusContext(name, shortenURL) {
+        withStatusContext(name, shortenURL) {
             body()
         }
     }
