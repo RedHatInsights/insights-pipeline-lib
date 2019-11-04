@@ -209,7 +209,7 @@ private def allocateResourcesAndRun(
 
         envVars = [envVar(key: 'ENV_FOR_DYNACONF', value: 'smoke')]
         openShiftUtils.withNode(
-            image: pipelineVars.iqeTestsImage, namespace: env.PROJECT, envVars: envVars
+            image: pipelineVars.iqeCoreImage, namespace: env.PROJECT, envVars: envVars
         ) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
