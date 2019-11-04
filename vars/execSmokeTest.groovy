@@ -124,7 +124,7 @@ private def runPipeline(
     }
 
     pipelineUtils.stageIf(iqePlugins, "Install plugins") {
-        for (plugin in plugins) {
+        for (plugin in iqePlugins) {
             sh "pip install ${plugin}"
         }
     }
