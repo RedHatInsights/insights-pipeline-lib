@@ -259,7 +259,7 @@ def call(p = [:]) {
         setParamDefaults(refSpec)
 
         // Run the job using github status notifications so the test status is reported to the PR
-        gitUtils.withStatusContext("smoke") {
+        gitUtils.withStatusContext("e2e-smoke") {
             allocateResourcesAndRun(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
                 pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId
