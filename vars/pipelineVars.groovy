@@ -1,16 +1,4 @@
 class pipelineVars implements Serializable {
-    String lintContext = "continuous-integration/jenkins/lint"
-    String unitTestContext = "continuous-integration/jenkins/unittest"
-    String integrationTestContext = "continuous-integration/jenkins/integrationtest"
-    String pipInstallContext = "continuous-integration/jenkins/pipinstall"
-    String bundleInstallContext = "continuous-integration/jenkins/bundleinstall"
-    String swaggerContext = "continuous-integration/jenkins/swagger"
-    String coverageContext = "continuous-integration/jenkins/coverage"
-    String smokeContext = "continuous-integration/jenkins/e2e-smoke"
-    String dbMigrateContext = "continuous-integration/jenkins/dbmigrate"
-    String artifactsContext = "continuous-integration/jenkins/artifacts"
-    String waitForFrontendContext = "continuous-integration/jenkins/waitforfrontend"
-
     String jenkinsSvcAccount = "jenkins"
     String defaultNameSpace = "jenkins"
 
@@ -30,14 +18,21 @@ class pipelineVars implements Serializable {
     String prodCluster = "api.insights.openshift.com"
     String devCluster = "api.insights-dev.openshift.com"
 
-    String jenkinsSlaveImage = 'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'
-    String centralCIjenkinsSlaveImage = 'docker-registry.engineering.redhat.com/centralci/jnlp-slave-base:1.5'
+    String jenkinsSlaveImage = (
+        'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'
+    )
+    String centralCIjenkinsSlaveImage = (
+        'docker-registry.engineering.redhat.com/centralci/jnlp-slave-base:1.5'
+    )
     String iqeCoreImage = 'quay.io/cloudservices/iqe-core'
     String iqeTestsImage = 'quay.io/cloudservices/iqe-tests'
     String seleniumImage = 'quay.io/redhatqe/selenium-standalone'
 
     String defaultCloud = 'openshift'
-    String defaultUICloud = 'upshift'
-    String defaultUINameSpace = 'insights-qe-ci'
+    String defaultNamespace = 'jenkins'
+    String upshiftCloud = 'upshift'
+    String upshiftNameSpace = 'insights-qe-ci'
 
+    String slackDefaultUrl = 'https://ansible.slack.com/services/hooks/jenkins-ci/'
+    String slackDefaultChannel = '#insights-qe-feed'
 }
