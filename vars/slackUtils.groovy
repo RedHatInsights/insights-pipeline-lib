@@ -21,7 +21,7 @@ import groovy.transform.Field
 ]
 
 // Map jenkins build result to default slack message content
-@Field def defaultMsg = [
+@Field def defaultMsgMap = [
     'success': "job succeeded",
     'failure': "job failed",
     'unstable': "job unstable",
@@ -29,19 +29,20 @@ import groovy.transform.Field
 ]
 
 
-private def getCurrentResult() {
-    return (currentBuild.result != null) ? currentBuild.result : currentBuild.currentResult
+private def currentResult() {
+    if (currentBuild.result != null) return currentBuild.result.toLowerCase()
+    else return currentBuild.currentResult.toLowerCase()
 }
 
 
-def getDefaultColor() {
-    return colorMap[getCurrentResult()]
+def defaultColor() {
+    return colorMap[currentResult()]
 
 }
 
 
-def getDefaultMsg() {
-    return defaultMsg[getCurrentResult()]
+def defaultMsg() {
+    return defaultMsgMap[currentResult()]
 }
 
 
@@ -55,11 +56,11 @@ def sendMsg(parameters = [:]) {
     def msg = parameters.get('msg')
     def color = parameters.get('color')
     def stage = parameters.get('stage')
-    def result = parameters.get('result', getCurrentResult()).toLowerCase()
+    def result = parameters.get('result', currentResult()).toLowerCase()
 
     txt = msgPrefix[result]
     txt += stage ? " stage: ${stage} " : " "
-    txt += msg ? msg : getDefaultMsg()
+    txt += msg ? msg : defaultMsg()
     slackSend(
         baseUrl: slackUrl,
         botUser: true,
