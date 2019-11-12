@@ -20,9 +20,10 @@ private def getJobParams(envs, svcs) {
     svcs.each { key, data ->
         def paramName = getParamNameForSvcKey(key, data)
         def displayName = data.get('displayName', "${key.toString()}")
+        Boolean checkedByDefault = data.get('checkedByDefault', true)
         p.add([
             $class: 'BooleanParameterDefinition',
-            name: paramName, defaultValue: true, description: "Deploy/promote ${displayName}"
+            name: paramName, defaultValue: checkedByDefault, description: "Deploy/promote ${displayName}"
         ])
     }
 
