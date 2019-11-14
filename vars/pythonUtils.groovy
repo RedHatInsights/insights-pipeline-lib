@@ -35,6 +35,7 @@ def runPipenvInstall(parameters = [:]) {
     // Test that pipenv install works, and check that the lock file is in sync with the Pipfile
     def scmVars = parameters['scmVars']
     def installPipenv = parameters.get('installPipenv', true)
+    def sequential = parameters.get('sequential', false)
 
     // Common errors we may hit ...
     def lockErrorRegex = ~/.*Your Pipfile.lock \(\S+\) is out of date. Expected: \(\S+\).*/
@@ -46,11 +47,13 @@ def runPipenvInstall(parameters = [:]) {
     // NOTE: Removing old comments won't work unless Pipeline Github Plugin >= v2.0
     removePipfileComments()
 
+    def sequentialArg = sequential ? "--sequential" : ""
+
     // use --deploy to check if Pipfile and Pipfile.lock are in sync
     def cmdStatus = sh(
         script: (
-            "${pipelineVars.userPath}/pipenv install --dev --deploy --verbose " + 
-            "> pipenv_install_out.txt"
+            "${pipelineVars.userPath}/pipenv install --dev --deploy --verbose " +
+            "${sequentialArg} > pipenv_install_out.txt"
         ),
         returnStatus: true
     )
@@ -65,7 +68,7 @@ def runPipenvInstall(parameters = [:]) {
             cmdStatus = sh(
                 script: (
                     "${pipelineVars.userPath}/pipenv install --dev --verbose " +
-                    "> pipenv_install_out.txt"
+                    "${sequentialArg} > pipenv_install_out.txt"
                 ),
                 returnStatus: true
             )
