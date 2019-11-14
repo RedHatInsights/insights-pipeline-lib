@@ -53,7 +53,7 @@ def runPipenvInstall(parameters = [:]) {
     def cmdStatus = sh(
         script: (
             "${pipelineVars.userPath}/pipenv install --dev --deploy --verbose " +
-            "${sequentialArg} > pipenv_install_out.txt"
+            "${sequentialArg} > pipenv_install_out.txt 2>&1"
         ),
         returnStatus: true
     )
@@ -68,7 +68,7 @@ def runPipenvInstall(parameters = [:]) {
             cmdStatus = sh(
                 script: (
                     "${pipelineVars.userPath}/pipenv install --dev --verbose " +
-                    "${sequentialArg} > pipenv_install_out.txt"
+                    "${sequentialArg} > pipenv_install_out.txt 2>&1"
                 ),
                 returnStatus: true
             )
