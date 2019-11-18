@@ -4,11 +4,9 @@
 import com.cloudbees.groovy.cps.NonCPS
 
 
-def runIfMasterOrPullReq(Closure body) {
-    // Run the code block only after checking SCM to ensure this is a master branch/untested PR
-
-    scmVars = checkout scm
-
+def checkIfMasterOrPullReq() {
+    // Check SCM to ensure this is a master branch/untested PR
+    // Needs to be wrapped in a 'node' statement.
     echo(
         """
         env.CHANGE_ID:                  ${env.CHANGE_ID}
@@ -23,9 +21,21 @@ def runIfMasterOrPullReq(Closure body) {
             || (env.BRANCH_NAME == 'master'
                     && scmVars.GIT_COMMIT != scmVars.GIT_PREVIOUS_SUCCESSFUL_COMMIT)
     ) {
-        body()
-    } else {
-        echo 'runIfMasterOrPullReq -- not a PR or not a new commit on master.'
+        return true
+    }
+
+    return false
+
+
+def runIfMasterOrPullReq(Closure body) {
+    // Run the code block only after checking SCM to ensure this is a master branch/untested PR
+    // Allocates/allocates a node to check scm
+    node {
+        if (checkIfMasterOrPullReq) {
+            body()
+        } else {
+            echo 'runIfMasterOrPullReq -- not a PR or not a new commit on master.'
+        }
     }
 }
 
