@@ -7,6 +7,8 @@ import com.cloudbees.groovy.cps.NonCPS
 def checkIfMasterOrPullReq() {
     // Check SCM to ensure this is a master branch/untested PR
     // Needs to be wrapped in a 'node' statement.
+    def scmVars = checkout scm
+
     echo(
         """
         env.CHANGE_ID:                  ${env.CHANGE_ID}
