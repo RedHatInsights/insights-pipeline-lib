@@ -25,6 +25,7 @@ def checkIfMasterOrPullReq() {
     }
 
     return false
+}
 
 
 def runIfMasterOrPullReq(Closure body) {
