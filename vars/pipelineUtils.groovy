@@ -33,12 +33,15 @@ def checkIfMasterOrPullReq() {
 def runIfMasterOrPullReq(Closure body) {
     // Run the code block only after checking SCM to ensure this is a master branch/untested PR
     // Allocates/allocates a node to check scm
+    def masterOrPullReq
     node {
-        if (checkIfMasterOrPullReq()) {
-            body()
-        } else {
-            echo 'runIfMasterOrPullReq -- not a PR or not a new commit on master.'
-        }
+        masterOrPullReq = checkIfMasterOrPullReq()
+    }
+
+    if (masterOrPullReq) {
+        body()
+    } else {
+        echo 'runIfMasterOrPullReq -- not a PR or not a new commit on master.'
     }
 }
 
