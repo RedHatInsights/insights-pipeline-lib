@@ -37,6 +37,7 @@ def withNode(Map parameters = [:], Closure body) {
     def buildingContainer = parameters.get('buildingContainer', "builder")
     def yaml = parameters.get('yaml')
     def envVars = parameters.get('envVars', [])
+    def extraContainers = parameters.get('extraContainers', [])
 
     def label = "test-${UUID.randomUUID().toString()}"
 
@@ -81,6 +82,8 @@ def withNode(Map parameters = [:], Closure body) {
         ]
     }
 
+    podParameters['containers'].addAll(extraContainers)
+
     podTemplate(podParameters) {
         node(label) {
             container(buildingContainer) {
@@ -102,6 +105,7 @@ def withUINode(Map parameters = [:], Closure body) {
     def requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     def limitMemory = parameters.get('resourceLimitMemory', "1Gi")
     def envVars = parameters.get('envVars', [])
+    def extraContainers = parameters.get('extraContainers', [])
 
     def label = "test-${UUID.randomUUID().toString()}"
 
@@ -155,6 +159,8 @@ def withUINode(Map parameters = [:], Closure body) {
             podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
         ]
     ]
+
+    podParameters['containers'].addAll(extraContainers)
 
     podTemplate(podParameters) {
         node(label) {
