@@ -34,6 +34,10 @@ def withNode(Map parameters = [:], Closure body) {
     def limitCpu = parameters.get('resourceLimitCpu', "500m")
     def requestMemory = parameters.get('resourceRequestMemory', "100Mi")
     def limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
+    def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
+    def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "256Mi")
+    def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
     def buildingContainer = parameters.get('buildingContainer', "builder")
     def yaml = parameters.get('yaml')
     def envVars = parameters.get('envVars', [])
@@ -62,10 +66,10 @@ def withNode(Map parameters = [:], Closure body) {
                 name: 'jnlp',
                 image: jenkinsSlaveImage,
                 args: '${computer.jnlpmac} ${computer.name}',
-                resourceRequestCpu: '100m',
-                resourceLimitCpu: '300m',
-                resourceRequestMemory: '256Mi',
-                resourceLimitMemory: '512Mi',
+                resourceRequestCpu: jnlpRequestCpu,
+                resourceLimitCpu: jnlpLimitCpu,
+                resourceRequestMemory: jnlpRequestMemory,
+                resourceLimitMemory: jnlpLimitMemory,
             ),
             containerTemplate(
                 name: 'builder',
@@ -104,6 +108,10 @@ def withUINode(Map parameters = [:], Closure body) {
     def limitCpu = parameters.get('resourceLimitCpu', "750m")
     def requestMemory = parameters.get('resourceRequestMemory', "256Mi")
     def limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
+    def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
+    def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "256Mi")
+    def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
 
@@ -122,10 +130,10 @@ def withUINode(Map parameters = [:], Closure body) {
                 name: 'jnlp',
                 image: slaveImage,
                 args: '${computer.jnlpmac} ${computer.name}',
-                resourceRequestCpu: '100m',
-                resourceLimitCpu: '300m',
-                resourceRequestMemory: '256Mi',
-                resourceLimitMemory: '512Mi',
+                resourceRequestCpu: jnlpRequestCpu,
+                resourceLimitCpu: jnlpLimitCpu,
+                resourceRequestMemory: jnlpRequestMemory,
+                resourceLimitMemory: jnlpLimitMemory,
             ),
             containerTemplate(
                 name: 'selenium',
