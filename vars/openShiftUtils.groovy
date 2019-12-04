@@ -1,13 +1,13 @@
 // Helpers for spinning up jenkins slaves running on OpenShift and other OpenShift utils
 
 
-private def getDefaultSlaveImage(String cloud) {
+def getDefaultSlaveImage(String cloud) {
     if (cloud.equals(pipelineVars.upshiftCloud)) return pipelineVars.centralCIjenkinsSlaveImage
     else return pipelineVars.jenkinsSlaveImage
 }
 
 
-private def getDefaultSlaveNamespace(String cloud) {
+def getDefaultSlaveNamespace(String cloud) {
     if (cloud.equals(pipelineVars.upshiftCloud)) return pipelineVars.upshiftNameSpace
     else return pipelineVars.defaultNameSpace
 }
