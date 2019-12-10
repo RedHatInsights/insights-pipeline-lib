@@ -86,7 +86,9 @@ def withNode(Map parameters = [:], Closure body) {
         ]
     }
 
-    podParameters['containers'].addAll(extraContainers)
+    if (extraContainers) {
+        podParameters['containers'].addAll(extraContainers)
+    }
 
     podTemplate(podParameters) {
         node(label) {
