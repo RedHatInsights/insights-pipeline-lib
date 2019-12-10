@@ -35,4 +35,6 @@ class pipelineVars implements Serializable {
 
     String slackDefaultUrl = 'https://ansible.slack.com/services/hooks/jenkins-ci/'
     String slackDefaultChannel = '#insights-qe-feed'
+
+    String pullSecrets = 'cloudservices-pull-secret'
 }
