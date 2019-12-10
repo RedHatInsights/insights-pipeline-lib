@@ -25,30 +25,6 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 }
 
 
-def importPullSecrets(podParameters, jenkinsSlaveImage) {
-    podParameters['label'] = "secret-importer-${UUID.randomUUID().toString()}"
-    podParameters['containers'] = [
-        containerTemplate(
-            name: 'jnlp',
-            image: jenkinsSlaveImage,
-            args: '${computer.jnlpmac} ${computer.name}',
-            resourceRequestCpu: "100m",
-            resourceLimitCpu: "300m",
-            resourceRequestMemory: "100Mi",
-            resourceLimitMemory: "256Mi",
-        )
-    ]
-    podTemplate(podParameters) {
-        node(label) {
-            stage("Import pull secrets") {
-                sh "oc create secret generic cloudservices-pull-secret --from-file=.dockerconfigjson=cloudservices-pull-config.json --type=kubernetes.io/dockerconfigjson"
-                sh "oc secrets link ${podParameters.get('serviceAccount', "jenkins")} cloudservices-pull-secret --for=pull,mount
-            }
-        }
-    }
-}
-
-
 def withNode(Map parameters = [:], Closure body) {
     def image = parameters.get('image', pipelineVars.iqeCoreImage)
     def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
@@ -66,7 +42,6 @@ def withNode(Map parameters = [:], Closure body) {
     def yaml = parameters.get('yaml')
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
-    def importPullSecrets = parameters.get('importPullSecrets', true)
 
     def label = "test-${UUID.randomUUID().toString()}"
 
@@ -81,9 +56,6 @@ def withNode(Map parameters = [:], Closure body) {
             podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
         ]
     ]
-
-    importPullSecrets(podParameters, jenkinsSlaveImage)
-
     if (yaml) {
         podParameters['yaml'] = readTrusted(yaml)
     } else {
@@ -114,8 +86,9 @@ def withNode(Map parameters = [:], Closure body) {
         ]
     }
 
-    // if yaml was used, the 'containers' key will not be set
-    if (podParameters.get('containers')) podParameters['containers'].addAll(extraContainers)
+    if (extraContainers) {
+        podParameters['containers'].addAll(extraContainers)
+    }
 
     podTemplate(podParameters) {
         node(label) {
@@ -143,7 +116,6 @@ def withUINode(Map parameters = [:], Closure body) {
     def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
-    def importPullSecrets = parameters.get('importPullSecrets', true)
 
     def label = "test-${UUID.randomUUID().toString()}"
 
@@ -155,50 +127,47 @@ def withUINode(Map parameters = [:], Closure body) {
         serviceAccount: pipelineVars.jenkinsSvcAccount,
         cloud: cloud,
         namespace: namespace,
+        containers: [
+            containerTemplate(
+                name: 'jnlp',
+                image: slaveImage,
+                args: '${computer.jnlpmac} ${computer.name}',
+                resourceRequestCpu: jnlpRequestCpu,
+                resourceLimitCpu: jnlpLimitCpu,
+                resourceRequestMemory: jnlpRequestMemory,
+                resourceLimitMemory: jnlpLimitMemory,
+            ),
+            containerTemplate(
+                name: 'selenium',
+                image: seleniumImage,
+                resourceRequestCpu: '500m',
+                resourceLimitCpu: '1',
+                resourceRequestMemory: '256Mi',
+                resourceLimitMemory: '3Gi',
+                envVars: [
+                    envVar(key: 'HOME', value: '/home/selenium'),
+                ],
+            ),
+            containerTemplate(
+                name: 'iqe',
+                ttyEnabled: true,
+                command: 'cat',
+                image: image,
+                alwaysPullImage: true,
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
+                envVars: envVars,
+            ),
+        ],
+        volumes: [
+            emptyDirVolume(mountPath: '/dev/shm', memory: true),
+        ],
         annotations: [
             podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
-            podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}")
+            podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
         ]
-    ]
-
-    importPullSecrets(podParameters, slaveImage)
-
-    podParameters['containers'] = [
-        containerTemplate(
-            name: 'jnlp',
-            image: slaveImage,
-            args: '${computer.jnlpmac} ${computer.name}',
-            resourceRequestCpu: jnlpRequestCpu,
-            resourceLimitCpu: jnlpLimitCpu,
-            resourceRequestMemory: jnlpRequestMemory,
-            resourceLimitMemory: jnlpLimitMemory,
-        ),
-        containerTemplate(
-            name: 'selenium',
-            image: seleniumImage,
-            resourceRequestCpu: '500m',
-            resourceLimitCpu: '1',
-            resourceRequestMemory: '256Mi',
-            resourceLimitMemory: '3Gi',
-            envVars: [
-                envVar(key: 'HOME', value: '/home/selenium'),
-            ],
-        ),
-        containerTemplate(
-            name: 'iqe',
-            ttyEnabled: true,
-            command: 'cat',
-            image: image,
-            alwaysPullImage: true,
-            resourceRequestCpu: requestCpu,
-            resourceLimitCpu: limitCpu,
-            resourceRequestMemory: requestMemory,
-            resourceLimitMemory: limitMemory,
-            envVars: envVars,
-        ),
-    ],
-    podParameters['volumes'] = [
-        emptyDirVolume(mountPath: '/dev/shm', memory: true),
     ]
 
     podParameters['containers'].addAll(extraContainers)
