@@ -170,7 +170,8 @@ def withUINode(Map parameters = [:], Closure body) {
         ]
     ]
 
-    podParameters['containers'].addAll(extraContainers)
+    // if yaml is used, the containers key will not be present
+    if (podParameters.get('containers')) podParameters['containers'].addAll(extraContainers)
 
     podTemplate(podParameters) {
         node(label) {
