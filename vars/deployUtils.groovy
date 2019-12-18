@@ -15,19 +15,20 @@ import groovy.transform.Field
 
 // Map of service set name -> Jenkins location of deploy job for that service set
 @Field def deployJobs = [
-    buildfactory: "/ops/deployBuildfactory",
     advisor: "/ops/deployAdvisor",
     approval: "/ops/deployApproval",
+    buildfactory: "/ops/deployBuildfactory",
     catalog: "/ops/deployCatalog",
-    platform: "/ops/deployPlatform",
-    sources: "/ops/deploySources",
-    "topological-inventory": "/ops/deployTopologicalInventory",
     compliance: "/ops/deployCompliance",
-    "system-baseline": "/ops/deployBaseline",
-    vulnerability: "/ops/deployVulnerability",
-    rbac: "/ops/deployRbac",
     hccm: "/ops/deployHccm",
-    subscriptions: "/ops/deploySubscriptions"
+    marketplace: "/ops/deployMarketplace",
+    platform: "/ops/deployPlatform",
+    rbac: "/ops/deployRbac",
+    sources: "/ops/deploySources",
+    subscriptions: "/ops/deploySubscriptions",
+    "system-baseline": "/ops/deployBaseline",
+    "topological-inventory": "/ops/deployTopologicalInventory",
+    vulnerability: "/ops/deployVulnerability",
 ]
 
 
