@@ -156,10 +156,9 @@ private def getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHost
     closure = {
         withCredentials([
             string(credentialsId: remoteCredentials, variable: "TOKEN"),
-            string(credentialsId: remoteHostname, variable: "REMOTE_HOSTNAME")
         ]) {
             triggerRemoteJob(
-                job: "https://${REMOTE_HOSTNAME}${fullUrlPath}",
+                job: "https://${remoteHostname}${fullUrlPath}",
                 parameters: paramsString,
                 auth: BearerTokenAuth(token: TOKEN)
             )
