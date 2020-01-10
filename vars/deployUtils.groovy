@@ -125,7 +125,7 @@ def getChangeInfo(parameters = [:]) {
             analyzeTemplateDir(serviceSet, dir, changeInfo, ignoreRoot)
 
             // Check if an env file changed at 'dir/serviceSet/env/file.yml'
-            if (path.split('/').size()) >= 4 {
+            if (path.split('/').size() >= 4) {
                 if (path.split('/')[2] == "env") {
                     envFileName = path.split('/')[3]
                     analyzeEnvFile(envFileName, changeInfo, serviceSet, envName)
