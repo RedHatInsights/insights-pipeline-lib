@@ -51,7 +51,7 @@ private def analyzeEnvFile(String envFile, Map changeInfo, String serviceSet, St
             changeInfo['envs'].add(envName)
             changeInfo['envsForDiff'].add(envName)
 
-            if (serviceSet == rootEnvDir) {
+            if (!serviceSet) {
                 // if a root env yaml was changed, process all templates using that env file
                 // NOTE: this assumes that 'buildfactory' templates don't use any env files
                 changeInfo['templates'].add(allTemplates)
