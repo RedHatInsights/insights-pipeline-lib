@@ -8,7 +8,7 @@ import groovy.transform.Field
 
 
 // The env files that are processed whenever a template change is detected
-@Field def defaultEnvFiles = ["ci", "qa", "prod"]
+@Field def defaultEnvs = ["ci", "qa", "prod"]
 
 // A const which represents 'all templates should be processed'
 @Field def allTemplates = "__ALL__"
