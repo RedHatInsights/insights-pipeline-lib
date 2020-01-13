@@ -8,7 +8,7 @@ import groovy.transform.Field
 
 
 // The env files that are processed whenever a template change is detected
-@Field def defaultEnvFiles = ["ci.yml", "qa.yml", "dev.yml", "prod.yml"]
+@Field def defaultEnvs = ["ci", "qa", "prod"]
 
 // A const which represents 'all templates should be processed'
 @Field def allTemplates = "__ALL__"
@@ -37,22 +37,32 @@ def getServiceDeployJobs() {
 }
 
 
-private def analyzeEnvFile(String envFile, Map changeInfo, String envName) {
-    // if an env yaml was changed, process all templates using that env file
-    echo "getChangeInfo: envFile is: ${envFile}"
+private def analyzeEnvFile(String envFile, Map changeInfo, String serviceSet, String specificEnv) {
+    def msg = "getChangeInfo: envFile is: ${envFile}"
+    msg += serviceSet ? " in service set ${serviceSet}" : ""
+    echo(msg)
 
     if (envFile.endsWith(".yaml") || envFile.endsWith(".yml")) {
-        def envFileName = envFile.split("\\.")[0]
-        echo "getChangeInfo: env file's name is: ${envFileName}"
+        def envName = envFile.split("\\.")[0]
+        echo "getChangeInfo: env file's name is: ${envName}"
+
         // if we are only analyzing a specific env, ignore other changed env files
-        if (!envName || envFileName == envName) {
-            changeInfo['templates'].add(allTemplates)
-            changeInfo['envFiles'].add(envFile)
-            changeInfo['envFilesForDiff'].add(envFile)
+        if (!specificEnv || envName == specificEnv) {
+            changeInfo['envs'].add(envName)
+            changeInfo['envsForDiff'].add(envName)
+
+            if (!serviceSet) {
+                // if a root env yaml was changed, process all templates using that env file
+                // NOTE: this assumes that 'buildfactory' templates don't use any env files
+                changeInfo['templates'].add(allTemplates)
+            } else {
+                // otherwise if it was a service set env yaml, process just that set's templates
+                changeInfo['templates'].add(serviceSet)
+            }
         } else {
             echo(
                 "getChangeInfo: ignoring changes for ${envFile} -- only analyzing " +
-                "changes for env ${envName}"
+                "changes for env ${specificEnv}"
             )
         }
     }
@@ -69,8 +79,8 @@ private def analyzeTemplateDir(
     if (serviceSet.startsWith("_cfg") && !ignoreRoot) changeInfo[dirName].add(allTemplates)
     // Otherwise process only this service set
     else changeInfo[dirName].add(serviceSet)
-    // Process all default env files any time templates change
-    changeInfo['envFilesForDiff'].addAll(defaultEnvFiles)
+    // Run diff using all default env files any time templates change
+    changeInfo['envsForDiff'].addAll(defaultEnvs)
 }
 
 
@@ -94,7 +104,7 @@ def getChangeInfo(parameters = [:]) {
     def envName = parameters.get('env')
     def ignoreRoot = parameters.get('ignoreRoot')
 
-    def changeInfo = [buildfactory: [], templates: [], envFiles: [], envFilesForDiff: []]
+    def changeInfo = [buildfactory: [], templates: [], envs: [], envsForDiff: []]
 
     echo "getChangeInfo: analyzing ${filesChanged}"
 
@@ -106,16 +116,27 @@ def getChangeInfo(parameters = [:]) {
 
         if (dir == "env") {
             def envFileName = path.split('/')[1]
-            analyzeEnvFile(envFileName, changeInfo, envName)
+            analyzeEnvFile(envFileName, changeInfo, null, envName)
         }
         else if (dir == "templates" || dir == "buildfactory") {
             def serviceSet = path.split('/')[1]
+
+            // Something in this service set changed, so process it...
             analyzeTemplateDir(serviceSet, dir, changeInfo, ignoreRoot)
+
+            // Check if an env file changed at 'dir/serviceSet/env/file.yml'
+            if (path.split('/').size() >= 4) {
+                if (path.split('/')[2] == "env") {
+                    envFileName = path.split('/')[3]
+                    analyzeEnvFile(envFileName, changeInfo, serviceSet, envName)
+                }
+            }
         }
     }
+
     // De-dupe the lists
-    changeInfo['envFiles'] = changeInfo['envFiles'].toSet()
-    changeInfo['envFilesForDiff'] = changeInfo['envFilesForDiff'].toSet()
+    changeInfo['envs'] = changeInfo['envs'].toSet()
+    changeInfo['envsForDiff'] = changeInfo['envsForDiff'].toSet()
     changeInfo['templates'] = changeInfo['templates'].toSet()
     changeInfo['buildfactory'] = changeInfo['buildfactory'].toSet()
 
@@ -134,8 +155,8 @@ def createDeployAllChangeInfo(String env) {
     return [
         'buildfactory': [allTemplates],
         'templates': [allTemplates],
-        'envFiles': ["${env}.yml"],
-        'envFilesForDiff': ["${env}.yml"]
+        'envs': [env],
+        'envsForDiff': [env]
     ]
 }
 
@@ -280,11 +301,9 @@ private def createBuildfactoryTask(
 private def createTemplateTasks(
     envName, changeInfo, e2eDeployDir, remote, remoteCredentials, remoteHostname
 ) {
-    // If the env yml was updated, or all templates are impacted by a change, re-deploy all services
-    // TODO: update once ocdeployer supports env file hierarchy
+    // If all templates are impacted by a change, re-deploy all services
     def allTemplatesChanged = changeInfo['templates'].contains(allTemplates)
-    def envFileChanged = changeInfo['envFiles'].contains("${envName}.yml")
-    if (allTemplatesChanged || envFileChanged) {
+    if (allTemplatesChanged) {
         return createParallelTasks(
             serviceSets: getServiceDeployJobs().keySet(),
             env: envName,
@@ -387,7 +406,7 @@ def deployServiceSet(parameters = [:]) {
     if (pipInstall) installE2EDeploy()
     dir(pipelineVars.e2eDeployDir) {
         def watchArg = watch ? " -w " : " "
-        def envArg = env ? " -e env/${env}.yml " : " "
+        def envArg = env ? " -e ${env} " : " "
         def cmd = (
             "ocdeployer deploy${watchArg}-f -t ${templateDir} " +
             "-s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"

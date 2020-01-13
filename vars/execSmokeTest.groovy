@@ -65,8 +65,8 @@ private def deployEnvironment(
                             SOURCE_REPOSITORY_REF: ${refSpec}
                     """
                 ).stripIndent()
-                writeFile file: "builder-env.yml", text: customBuildYaml
-                sh "cat builder-env.yml"
+                writeFile file: "env/builder-env.yml", text: customBuildYaml
+                sh "cat env/builder-env.yml"
                 def pickArg = ocDeployerBuilderPath.contains("/") ? "-p" : "-s"
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
@@ -86,8 +86,8 @@ private def deployEnvironment(
                             IMAGE_TAG: latest
                     """
                 ).stripIndent()
-                writeFile file: "custom-env.yml", text: customAppYaml
-                sh "cat custom-env.yml"   
+                writeFile file: "env/custom-env.yml", text: customAppYaml
+                sh "cat env/custom-env.yml"
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true -s ${ocDeployerServiceSets} " +
                     "-e custom-env.yml -e env/smoke.yml ${project}"
