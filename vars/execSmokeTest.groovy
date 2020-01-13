@@ -70,8 +70,8 @@ private def deployEnvironment(
                 def pickArg = ocDeployerBuilderPath.contains("/") ? "-p" : "-s"
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
-                    "${ocDeployerBuilderPath} -t buildfactory -e smoke " +
-                    "-e builder-env ${project}"
+                    "${ocDeployerBuilderPath} -t buildfactory -e builder-env.yml " +
+                    "-e env/smoke.yml ${project}"
                 )
             }
 
@@ -90,7 +90,7 @@ private def deployEnvironment(
                 sh "cat env/custom-env.yml"
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true -s ${ocDeployerServiceSets} " +
-                    "-e smoke -e custom-env ${project}"
+                    "-e custom-env.yml -e env/smoke.yml ${project}"
                 )
             }
 
