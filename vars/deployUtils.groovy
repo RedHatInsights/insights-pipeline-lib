@@ -109,27 +109,28 @@ def getChangeInfo(parameters = [:]) {
     echo "getChangeInfo: analyzing ${filesChanged}"
 
     for (String path : filesChanged) {
+        def splitPath = path.split('/')
+
         echo "getChangeInfo: analyzing file: ${path}"
 
-        def dir = path.split('/')[0]
+        def dir = splitPath[0]
         echo "getChangeInfo: dir is: ${dir}"
 
         if (dir == "env") {
-            def envFileName = path.split('/')[1]
+            def envFileName = splitPath[1]
             analyzeEnvFile(envFileName, changeInfo, null, envName)
         }
         else if (dir == "templates" || dir == "buildfactory") {
-            def serviceSet = path.split('/')[1]
+            def serviceSet = splitPath[1]
 
             // Something in this service set changed, so process it...
             analyzeTemplateDir(serviceSet, dir, changeInfo, ignoreRoot)
 
             // Check if an env file changed at 'dir/serviceSet/env/file.yml'
-            if (path.split('/').size() >= 4) {
-                if (path.split('/')[2] == "env") {
-                    envFileName = path.split('/')[3]
-                    analyzeEnvFile(envFileName, changeInfo, serviceSet, envName)
-                }
+            if (splitPath.size() >= 4 && splitPath[2] == "env") {
+                echo "Analyzing service set env file"
+                envFileName = splitPath[3]
+                analyzeEnvFile(envFileName, changeInfo, serviceSet, envName)
             }
         }
     }
