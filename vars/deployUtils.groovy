@@ -422,9 +422,9 @@ def skopeoCopy(parameters = [:]) {
     def srcUri = parameters['srcUri']
     def dstUri = parameters['dstUri']
     def srcUser = parameters['srcUser']
-    def srcTokenId = parameters['srcToken']
+    def srcTokenId = parameters['srcTokenId']
     def dstUser = parameters['dstUser']
-    def dstTokenId = parameters['dstToken']
+    def dstTokenId = parameters['dstTokenId']
 
     withCredentials(
         [
