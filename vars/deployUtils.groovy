@@ -418,6 +418,28 @@ def deployServiceSet(parameters = [:]) {
 }
 
 
+def skopeoCopy(parameters = [:]) {
+    def srcUri = parameters['srcUri']
+    def dstUri = parameters['dstUri']
+    def srcUser = parameters['srcUser']
+    def srcTokenId = parameters['srcToken']
+    def dstUser = parameters['dstUser']
+    def dstTokenId = parameters['dstToken']
+
+    withCredentials(
+        [
+            string(credentialsId: srcTokenId, variable: 'SRC_TOKEN'),
+            string(credentialsId: dstTokenId, variable: 'DST_TOKEN')
+        ]
+    ) {
+        sh(
+            "skopeo copy --src-creds=\"${srcUser}:${SRC_TOKEN}\" " +
+            "--dest-creds=\"${dstUser}:${DST_TOKEN}\" ${srcUri} ${dstUri}"
+        )
+    }
+}
+
+
 def promoteImages(parameters = [:]) {
     /**
      * Use skopeo to copy images from one OpenShift registry to another
@@ -457,24 +479,16 @@ def promoteImages(parameters = [:]) {
     dstRegistry = dstCluster.replace("api", "registry")
     imageFormat = "docker://%s/%s/%s"
 
-    withCredentials(
-        [
-            string(credentialsId: srcSaTokenCredentialsId, variable: 'SRC_TOKEN'),
-            string(credentialsId: dstSaTokenCredentialsId, variable: 'DST_TOKEN')
-        ]
-    ) {
-        srcImages.eachWithIndex { srcImage, i ->
-            srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
-            dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
-            sh(
-                "skopeo copy --src-creds=\"${srcSaUsername}:${SRC_TOKEN}\" " +
-                "--dest-creds=\"${dstSaUsername}:${DST_TOKEN}\" ${srcImageUri} ${dstImageUri}"
-            )
-        }
+    srcImages.eachWithIndex { srcImage, i ->
+        srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
+        dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
+        skopeoCopy(
+            srcUri: srcImageUri,
+            dstUri: dstImageUri,
+            srcUser: srcSaUsername,
+            srcTokenId: srcSaTokenCredentialsId,
+            dstUser: dstSaUsername,
+            dstTokenId: dstSaTokenCredentialsId, 
+        )
     }
-}
-
-
-def mirrorImage(parameters = [:]) {
-    def srcImageTag = parameters['srcImageTag']
 }
