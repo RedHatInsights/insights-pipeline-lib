@@ -241,7 +241,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
 
     podTemplate(podParameters) {
         node(label) {
-            container(jnlp) {
+            container('jnlp') {
                 body()
             }
         }
