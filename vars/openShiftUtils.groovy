@@ -193,8 +193,8 @@ def withJnlpNode(Map parameters = [:], Closure body) {
     /*
     Spins up a pod with a single jnlp container
     */
-    def image = parameters.get('image', getDefaultSlaveImage(cloud))
     def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
+    def image = parameters.get('image', getDefaultSlaveImage(cloud))
     def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
     def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
     def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
