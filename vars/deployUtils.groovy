@@ -473,3 +473,8 @@ def promoteImages(parameters = [:]) {
         }
     }
 }
+
+
+def mirrorImage(parameters = [:]) {
+    def srcImageTag = parameters['srcImageTag']
+}
