@@ -5,7 +5,7 @@ def call(parameters = [:]) {
     def srcNamespace = parameters.get('srcNamespace', "buildfactory")
     def srcBaseUri = parameters.get(
         "srcBaseUri",
-        "docker://registry.insights-dev.openshift.com/" + srcNamespace
+        "docker://registry.insights-dev.openshift.com/" + srcNamespace + "/"
     )
     def dstBaseUri = parameters.get("dstBaseUri", "docker://quay.io/cloudservices/")
     def srcTokenId = parameters.get("srcTokenId", "buildfactoryDeployerToken")
