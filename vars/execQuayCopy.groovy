@@ -23,7 +23,7 @@ def call(parameters = [:]) {
                     "| grep ${commitLabel} | cut -f2 -d'='"
                 )
                 def commitIsTag = imageName + ":" + commitId
-                sh("oc tag ${isTag} ${commitIsTag}")
+                sh("oc tag ${isTag} ${commitIsTag} -n ${srcNamespace}")
 
                 def tags = [isTag, commitIsTag]
                 tags.each { tag ->
