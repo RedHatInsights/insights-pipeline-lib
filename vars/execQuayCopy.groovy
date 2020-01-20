@@ -27,8 +27,8 @@ def call(parameters = [:]) {
                 def tags = [isTag, commitIsTag]
                 tags.each { tag ->
                     deployUtils.skopeoCopy(
-                        srcUri: srcBaseUri + tag
-                        dstUri: dstBaseUri + tag
+                        srcUri: srcBaseUri + tag,
+                        dstUri: dstBaseUri + tag,
                         srcUser: "na",
                         srcTokenId: srcTokenId,
                         dstUser: dstUser,
