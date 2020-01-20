@@ -19,7 +19,8 @@ def call(parameters = [:]) {
             stage("Copy images") {
                 def isTag = imageName + ":" + imageTag
                 def commitId = sh(
-                    "oc describe istag ${isTag} | grep ${commitLabel} | cut -f2 -d'='"
+                    "oc describe istag ${isTag} -n ${srcNamespace}" +
+                    "| grep ${commitLabel} | cut -f2 -d'='"
                 )
                 def commitIsTag = imageName + ":" + commitId
                 sh("oc tag ${isTag} ${commitIsTag}")
