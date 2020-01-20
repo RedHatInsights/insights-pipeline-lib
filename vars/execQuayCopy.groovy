@@ -1,5 +1,6 @@
 def call(parameters = [:]) {
-    def isTags = parameters['isTags']  // required param
+    def imageName = parameters['imageName']  // required param
+    def imageTag = parameters['imageTag']
     def jnlpImage = parameters.get('jnlpImage', "jenkins-deploy-jnlp:latest")
     def srcNamespace = parameters.get('srcNamespace', "buildfactory")
     def srcBaseUri = parameters.get(
@@ -11,16 +12,23 @@ def call(parameters = [:]) {
     def dstUser = parameters.get("dstUser", "cloudservices+push")
     def dstTokenId = parameters.get("dstTokenId", "quay-cloudservices-push-token")
 
+    def commitLabel = "io.openshift.build.commit.id"
 
     stage("Start jnlp container") {
         openShiftUtils.withJnlpNode(image: jnlpImage) {
             stage("Copy images") {
-                isTags.each { isTag ->
-                    sh "oc describe istag ${isTag}"
+                def isTag = imageName + ":" + imageTag
+                def commitId = sh(
+                    "oc describe istag ${isTag} | grep ${commitLabel} | cut -f2 -d'='"
+                )
+                def commitIsTag = imageName + ":" + commitId
+                sh("oc tag ${isTag} ${commitIsTag}")
 
+                def tags = [isTag, commitIsTag]
+                tags.each { tag ->
                     deployUtils.skopeoCopy(
-                        srcUri: srcBaseUri + isTag
-                        dstUri: dstBaseUri + isTag
+                        srcUri: srcBaseUri + tag
+                        dstUri: dstBaseUri + tag
                         srcUser: "na",
                         srcTokenId: srcTokenId,
                         dstUser: dstUser,
