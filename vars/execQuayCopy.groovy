@@ -1,6 +1,7 @@
 def call(parameters = [:]) {
     def imageName = parameters['imageName']  // required param
-    def imageTag = parameters['imageTag']
+    def imageTag = parameters['imageTag']  // required param
+    def dstImageName = parameters.get('dstImageName', imageName)
     def jnlpImage = parameters.get('jnlpImage', "jenkins-deploy-jnlp:latest")
     def srcNamespace = parameters.get('srcNamespace', "buildfactory")
     def srcBaseUri = parameters.get(
@@ -28,7 +29,7 @@ def call(parameters = [:]) {
                 def commitIsTag = imageName + ":" + commitId
                 sh("oc tag ${isTag} ${commitIsTag} -n ${srcNamespace}")
 
-                def tags = [isTag, commitIsTag]
+                def tags = [dstImageName + ":" + imageTag, dstImageName + ":" + commitId]
                 tags.each { tag ->
                     deployUtils.skopeoCopy(
                         srcUri: srcBaseUri + tag,
