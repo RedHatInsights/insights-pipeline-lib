@@ -26,6 +26,9 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 
 
 def withNode(Map parameters = [:], Closure body) {
+    /*
+    Spins up a pod with 2 containers: jnlp, and specified 'image'
+    */
     def image = parameters.get('image', pipelineVars.iqeCoreImage)
     def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
     def jenkinsSlaveImage = parameters.get('jenkinsSlaveImage', getDefaultSlaveImage(cloud))
@@ -43,7 +46,7 @@ def withNode(Map parameters = [:], Closure body) {
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
 
-    def label = "test-${UUID.randomUUID().toString()}"
+    def label = "node-${UUID.randomUUID().toString()}"
 
     podParameters = [
         label: label,
@@ -101,6 +104,9 @@ def withNode(Map parameters = [:], Closure body) {
 
 
 def withUINode(Map parameters = [:], Closure body) {
+    /* 
+    Spins up a pod with 3 containers: jnlp, selenium, and specified 'image'
+    */
     def cloud = parameters.get('cloud', pipelineVars.upshiftCloud)
     def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
     def slaveImage = parameters.get('slaveImage', getDefaultSlaveImage(cloud))
@@ -117,7 +123,7 @@ def withUINode(Map parameters = [:], Closure body) {
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
 
-    def label = "test-${UUID.randomUUID().toString()}"
+    def label = "node-${UUID.randomUUID().toString()}"
 
     setDevPiEnvVars(image, cloud, envVars)
 
@@ -176,6 +182,66 @@ def withUINode(Map parameters = [:], Closure body) {
     podTemplate(podParameters) {
         node(label) {
             container('iqe') {
+                body()
+            }
+        }
+    }
+}
+
+
+def withJnlpNode(Map parameters = [:], Closure body) {
+    /*
+    Spins up a pod with a single jnlp container
+    */
+    def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
+    def image = parameters.get('image', getDefaultSlaveImage(cloud))
+    def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
+    def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
+    def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
+    def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "100Mi")
+    def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
+    def yaml = parameters.get('yaml')
+    def envVars = parameters.get('envVars', [])
+    def extraContainers = parameters.get('extraContainers', [])
+
+    def label = "node-${UUID.randomUUID().toString()}"
+
+    podParameters = [
+        label: label,
+        slaveConnectTimeout: 120,
+        serviceAccount: pipelineVars.jenkinsSvcAccount,
+        cloud: cloud,
+        namespace: namespace,
+        annotations: [
+            podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
+            podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
+        ]
+    ]
+    if (yaml) {
+        podParameters['yaml'] = readTrusted(yaml)
+    } else {
+        setDevPiEnvVars(image, cloud, envVars)
+
+        podParameters['containers'] = [
+            containerTemplate(
+                name: 'jnlp',
+                image: image,
+                args: '${computer.jnlpmac} ${computer.name}',
+                resourceRequestCpu: jnlpRequestCpu,
+                resourceLimitCpu: jnlpLimitCpu,
+                resourceRequestMemory: jnlpRequestMemory,
+                resourceLimitMemory: jnlpLimitMemory,
+            )
+        ]
+    }
+
+    if (extraContainers) {
+        podParameters['containers'].addAll(extraContainers)
+    }
+
+    podTemplate(podParameters) {
+        node(label) {
+            container('jnlp') {
                 body()
             }
         }
