@@ -23,7 +23,7 @@ def call(parameters = [:]) {
                     script: (
                         "oc describe istag ${isTag} -n ${srcNamespace}" +
                         "| grep ${commitLabel} | cut -f2 -d'='"
-                    )
+                    ),
                     returnStdout: true
                 )
                 // trim commit hash to 7 chars
