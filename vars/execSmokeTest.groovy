@@ -132,7 +132,7 @@ private def runPipeline(
             if (plugin ==~ /iqe-\w+-plugin.*/) pluginName = plugin.split("-")[1]
             else pluginName = plugin
 
-            sh "iqe plugin install ${plugin}"
+            sh "iqe plugin install ${pluginName}"
         }
     }
 
