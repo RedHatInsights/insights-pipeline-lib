@@ -26,6 +26,8 @@ def call(parameters = [:]) {
                     )
                     returnStdout: true
                 )
+                // trim commit hash to 7 chars
+                commitId = commitId[0..6]
                 def commitIsTag = imageName + ":" + commitId
                 sh("oc tag ${isTag} ${commitIsTag} -n ${srcNamespace}")
 
