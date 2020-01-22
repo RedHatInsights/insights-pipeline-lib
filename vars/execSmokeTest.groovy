@@ -32,9 +32,6 @@
  *
  */
 
-import java.util.regex.Pattern
-import java.util.regex.Matcher
-
 
 private def getRefSpec() {
     // get refspec so we can set up the OpenShift build config to point to this PR
@@ -131,8 +128,7 @@ private def runPipeline(
             def pluginName
 
             // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
-            Matcher matcher = Pattern.compile(/iqe-(\w+)-plugin/).matcher(plugin)
-            if (matcher.hasGroup()) pluginName = matcher.getAt(0)[1]
+            if (plugin =~ /iqe-(\w+)-plugin/) pluginName = plugin.split("-")[1]
             else pluginName = plugin
 
             sh "iqe plugin install ${plugin}"
