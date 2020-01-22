@@ -128,7 +128,8 @@ private def runPipeline(
             def pluginName
 
             // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
-            if (plugin =~ /iqe-(\w+)-plugin/) pluginName = plugin.split("-")[1]
+            plugin = plugin.replaceAll("\\s", "")
+            if (plugin ==~ /iqe-\w+-plugin.*/) pluginName = plugin.split("-")[1]
             else pluginName = plugin
 
             sh "iqe plugin install ${plugin}"
