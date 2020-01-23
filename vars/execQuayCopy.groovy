@@ -13,6 +13,7 @@ def call(parameters = [:]) {
     def srcTokenId = parameters.get("srcTokenId", "buildfactoryDeployerToken")
     def dstUser = parameters.get("dstUser", "cloudservices+push")
     def dstTokenId = parameters.get("dstTokenId", "quay-cloudservices-push-token")
+    def copyCommitTag = parameters.get("copyCommitTag", true)
 
     def commitLabel = "io.openshift.build.commit.id"
 
@@ -20,20 +21,25 @@ def call(parameters = [:]) {
         openShiftUtils.withJnlpNode(image: jnlpImage) {
             stage("Copy images") {
                 def srcIsTag = imageName + ":" + imageTag
-                def commitId = sh(
-                    script: (
-                        "oc describe istag ${srcIsTag} -n ${srcNamespace}" +
-                        "| grep ${commitLabel} | cut -f2 -d'='"
-                    ),
-                    returnStdout: true
-                )
-                // trim commit hash to 7 chars
-                commitId = commitId[0..6]
-                def commitIsTag = imageName + ":" + commitId
-                sh("oc tag ${srcIsTag} ${commitIsTag} -n ${srcNamespace}")
+                def commitId
+                def dstTags = [dstImageName + ":" + dstImageTag]
 
-                def tags = [dstImageName + ":" + dstImageTag, dstImageName + ":" + commitId]
-                tags.each { dstTag ->
+                if (copyCommitTag) {
+                    def commitId = sh(
+                        script: (
+                            "oc describe istag ${srcIsTag} -n ${srcNamespace}" +
+                            "| grep ${commitLabel} | cut -f2 -d'='"
+                        ),
+                        returnStdout: true
+                    )
+                    // trim commit hash to 7 chars
+                    commitId = commitId[0..6]
+                    def commitIsTag = imageName + ":" + commitId
+                    sh("oc tag ${srcIsTag} ${commitIsTag} -n ${srcNamespace}")
+                    dstTags.add(dstImageName + ":" + commitId)
+                }
+
+                dstTags.each { dstTag ->
                     deployUtils.skopeoCopy(
                         srcUri: srcBaseUri + srcIsTag,
                         dstUri: dstBaseUri + dstTag,
