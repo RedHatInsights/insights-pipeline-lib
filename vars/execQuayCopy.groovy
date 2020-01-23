@@ -21,7 +21,6 @@ def call(parameters = [:]) {
         openShiftUtils.withJnlpNode(image: jnlpImage) {
             stage("Copy images") {
                 def srcIsTag = imageName + ":" + imageTag
-                def commitId
                 def dstTags = [dstImageName + ":" + dstImageTag]
 
                 if (copyCommitTag) {
