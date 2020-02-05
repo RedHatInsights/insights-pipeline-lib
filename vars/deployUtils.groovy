@@ -20,6 +20,7 @@ import groovy.transform.Field
     buildfactory: "/ops/deployBuildfactory",
     catalog: "/ops/deployCatalog",
     compliance: "/ops/deployCompliance",
+    "custom-policies": "/ops/deployCustomPolicies",
     hccm: "/ops/deployHccm",
     marketplace: "/ops/deployMarketplace",
     platform: "/ops/deployPlatform",
@@ -492,3 +493,4 @@ def promoteImages(parameters = [:]) {
         )
     }
 }
+
