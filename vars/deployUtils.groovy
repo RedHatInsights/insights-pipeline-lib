@@ -23,7 +23,7 @@ import groovy.transform.Field
     "custom-policies": "/ops/deployCustomPolicies",
     hccm: "/ops/deployHccm",
     marketplace: "/ops/deployMarketplace",
-    patchman: "/ops/deployPatchman"
+    patchman: "/ops/deployPatchman",
     platform: "/ops/deployPlatform",
     rbac: "/ops/deployRbac",
     sources: "/ops/deploySources",
