@@ -14,6 +14,7 @@ def call(parameters = [:]) {
     def dstUser = parameters.get("dstUser", "cloudservices+push")
     def dstTokenId = parameters.get("dstTokenId", "quay-cloudservices-push-token")
     def copyCommitTag = parameters.get("copyCommitTag", true)
+    def extraDstTags = parameters.get("extraDstTags", [])
 
     def commitLabel = "io.openshift.build.commit.id"
 
@@ -36,6 +37,10 @@ def call(parameters = [:]) {
                     def commitIsTag = imageName + ":" + commitId
                     sh("oc tag ${srcIsTag} ${commitIsTag} -n ${srcNamespace}")
                     dstTags.add(dstImageName + ":" + commitId)
+                }
+
+                extraDstTags.each { dstTag ->
+                    dstTags.add(dstImageName + ":" + dstTag)
                 }
 
                 dstTags.each { dstTag ->
