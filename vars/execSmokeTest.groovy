@@ -106,7 +106,7 @@ private def deployEnvironment(
 
 private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars,
+    String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
     String configFileCredentialsId
 ) {
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
@@ -163,15 +163,24 @@ private def runPipeline(
             }
         }
     }
-
-    stage("Run tests (pytest marker: ${pytestMarker})") {
+    
+    if (pytestMarker instanceof String) {
+        pytestMarker = [pytestMarker]
+    }
+    
+    def markerArgs = " "
+    pytestMarker.each { marker ->
+        markerArgs += "-m ${marker} "
+    }
+    
+    stage("Run tests (pytest markers: ${pytestMarker})") {
         extraEnvVars.each { key, val ->
             sh "export ${key}=${val}"
         }
 
         // tee the output -- the 'junit' step later will change build status if any tests fail
         iqeCommand = (
-            "iqe tests all --junitxml=junit.xml -s -v -m ${pytestMarker} --log-file=iqe.log " +
+            "iqe tests all --junitxml=junit.xml -s -v ${markerArgs} --log-file=iqe.log " +
             "--log-file-level=DEBUG 2>&1 | tee pytest-stdout.log"
         )
 
@@ -209,7 +218,7 @@ private def runPipeline(
 
 private def allocateResourcesAndRun(
     String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, String pytestMarker, List<String> iqePlugins, Map extraEnvVars,
+    String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
     String configFileCredentialsId
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
