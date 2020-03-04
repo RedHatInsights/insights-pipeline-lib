@@ -28,6 +28,7 @@ import groovy.transform.Field
     ingress: "/ops/deployIngress",
     inventory: "/ops/deployInventory",
     marketplace: "/ops/deployMarketplace",
+    mnm: "/ops/deployMnm",
     patchman: "/ops/deployPatchman",
     "payload-tracker": "/ops/deployPayloadTracker",
     rbac: "/ops/deployRbac",
