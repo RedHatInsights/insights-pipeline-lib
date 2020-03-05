@@ -74,6 +74,7 @@ def withNode(Map parameters = [:], Closure body) {
                 resourceLimitCpu: jnlpLimitCpu,
                 resourceRequestMemory: jnlpRequestMemory,
                 resourceLimitMemory: jnlpLimitMemory,
+                workingDir: workingDir,
             ),
             containerTemplate(
                 name: 'builder',
@@ -86,6 +87,7 @@ def withNode(Map parameters = [:], Closure body) {
                 resourceRequestMemory: requestMemory,
                 resourceLimitMemory: limitMemory,
                 envVars: envVars,
+                workingDir: workingDir,
             ),
         ]
     }
@@ -94,7 +96,7 @@ def withNode(Map parameters = [:], Closure body) {
         podParameters['containers'].addAll(extraContainers)
     }
 
-    podParameters['containers'].each { it.workingDir = workingDir }
+    podParameters['containers'].each { it.setWorkingDir(workingDir) }
 
     podTemplate(podParameters) {
         node(label) {
@@ -183,7 +185,7 @@ def withUINode(Map parameters = [:], Closure body) {
     // if yaml is used, the containers key will not be present
     if (podParameters.get('containers')) podParameters['containers'].addAll(extraContainers)
 
-    podParameters['containers'].each { it.workingDir = workingDir }
+    podParameters['containers'].each { it.setWorkingDir(workingDir) }
 
     podTemplate(podParameters) {
         node(label) {
@@ -246,7 +248,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
         podParameters['containers'].addAll(extraContainers)
     }
 
-    podParameters['containers'].each { it.workingDir = workingDir }
+    podParameters['containers'].each { it.setWorkingDir(workingDir) }
 
     podTemplate(podParameters) {
         node(label) {
