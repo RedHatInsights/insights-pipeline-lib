@@ -104,7 +104,7 @@ def ghNotify(parameters = [:]) {
 
     try {
         targetUrl = shortenURL ? URLShortener(targetUrl) : targetUrl
-        githubNotify context: context, status: status, targetUrl: targetUrl
+        githubNotify context: getStatusContext(context), status: status, targetUrl: targetUrl
     } catch (err) {
         msg = err.getMessage()
         echo "Error notifying GitHub: ${msg}"
@@ -143,7 +143,6 @@ def withStatusContext(String context, Boolean shortenURL = false, Closure body) 
      * Context manager which notifies github if the operation succeeds or fails
      * Example: gitUtils.withStatusContext("unit-tests") { }
      */
-    context = getStatusContext(context)
     ghNotify context: context, shortenURL: shortenURL, status: "PENDING"
 
     try {
