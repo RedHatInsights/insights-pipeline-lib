@@ -45,7 +45,6 @@ def withNode(Map parameters = [:], Closure body) {
     def yaml = parameters.get('yaml')
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
-    def workingDir = parameters.get('workingDir', '/home/jenkins')
 
     def label = "node-${UUID.randomUUID().toString()}"
 
@@ -74,7 +73,6 @@ def withNode(Map parameters = [:], Closure body) {
                 resourceLimitCpu: jnlpLimitCpu,
                 resourceRequestMemory: jnlpRequestMemory,
                 resourceLimitMemory: jnlpLimitMemory,
-                workingDir: workingDir,
             ),
             containerTemplate(
                 name: 'builder',
@@ -87,7 +85,6 @@ def withNode(Map parameters = [:], Closure body) {
                 resourceRequestMemory: requestMemory,
                 resourceLimitMemory: limitMemory,
                 envVars: envVars,
-                workingDir: workingDir,
             ),
         ]
     }
@@ -95,8 +92,6 @@ def withNode(Map parameters = [:], Closure body) {
     if (extraContainers) {
         podParameters['containers'].addAll(extraContainers)
     }
-
-    podParameters['containers'].each { it.setWorkingDir(workingDir) }
 
     podTemplate(podParameters) {
         node(label) {
@@ -127,7 +122,6 @@ def withUINode(Map parameters = [:], Closure body) {
     def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
-    def workingDir = parameters.get('workingDir', '/home/jenkins')
 
     def label = "node-${UUID.randomUUID().toString()}"
 
@@ -185,8 +179,6 @@ def withUINode(Map parameters = [:], Closure body) {
     // if yaml is used, the containers key will not be present
     if (podParameters.get('containers')) podParameters['containers'].addAll(extraContainers)
 
-    podParameters['containers'].each { it.setWorkingDir(workingDir) }
-
     podTemplate(podParameters) {
         node(label) {
             container('iqe') {
@@ -211,7 +203,6 @@ def withJnlpNode(Map parameters = [:], Closure body) {
     def yaml = parameters.get('yaml')
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
-    def workingDir = parameters.get('workingDir', '/home/jenkins')
 
     def label = "node-${UUID.randomUUID().toString()}"
 
@@ -247,8 +238,6 @@ def withJnlpNode(Map parameters = [:], Closure body) {
     if (extraContainers) {
         podParameters['containers'].addAll(extraContainers)
     }
-
-    podParameters['containers'].each { it.setWorkingDir(workingDir) }
 
     podTemplate(podParameters) {
         node(label) {
