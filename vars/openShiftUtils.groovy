@@ -25,18 +25,6 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 }
 
 
-private def updateWorkingDir(podParameters, workingDir) {
-    def newContainers = []
-    podParameters['containers'].each {
-        def args = it.getArguments()
-        args["workingDir"] = workingDir
-        def newContainerTemplate = it.withArguments(args)
-        newContainers.add(newContainerTemplate)
-    }
-    podParameters['containers'] = newContainers
-}
-
-
 def withNode(Map parameters = [:], Closure body) {
     /*
     Spins up a pod with 2 containers: jnlp, and specified 'image'
@@ -106,7 +94,7 @@ def withNode(Map parameters = [:], Closure body) {
         podParameters['containers'].addAll(extraContainers)
     }
 
-    updateWorkingDir(podParameters, workingDir)
+    podParameters['containers'].each { it.workingDir = workingDir }
 
     podTemplate(podParameters) {
         node(label) {
@@ -195,7 +183,7 @@ def withUINode(Map parameters = [:], Closure body) {
     // if yaml is used, the containers key will not be present
     if (podParameters.get('containers')) podParameters['containers'].addAll(extraContainers)
 
-    updateWorkingDir(podParameters, workingDir)
+    podParameters['containers'].each { it.workingDir = workingDir }
 
     podTemplate(podParameters) {
         node(label) {
@@ -258,7 +246,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
         podParameters['containers'].addAll(extraContainers)
     }
 
-    updateWorkingDir(podParameters, workingDir)
+    podParameters['containers'].each { it.workingDir = workingDir }
 
     podTemplate(podParameters) {
         node(label) {
