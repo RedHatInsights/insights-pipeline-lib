@@ -32,6 +32,8 @@ def removePipfileComments() {
 
 
 def runPipenvInstall(parameters = [:]) {
+    gitUtils.ghNotify context: "pipinstall", status: "PENDING"
+
     // Test that pipenv install works, and check that the lock file is in sync with the Pipfile
     def scmVars = parameters['scmVars']
     def installPipenv = parameters.get('installPipenv', true)
