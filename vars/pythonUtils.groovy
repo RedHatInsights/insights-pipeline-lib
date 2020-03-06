@@ -89,10 +89,10 @@ def runPipenvInstall(parameters = [:]) {
         postPipfileComment(commitId: scmVars.GIT_COMMIT, str: errorMsg)
     }
     if (installFailed) {
-        gitUtils.ghNotify context: gitUtils.getStatusContext("pipinstall"), status: "FAILURE"
+        gitUtils.ghNotify context: "pipinstall", status: "FAILURE"
         error("pipenv install has failed")
     } else {
-        gitUtils.ghNotify context: gitUtils.getStatusContext("pipinstall"), status: "SUCCESS"
+        gitUtils.ghNotify context: "pipinstall", status: "SUCCESS"
     }
 }
 
