@@ -71,7 +71,7 @@ private def deployEnvironment(
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
                     "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
-                    "-e smoke ${project}"
+                    "-e smoke ${project} --secrets-src-project secrets"
                 )
             }
 
@@ -90,7 +90,7 @@ private def deployEnvironment(
                 sh "cat env/custom-env.yml"
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true -s ${ocDeployerServiceSets} " +
-                    "-e custom-env -e smoke ${project}"
+                    "-e custom-env -e smoke ${project} --secrets-src-project secrets"
                 )
             }
 
