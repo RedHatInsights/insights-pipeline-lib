@@ -95,6 +95,7 @@ def runDeploy(parsed) {
 
     echo "imagesToCopy:   ${imagesToCopy}, servicesToSkip: ${servicesToSkip}"
     echo "envConfig:      ${envConfig}"
+
     currentBuild.description = "env: ${envConfig['env']}"
 
     openShiftUtils.withNode(image: "jenkins-deploy-slave:latest") {
@@ -146,6 +147,12 @@ def call(p = [:]) {
     if (params.RELOAD) {
         echo "Job is only reloading"
         currentBuild.description = "reload"
+        return
+    }
+
+    // Exit the job if there's no config for this env
+    if (!parsed['envConfig']) {
+        echo "No env config found for this env"
         return
     }
 
