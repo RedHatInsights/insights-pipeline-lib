@@ -51,7 +51,6 @@ private def parseParams(envs, svcs) {
     imagesToCopy = []
     echo "Job params: ${params.toString()}"
 
-    if (!envs[params.ENV]) envs[params.ENV] = [:]
     servicesToSkip = envs[params.ENV].get('skip', [])
     svcs.each { key, data ->
         paramName = getParamNameForSvcKey(key, data)
@@ -151,9 +150,9 @@ def call(p = [:]) {
         return
     }
 
-    // Exit the job if there's no config for this env
-    if (!parsed['envConfig']) {
-        echo "No env config found for this env"
+    // Exit the job if this env should be ignored
+    if (parsed['envConfig'].get('disabled')) {
+        echo "Env has 'disabled' set"
         return
     }
 
