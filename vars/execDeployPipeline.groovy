@@ -50,8 +50,9 @@ private def getJobParams(envs, svcs) {
 private def parseParams(envs, svcs) {
     imagesToCopy = []
     echo "Job params: ${params.toString()}"
-    servicesToSkip = envs[params.ENV].get('skip', [])
 
+    if (!envs[params.ENV]) envs[params.ENV] = [:]
+    servicesToSkip = envs[params.ENV].get('skip', [])
     svcs.each { key, data ->
         paramName = getParamNameForSvcKey(key, data)
         echo "Checking if ${paramName} is checked and should be deployed..."
