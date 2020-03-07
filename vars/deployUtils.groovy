@@ -20,7 +20,7 @@ import groovy.transform.Field
     buildfactory: "/ops/deployBuildfactory",
     "buck-it": "/ops/deployBuckIt",
     catalog: "/ops/deployCatalog",
-    ccx: "/ops/deployCCX",
+    "ccx-data-pipeline": "/ops/deployCCX",
     compliance: "/ops/deployCompliance",
     "custom-policies": "/ops/deployCustomPolicies",
     engine: "/ops/deployEngine",
