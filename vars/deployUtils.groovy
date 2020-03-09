@@ -82,11 +82,17 @@ private def analyzeTemplateDir(
 ) {
     echo "getChangeInfo: service set is ${serviceSet}"
 
+    /*
     // If root _cfg.yml was edited, process all templates, unless we are ignoring
     // changes to the root cfg
     if (serviceSet.startsWith("_cfg") && !ignoreRoot) changeInfo[dirName].add(allTemplates)
     // Otherwise process only this service set
     else changeInfo[dirName].add(serviceSet)
+    */
+
+    // until there's a need ... always ignore root _cfg change for now to avoid mass deploys
+    changeInfo[dirName].add(serviceSet)
+
     // Run diff using all default env files any time templates change
     changeInfo['envsForDiff'].addAll(defaultEnvs)
 }
