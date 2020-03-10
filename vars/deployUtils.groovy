@@ -91,7 +91,7 @@ private def analyzeTemplateDir(
     */
 
     // until there's a need ... always ignore root _cfg change for now to avoid mass deploys
-    changeInfo[dirName].add(serviceSet)
+    if (!serviceSet.startsWith(_"cfg")) changeInfo[dirName].add(serviceSet)
 
     // Run diff using all default env files any time templates change
     changeInfo['envsForDiff'].addAll(defaultEnvs)
