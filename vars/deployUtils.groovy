@@ -24,6 +24,7 @@ import groovy.transform.Field
     cloudigrade: "/ops/deployCloudigrade",
     compliance: "/ops/deployCompliance",
     "custom-policies": "/ops/deployCustomPolicies",
+    drift: "/ops/deployDrift",
     engine: "/ops/deployEngine",
     hccm: "/ops/deployHccm",
     ingress: "/ops/deployIngress",
