@@ -425,7 +425,7 @@ def deployServiceSet(parameters = [:]) {
     dir(pipelineVars.e2eDeployDir) {
         def watchArg = watch ? " -w " : " "
         def envArg = env ? " -e ${env} " : " "
-        def secretsArg = secretsSrcProject ? " --secrets-src-project ${secretsSrcProject}"
+        def secretsArg = secretsSrcProject ? " --secrets-src-project ${secretsSrcProject}" : " "
         def cmd = (
             "ocdeployer deploy${watchArg}-f -t ${templateDir} " +
             "-s ${serviceSet}${envArg}${project}${secretsArg}
