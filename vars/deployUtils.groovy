@@ -415,7 +415,7 @@ def deployServiceSet(parameters = [:]) {
     def serviceSet = parameters['serviceSet']
     def env = parameters.get('env')
     def project = parameters['project']
-    def secretsSrcProject = parameters.get('secretsSrcProject', "secrets")
+    def secretsSrcProject = parameters.get('secretsSrcProject')
     def templateDir = parameters.get('templateDir', "templates")
     def skip = parameters.get('skip')
     def pipInstall = parameters.get('pipInstall', true)
@@ -425,9 +425,10 @@ def deployServiceSet(parameters = [:]) {
     dir(pipelineVars.e2eDeployDir) {
         def watchArg = watch ? " -w " : " "
         def envArg = env ? " -e ${env} " : " "
+        def secretsArg = secretsSrcProject ? " --secrets-src-project ${secretsSrcProject}"
         def cmd = (
             "ocdeployer deploy${watchArg}-f -t ${templateDir} " +
-            "-s ${serviceSet}${envArg}${project} --secrets-src-project ${secretsSrcProject}"
+            "-s ${serviceSet}${envArg}${project}${secretsArg}
         )
         if (skip) cmd = "${cmd} --skip ${skip.join(",")}"
         sh cmd
