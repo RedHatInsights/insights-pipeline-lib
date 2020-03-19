@@ -428,7 +428,7 @@ def deployServiceSet(parameters = [:]) {
         def secretsArg = secretsSrcProject ? " --secrets-src-project ${secretsSrcProject}" : " "
         def cmd = (
             "ocdeployer deploy${watchArg}-f -t ${templateDir} " +
-            "-s ${serviceSet}${envArg}${project}${secretsArg}
+            "-s ${serviceSet}${envArg}${project}${secretsArg}"
         )
         if (skip) cmd = "${cmd} --skip ${skip.join(",")}"
         sh cmd
