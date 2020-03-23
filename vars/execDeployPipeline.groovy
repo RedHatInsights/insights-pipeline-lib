@@ -48,7 +48,7 @@ private def getJobParams(envs, svcs) {
 
 // Parse the selected parameters when the job is run
 private def parseParams(envs, svcs) {
-    imagesToCopy = []
+    imagesToCopy = []  // a list of Maps with key = srcImage, value = dstImage
     echo "Job params: ${params.toString()}"
 
     servicesToSkip = envs[params.ENV].get('skip', [])
@@ -67,7 +67,11 @@ private def parseParams(envs, svcs) {
         )
 
         // if the service was checked, add its image to the list of images we will copy
-        if (copyImages && !disableImageCopy && boxChecked) imagesToCopy.add(data['srcImage'])
+        if (copyImages && !disableImageCopy && boxChecked) {
+            def srcImage = data['srcImage']
+            def imgMap = [srcImage: data.get('dstImage', srcImage)]
+            imagesToCopy.add(imgMap)
+        }
 
         // if a service was not checked, add it to the list of services to skip, but only
         // if 'promoteImageOnly' is false (because in that case deployment doesn't apply
@@ -100,8 +104,17 @@ def runDeploy(parsed) {
 
     openShiftUtils.withNode(image: "jenkins-deploy-slave:latest") {
         pipelineUtils.stageIf(imagesToCopy, 'Copy images') {
+            // 'imagesToCopy' is a list of Maps, generate the args we need for promoteImages
+            def srcImages = []
+            def dstImages = []
+            parsed['imagesToCopy'].each { srcImage, dstImage ->
+                srcImages.add(srcImage)
+                dstImages.add(dstImage)
+            }
+
             deployUtils.promoteImages(
-                srcImages: parsed['imagesToCopy'],
+                srcImages: srcImages,
+                dstImages: dstImages,
                 dstProject: envConfig['project'],
                 dstSaUsername: envConfig['saUsername'],
                 dstSaTokenCredentialsId: envConfig['saTokenCredentialsId'],
