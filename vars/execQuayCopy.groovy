@@ -1,4 +1,11 @@
 def call(parameters = [:]) {
+    timeout(time: 10, unit: "MINUTES") {
+        run(parameters)
+    }
+}
+
+
+def run(parameters) {
     def imageName = parameters['imageName']  // required param
     def imageTag = parameters['imageTag']  // required param
     def dstImageName = parameters.get('dstImageName', imageName)
