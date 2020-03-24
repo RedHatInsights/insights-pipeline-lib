@@ -24,7 +24,7 @@ import groovy.transform.Field
     "ccx-data-pipeline": "/ops/deployCCX",
     cloudigrade: "/ops/deployCloudigrade",
     compliance: "/ops/deployCompliance",
-    //"custom-policies": "/ops/deployCustomPolicies",
+    policies: "/ops/deployPolicies",
     drift: "/ops/deployDrift",
     engine: "/ops/deployEngine",
     hccm: "/ops/deployHccm",
