@@ -51,6 +51,7 @@ private def parseParams(envs, svcs) {
     def selectedEnv = params.ENV
     def imagesToCopy = [:]  // a list of Maps with key = srcImage, value = dstImage
     def servicesToSkip = envs[selectedEnv].get('skip', [])
+    def boxesChecked = []
 
     echo "Job params: ${params.toString()}"
 
@@ -67,6 +68,8 @@ private def parseParams(envs, svcs) {
             "${key} boxChecked: ${boxChecked}, promoteImageOnly: ${promoteImageOnly}, " +
             "disableImageCopy: ${disableImageCopy}"
         )
+
+        if (boxChecked) boxesChecked.add(data.get("displayName").toString())
 
         // if the service was checked, add its image to the list of images we will copy
         if (copyImages && !disableImageCopy && boxChecked) {
@@ -104,7 +107,8 @@ private def parseParams(envs, svcs) {
         envConfig: envs[selectedEnv],
         imagesToCopy: imagesToCopy,
         servicesToSkip: servicesToSkip,
-        deployServices: envs[selectedEnv]['deployServices']
+        deployServices: envs[selectedEnv]['deployServices'],
+        boxesChecked: boxesChecked.size() == svcs.size() ? ["all"] : boxesChecked
     ]
 }
 
@@ -200,13 +204,14 @@ def call(p = [:]) {
 
     def envName = parsed['envConfig']['env']
     def verboseNotifications = parsed['envConfig'].get('verboseNotifications', true)
+    def boxesChecked = parsed['boxesChecked'].join(", ")
 
     if (verboseNotifications) {
         slackUtils.sendMsg(
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "info",
-            msg: "started for env *${envName}*"
+            msg: "started for env *${envName}* (components: ${boxesChecked})"
         )
     }
 
@@ -217,7 +222,7 @@ def call(p = [:]) {
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "failure",
-            msg: "failed for env *${envName}*",
+            msg: "failed for env *${envName}* (components: ${boxesChecked})",
         )
         throw err
     }
@@ -227,7 +232,7 @@ def call(p = [:]) {
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "success",
-            msg: "successful for env *${envName}*"
+            msg: "successful for env *${envName}* (components: ${boxesChecked})"
         )
     }
 }
