@@ -226,13 +226,15 @@ def getDeployTask(parameters = [:]) {
      */
     def setToDeploy = parameters['serviceSet']
     def envName = parameters['env']
-    def remote = parameters['remote']
+    def remote = parameters.get('remote', false)
     def remoteCredentials = parameters.get('remoteCredentials', "remoteJenkinsApiToken")
     def remoteHostname = parameters.get('remoteHostname', "remoteJenkinsHostname")
     def jobParameters = parameters.get(
         'jobParameters',
         [[$class: 'StringParameterValue', name: 'ENV', value: envName]]
     )
+    def extraJobParameters = parameters.get('extraJobParameters', [])
+    jobParameters.addAll(extraJobParameters)
 
     def buildJob = deployJobs[setToDeploy]
     def closure
