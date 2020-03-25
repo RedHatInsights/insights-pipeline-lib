@@ -458,9 +458,55 @@ def skopeoCopy(parameters = [:]) {
 }
 
 
+private def promoteToCluster(
+    srcImage, dstImage, srcCluster, dstCluster, srcSaUsername, srcSaTokenCredentialsId,
+    dstSaUsername, dstSaTokenCredentialsId
+) {
+    /* Promotes images from a src OpenShift cluster to a dst OpenShift cluster */
+    def srcRegistry = srcCluster.replace("api", "registry")
+    def dstRegistry = dstCluster.replace("api", "registry")
+    def imageFormat = "docker://%s/%s/%s"
+
+    def srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
+    def dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImage)
+    skopeoCopy(
+        srcUri: srcImageUri,
+        dstUri: dstImageUri,
+        srcUser: srcSaUsername,
+        srcTokenId: srcSaTokenCredentialsId,
+        dstUser: dstSaUsername,
+        dstTokenId: dstSaTokenCredentialsId,
+    )
+}
+
+
+private def promoteToQuay(
+    srcImage, dstImage, srcCluster, srcSaUsername, srcSaTokenCredentialsId, dstQuayUser,
+    dstQuayTokenId
+) {
+    /* Promotes images from a src OpenShift cluster to quay */
+    def srcRegistry = srcCluster.replace("api", "registry")
+    def imageFormat = "docker://%s/%s/%s"
+    def srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
+    def dstImageUri = "docker://" + dstImage
+
+    skopeoCopy(
+        srcUri: srcImageUri,
+        dstUri: dstImageUri,
+        srcUser: srcSaUsername,
+        srcTokenId: srcSaTokenCredentialsId,
+        dstUser: dstQuayUser,
+        dstTokenId: dstQuayTokenId,
+    )
+}
+
+
 def promoteImages(parameters = [:]) {
     /**
-     * Use skopeo to copy images from one OpenShift registry to another
+     * Use skopeo to copy images from one OpenShift registry to another, or to quay
+     *
+     * If the dstImage is a quay URI, we will promote the image to quay.
+     * If it is not, we promote it to the OpenShift cluster specified by 'dstCluster'.
      *
      * @param srcImages REQUIRED images to copy from, e.g. ["myimage2:latest", "myimage3:other_tag"]
      * @param dstImages images to copy to, e.g. ["myimage2:prod", "myimage3:prod"]
@@ -476,6 +522,10 @@ def promoteImages(parameters = [:]) {
      * @param dstSaUsername service account user for destination cluster
         (default: 'jenkins-deployer')
      * @param dstSaTokenCredentialsId REQUIRED Jenkins secret name for dst service account token
+     * @param dstQuayUser username for quay (default: pipelineVars.quayUser)
+     * @param dstQuayTokenId Jenkins secret name for quay token
+        (default: pipelineVars.quayPushCredentialsId)
+     *
      * @return
      */
 
@@ -486,28 +536,29 @@ def promoteImages(parameters = [:]) {
     def dstProject = parameters['dstProject']
     def dstCluster = parameters.get('dstCluster', pipelineVars.prodCluster)
     def srcSaUsername = parameters.get('srcSaUsername', "jenkins-deployer")
-    def srcSaTokenCredentialsId = parameters.get('srcSaTokenCredentialsId', "buildfactoryDeployerToken")
+    def srcSaTokenCredentialsId = parameters.get(
+        'srcSaTokenCredentialsId', "buildfactoryDeployerToken"
+    )
     def dstSaUsername = parameters.get('dstSaUsername', "jenkins-deployer")
     def dstSaTokenCredentialsId = parameters['dstSaTokenCredentialsId']
+    def dstQuayUser = parameters.get("dstQuayUser", pipelineVars.quayUser)
+    def dstQuayTokenId = parameters.get("dstQuayTokenId", pipelineVars.quayPushCredentialsId)
 
     if (!dstImages) dstImages = srcImages
-    if (srcImages.size() != dstImages.size()) error("srcImages and dstImages not the same size")
-
-    srcRegistry = srcCluster.replace("api", "registry")
-    dstRegistry = dstCluster.replace("api", "registry")
-    imageFormat = "docker://%s/%s/%s"
+    if (srcImages.size() != dstImages.size()) error("srcImages and dstImages must be the same size")
 
     srcImages.eachWithIndex { srcImage, i ->
-        srcImageUri = String.format(imageFormat, srcRegistry, srcProject, srcImage)
-        dstImageUri = String.format(imageFormat, dstRegistry, dstProject, dstImages[i])
-        skopeoCopy(
-            srcUri: srcImageUri,
-            dstUri: dstImageUri,
-            srcUser: srcSaUsername,
-            srcTokenId: srcSaTokenCredentialsId,
-            dstUser: dstSaUsername,
-            dstTokenId: dstSaTokenCredentialsId, 
-        )
+        def dstImage = dstImages[i]
+        if (dstImage.startsWith(pipelineVars.quayBaseUri)) {
+            promoteToQuay(
+                srcImage, dstImage, srcCluster, srcSaUsername, srcSaTokenCredentialsId, dstQuayUser,
+                dstQuayTokenId
+            )
+        } else {
+            promoteToCluster(
+                srcImage, dstImage, srcCluster, dstCluster, srcSaUsername, srcSaTokenCredentialsId,
+                dstSaUsername, dstSaTokenCredentialsId
+            )
+        }
     }
 }
-

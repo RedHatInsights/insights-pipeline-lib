@@ -15,8 +15,8 @@ private def getParamNameForSvcKey(String key, Map svcData) {
 
 
 private def getJobParams(envs, svcs) {
-    // Set up the job parameters
-    p = []
+    // Set up the job parameters for the job by reading the 'envs' and 'svcs' config
+    def p = []
     svcs.each { key, data ->
         def paramName = getParamNameForSvcKey(key, data)
         def displayName = data.get('displayName', "${key.toString()}")
@@ -27,7 +27,7 @@ private def getJobParams(envs, svcs) {
         ])
     }
 
-    choices = []
+    def choices = []
     envs.each { key, data ->
         choices.add(data['env'])
     }
@@ -46,20 +46,22 @@ private def getJobParams(envs, svcs) {
 }
 
 
-// Parse the selected parameters when the job is run
 private def parseParams(envs, svcs) {
-    imagesToCopy = []  // a list of Maps with key = srcImage, value = dstImage
+    // Parse the selected parameters when the job is run
+    def selectedEnv = params.ENV
+    def imagesToCopy = []  // a list of Maps with key = srcImage, value = dstImage
+    def servicesToSkip = envs[selectedEnv].get('skip', [])
+
     echo "Job params: ${params.toString()}"
 
-    servicesToSkip = envs[params.ENV].get('skip', [])
     svcs.each { key, data ->
-        paramName = getParamNameForSvcKey(key, data)
+        def paramName = getParamNameForSvcKey(key, data)
         echo "Checking if ${paramName} is checked and should be deployed..."
-        boxChecked = params.get(paramName.toString())
-        promoteImageOnly = data.get('promoteImageOnly')
-        disableImageCopy = data.get('disableImageCopy')
-        copyImages = envs[params.ENV]['copyImages']
-        deployServices = envs[params.ENV]['deployServices']
+        def boxChecked = params.get(paramName.toString())
+        def promoteImageOnly = data.get('promoteImageOnly')
+        def disableImageCopy = data.get('disableImageCopy')
+        def copyImages = envs[selectedEnv]['copyImages']
+        def deployServices = envs[selectedEnv]['deployServices']
 
         echo(
             "${key} boxChecked: ${boxChecked}, promoteImageOnly: ${promoteImageOnly}, " +
@@ -68,8 +70,26 @@ private def parseParams(envs, svcs) {
 
         // if the service was checked, add its image to the list of images we will copy
         if (copyImages && !disableImageCopy && boxChecked) {
+            // srcImage can be a Map or a string
             def srcImage = data['srcImage']
-            def imgMap = [srcImage: data.get('dstImage', srcImage)]
+            if (srcImage instanceof Map) {
+                srcImage = srcImage.get(selectedEnv)
+                if (!srcImage) error(
+                    "No srcImage configured for svc '${key}' for env name '${selectedEnv}'"
+                )
+            }
+
+            // dstImage is optional, if not defined it is the same as srcImage
+            // it can also be a Map or a string
+            def dstImage = data.get('dstImage', srcImage)
+            if (dstImage instanceof Map) {
+                dstImage = dstImage.get(selectedEnv)
+                if (!dstImage) error(
+                    "No dstImage configured for svc '${key}' for env name '${selectedEnv}'"
+                )
+            }
+
+            def imgMap = [srcImage: dstImage]
             imagesToCopy.add(imgMap)
         }
 
@@ -82,10 +102,10 @@ private def parseParams(envs, svcs) {
     }
 
     return [
-        envConfig: envs[params.ENV],
+        envConfig: envs[selectedEnv],
         imagesToCopy: imagesToCopy,
         servicesToSkip: servicesToSkip,
-        deployServices: envs[params.ENV]['deployServices']
+        deployServices: envs[selectedEnv]['deployServices']
     ]
 }
 
@@ -119,6 +139,8 @@ def runDeploy(parsed) {
                 dstSaUsername: envConfig['saUsername'],
                 dstSaTokenCredentialsId: envConfig['saTokenCredentialsId'],
                 dstCluster: envConfig['cluster']
+                dstQuayUser: envConfig.get("dstQuayUser", pipelineVars.quayUser)
+                dstQuayTokenId: envConfig.get("dstQuayTokenId", pipelineVars.quayPushCredentialsId)
             )
         }
 

@@ -14,12 +14,12 @@ def run(parameters) {
     def srcNamespace = parameters.get('srcNamespace', "buildfactory")
     def srcBaseUri = parameters.get(
         "srcBaseUri",
-        "docker://registry.insights-dev.openshift.com/" + srcNamespace + "/"
+        "docker://registry.insights-dev.openshift.com/${srcNamespace}"
     )
-    def dstBaseUri = parameters.get("dstBaseUri", "docker://quay.io/cloudservices/")
+    def dstBaseUri = parameters.get("dstBaseUri", "docker://${pipelineVars.quayBaseUri}")
     def srcTokenId = parameters.get("srcTokenId", "buildfactoryDeployerToken")
-    def dstUser = parameters.get("dstUser", "cloudservices+push")
-    def dstTokenId = parameters.get("dstTokenId", "quay-cloudservices-push-token")
+    def dstUser = parameters.get("dstUser", pipelineVars.quayUser)
+    def dstTokenId = parameters.get("dstTokenId", pipelineVars.quayPushCredentialsId)
     def copyCommitTag = parameters.get("copyCommitTag", true)
     def extraDstTags = parameters.get("extraDstTags", [])
 
