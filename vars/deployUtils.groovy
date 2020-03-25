@@ -39,6 +39,7 @@ import groovy.transform.Field
     subscriptions: "/ops/deploySubscriptions",
     "system-baseline": "/ops/deployBaseline",
     "topological-inventory": "/ops/deployTopologicalInventory",
+    vmaas: "/ops/deployVmaas",
     vulnerability: "/ops/deployVulnerability",
 ]
 
