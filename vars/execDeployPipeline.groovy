@@ -143,7 +143,7 @@ def runDeploy(parsed) {
             )
         }
 
-        stage('Login as deployer account') {
+        pipelineUtils.stageIf(deployServices, 'Login as deployer account') {
             withCredentials([
                 string(credentialsId: envConfig['saTokenCredentialsId'], variable: 'TOKEN')
             ]) {
