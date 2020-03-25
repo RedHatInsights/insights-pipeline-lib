@@ -49,7 +49,7 @@ private def getJobParams(envs, svcs) {
 private def parseParams(envs, svcs) {
     // Parse the selected parameters when the job is run
     def selectedEnv = params.ENV
-    def imagesToCopy = []  // a list of Maps with key = srcImage, value = dstImage
+    def imagesToCopy = [:]  // a list of Maps with key = srcImage, value = dstImage
     def servicesToSkip = envs[selectedEnv].get('skip', [])
 
     echo "Job params: ${params.toString()}"
@@ -89,8 +89,7 @@ private def parseParams(envs, svcs) {
                 )
             }
 
-            def imgMap = [srcImage: dstImage]
-            imagesToCopy.add(imgMap)
+            imagesToCopy[srcImage] = dstImage
         }
 
         // if a service was not checked, add it to the list of services to skip, but only
