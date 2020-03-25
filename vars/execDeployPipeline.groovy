@@ -138,9 +138,9 @@ def runDeploy(parsed) {
                 dstProject: envConfig['project'],
                 dstSaUsername: envConfig['saUsername'],
                 dstSaTokenCredentialsId: envConfig['saTokenCredentialsId'],
-                dstCluster: envConfig['cluster']
-                dstQuayUser: envConfig.get("dstQuayUser", pipelineVars.quayUser)
-                dstQuayTokenId: envConfig.get("dstQuayTokenId", pipelineVars.quayPushCredentialsId)
+                dstCluster: envConfig['cluster'],
+                dstQuayUser: envConfig.get("dstQuayUser", pipelineVars.quayUser),
+                dstQuayTokenId: envConfig.get("dstQuayTokenId", pipelineVars.quayPushCredentialsId),
             )
         }
 
