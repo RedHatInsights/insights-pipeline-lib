@@ -211,7 +211,7 @@ def call(p = [:]) {
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "info",
-            msg: "started for env *${envName}* (components: ${boxesChecked})"
+            msg: "started for env *${envName}* (selected components: ${boxesChecked})"
         )
     }
 
@@ -222,7 +222,7 @@ def call(p = [:]) {
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "failure",
-            msg: "failed for env *${envName}* (components: ${boxesChecked})",
+            msg: "failed for env *${envName}* (selected components: ${boxesChecked})",
         )
         throw err
     }
@@ -232,7 +232,7 @@ def call(p = [:]) {
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "success",
-            msg: "successful for env *${envName}* (components: ${boxesChecked})"
+            msg: "successful for env *${envName}* (selected components: ${boxesChecked})"
         )
     }
 }
