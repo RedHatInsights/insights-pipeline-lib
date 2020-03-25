@@ -459,8 +459,8 @@ def skopeoCopy(parameters = [:]) {
 
 
 private def promoteToCluster(
-    srcImage, dstImage, srcCluster, srcProject, dstCluster, srcSaUsername, srcSaTokenCredentialsId,
-    dstSaUsername, dstSaTokenCredentialsId
+    srcImage, dstImage, srcCluster, srcProject, dstCluster, dstProject, srcSaUsername,
+    srcSaTokenCredentialsId, dstSaUsername, dstSaTokenCredentialsId
 ) {
     /* Promotes images from a src OpenShift cluster to a dst OpenShift cluster */
     def srcRegistry = srcCluster.replace("api", "registry")
@@ -533,14 +533,14 @@ def promoteImages(parameters = [:]) {
     def dstImages = parameters.get('dstImages')
     def srcProject = parameters.get('srcProject', "buildfactory")
     def srcCluster = parameters.get('srcCluster', pipelineVars.devCluster)
-    def dstProject = parameters['dstProject']
+    def dstProject = parameters.get('dstProject')
     def dstCluster = parameters.get('dstCluster', pipelineVars.prodCluster)
     def srcSaUsername = parameters.get('srcSaUsername', "jenkins-deployer")
     def srcSaTokenCredentialsId = parameters.get(
         'srcSaTokenCredentialsId', "buildfactoryDeployerToken"
     )
     def dstSaUsername = parameters.get('dstSaUsername', "jenkins-deployer")
-    def dstSaTokenCredentialsId = parameters['dstSaTokenCredentialsId']
+    def dstSaTokenCredentialsId = parameters.get('dstSaTokenCredentialsId')
     def dstQuayUser = parameters.get("dstQuayUser", pipelineVars.quayUser)
     def dstQuayTokenId = parameters.get("dstQuayTokenId", pipelineVars.quayPushCredentialsId)
 
@@ -555,8 +555,13 @@ def promoteImages(parameters = [:]) {
                 dstQuayUser, dstQuayTokenId
             )
         } else {
+            if (!dstProject || !dstSaTokenCredentialsId) {
+                error(
+                    "'dstProject'/'dstSaTokenCredentialsId' must be defined for cluster image copy"
+                )
+            }
             promoteToCluster(
-                srcImage, dstImage, srcCluster, srcProject, dstCluster, srcSaUsername,
+                srcImage, dstImage, srcCluster, srcProject, dstCluster, dstProject, srcSaUsername,
                 srcSaTokenCredentialsId, dstSaUsername, dstSaTokenCredentialsId
             )
         }
