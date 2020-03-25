@@ -459,7 +459,7 @@ def skopeoCopy(parameters = [:]) {
 
 
 private def promoteToCluster(
-    srcImage, dstImage, srcCluster, dstCluster, srcSaUsername, srcSaTokenCredentialsId,
+    srcImage, dstImage, srcCluster, srcProject, dstCluster, srcSaUsername, srcSaTokenCredentialsId,
     dstSaUsername, dstSaTokenCredentialsId
 ) {
     /* Promotes images from a src OpenShift cluster to a dst OpenShift cluster */
@@ -481,7 +481,7 @@ private def promoteToCluster(
 
 
 private def promoteToQuay(
-    srcImage, dstImage, srcCluster, srcSaUsername, srcSaTokenCredentialsId, dstQuayUser,
+    srcImage, dstImage, srcCluster, srcProject, srcSaUsername, srcSaTokenCredentialsId, dstQuayUser,
     dstQuayTokenId
 ) {
     /* Promotes images from a src OpenShift cluster to quay */
@@ -551,13 +551,13 @@ def promoteImages(parameters = [:]) {
         def dstImage = dstImages[i]
         if (dstImage.startsWith(pipelineVars.quayBaseUri)) {
             promoteToQuay(
-                srcImage, dstImage, srcCluster, srcSaUsername, srcSaTokenCredentialsId, dstQuayUser,
-                dstQuayTokenId
+                srcImage, dstImage, srcCluster, srcProject, srcSaUsername, srcSaTokenCredentialsId,
+                dstQuayUser, dstQuayTokenId
             )
         } else {
             promoteToCluster(
-                srcImage, dstImage, srcCluster, dstCluster, srcSaUsername, srcSaTokenCredentialsId,
-                dstSaUsername, dstSaTokenCredentialsId
+                srcImage, dstImage, srcCluster, srcProject, dstCluster, srcSaUsername,
+                srcSaTokenCredentialsId, dstSaUsername, dstSaTokenCredentialsId
             )
         }
     }
