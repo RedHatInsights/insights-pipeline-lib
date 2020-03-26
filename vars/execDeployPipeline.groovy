@@ -15,8 +15,8 @@ private def getParamNameForSvcKey(String key, Map svcData) {
 
 
 private def getJobParams(envs, svcs) {
-    // Set up the job parameters
-    p = []
+    // Set up the job parameters for the job by reading the 'envs' and 'svcs' config
+    def p = []
     svcs.each { key, data ->
         def paramName = getParamNameForSvcKey(key, data)
         def displayName = data.get('displayName', "${key.toString()}")
@@ -27,7 +27,7 @@ private def getJobParams(envs, svcs) {
         ])
     }
 
-    choices = []
+    def choices = []
     envs.each { key, data ->
         choices.add(data['env'])
     }
@@ -46,28 +46,54 @@ private def getJobParams(envs, svcs) {
 }
 
 
-// Parse the selected parameters when the job is run
 private def parseParams(envs, svcs) {
-    imagesToCopy = []
+    // Parse the selected parameters when the job is run
+    def selectedEnv = params.ENV
+    def imagesToCopy = [:]  // a list of Maps with key = srcImage, value = dstImage
+    def servicesToSkip = envs[selectedEnv].get('skip', [])
+    def boxesChecked = []
+
     echo "Job params: ${params.toString()}"
 
-    servicesToSkip = envs[params.ENV].get('skip', [])
     svcs.each { key, data ->
-        paramName = getParamNameForSvcKey(key, data)
+        def paramName = getParamNameForSvcKey(key, data)
         echo "Checking if ${paramName} is checked and should be deployed..."
-        boxChecked = params.get(paramName.toString())
-        promoteImageOnly = data.get('promoteImageOnly')
-        disableImageCopy = data.get('disableImageCopy')
-        copyImages = envs[params.ENV]['copyImages']
-        deployServices = envs[params.ENV]['deployServices']
+        def boxChecked = params.get(paramName.toString())
+        def promoteImageOnly = data.get('promoteImageOnly')
+        def disableImageCopy = data.get('disableImageCopy')
+        def copyImages = envs[selectedEnv]['copyImages']
+        def deployServices = envs[selectedEnv]['deployServices']
 
         echo(
             "${key} boxChecked: ${boxChecked}, promoteImageOnly: ${promoteImageOnly}, " +
             "disableImageCopy: ${disableImageCopy}"
         )
 
+        if (boxChecked) boxesChecked.add(data.get("displayName").toString())
+
         // if the service was checked, add its image to the list of images we will copy
-        if (copyImages && !disableImageCopy && boxChecked) imagesToCopy.add(data['srcImage'])
+        if (copyImages && !disableImageCopy && boxChecked) {
+            // srcImage can be a Map or a string
+            def srcImage = data['srcImage']
+            if (srcImage instanceof Map) {
+                srcImage = srcImage.get(selectedEnv)
+                if (!srcImage) error(
+                    "No srcImage configured for svc '${key}' for env name '${selectedEnv}'"
+                )
+            }
+
+            // dstImage is optional, if not defined it is the same as srcImage
+            // it can also be a Map or a string
+            def dstImage = data.get('dstImage', srcImage)
+            if (dstImage instanceof Map) {
+                dstImage = dstImage.get(selectedEnv)
+                if (!dstImage) error(
+                    "No dstImage configured for svc '${key}' for env name '${selectedEnv}'"
+                )
+            }
+
+            imagesToCopy[srcImage] = dstImage
+        }
 
         // if a service was not checked, add it to the list of services to skip, but only
         // if 'promoteImageOnly' is false (because in that case deployment doesn't apply
@@ -78,10 +104,11 @@ private def parseParams(envs, svcs) {
     }
 
     return [
-        envConfig: envs[params.ENV],
+        envConfig: envs[selectedEnv],
         imagesToCopy: imagesToCopy,
         servicesToSkip: servicesToSkip,
-        deployServices: envs[params.ENV]['deployServices']
+        deployServices: envs[selectedEnv]['deployServices'],
+        boxesChecked: boxesChecked.size() == svcs.size() ? ["all"] : boxesChecked
     ]
 }
 
@@ -100,16 +127,27 @@ def runDeploy(parsed) {
 
     openShiftUtils.withNode(image: "jenkins-deploy-slave:latest") {
         pipelineUtils.stageIf(imagesToCopy, 'Copy images') {
+            // 'imagesToCopy' is a list of Maps, generate the args we need for promoteImages
+            def srcImages = []
+            def dstImages = []
+            parsed['imagesToCopy'].each { srcImage, dstImage ->
+                srcImages.add(srcImage)
+                dstImages.add(dstImage)
+            }
+
             deployUtils.promoteImages(
-                srcImages: parsed['imagesToCopy'],
+                srcImages: srcImages,
+                dstImages: dstImages,
                 dstProject: envConfig['project'],
                 dstSaUsername: envConfig['saUsername'],
                 dstSaTokenCredentialsId: envConfig['saTokenCredentialsId'],
-                dstCluster: envConfig['cluster']
+                dstCluster: envConfig['cluster'],
+                dstQuayUser: envConfig.get("dstQuayUser", pipelineVars.quayUser),
+                dstQuayTokenId: envConfig.get("dstQuayTokenId", pipelineVars.quayPushCredentialsId),
             )
         }
 
-        stage('Login as deployer account') {
+        pipelineUtils.stageIf(deployServices, 'Login as deployer account') {
             withCredentials([
                 string(credentialsId: envConfig['saTokenCredentialsId'], variable: 'TOKEN')
             ]) {
@@ -166,13 +204,14 @@ def call(p = [:]) {
 
     def envName = parsed['envConfig']['env']
     def verboseNotifications = parsed['envConfig'].get('verboseNotifications', true)
+    def boxesChecked = parsed['boxesChecked'].join(", ")
 
     if (verboseNotifications) {
         slackUtils.sendMsg(
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "info",
-            msg: "started for env *${envName}*"
+            msg: "started for env *${envName}* (selected components: ${boxesChecked})"
         )
     }
 
@@ -183,7 +222,7 @@ def call(p = [:]) {
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "failure",
-            msg: "failed for env *${envName}*",
+            msg: "failed for env *${envName}* (selected components: ${boxesChecked})",
         )
         throw err
     }
@@ -193,7 +232,7 @@ def call(p = [:]) {
             slackChannel: slackChannel,
             slackUrl: slackUrl,
             result: "success",
-            msg: "successful for env *${envName}*"
+            msg: "successful for env *${envName}* (selected components: ${boxesChecked})"
         )
     }
 }
