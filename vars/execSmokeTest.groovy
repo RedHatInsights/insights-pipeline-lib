@@ -174,11 +174,6 @@ private def runPipeline(
         pytestMarker = [pytestMarker]
     }
     
-    def markerArgs = " "
-    pytestMarker.each { marker ->
-        markerArgs += "-m ${marker} "
-    }
-    
     stage("Run tests (pytest markers: ${pytestMarker})") {
         extraEnvVars.each { key, val ->
             sh "export ${key}=${val}"
@@ -186,7 +181,7 @@ private def runPipeline(
 
         // tee the output -- the 'junit' step later will change build status if any tests fail
         iqeCommand = (
-            "iqe tests all --junitxml=junit.xml -s -v ${markerArgs} --log-file=iqe.log " +
+            "iqe tests all --junitxml=junit.xml -s -v -m \"${pytestMarker.join(" or ")}\" --log-file=iqe.log " +
             "--log-file-level=DEBUG 2>&1 | tee pytest-stdout.log"
         )
 
