@@ -82,12 +82,14 @@ private def deployEnvironment(
             sh "cat env/custom-env.yml"
 
             // Deploy the builder for only this app to build the PR image in this project
-            def pickArg = ocDeployerBuilderPath.contains("/") ? "-p" : "-s"
-            sh(
-                "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
-                "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
-                "-e smoke ${project} --secrets-src-project secrets"
-            )
+            stage("Deploy buildConfig") {
+                def pickArg = ocDeployerBuilderPath.contains("/") ? "-p" : "-s"
+                sh(
+                    "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
+                    "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
+                    "-e smoke ${project} --secrets-src-project secrets"
+                )
+            }
 
             // Deploy the other service sets
             for (serviceSet in ocDeployerServiceSets.split(',')) {
