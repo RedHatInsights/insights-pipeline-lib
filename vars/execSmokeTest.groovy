@@ -92,7 +92,6 @@ private def deployEnvironment(
             writeFile file: "env/custom-env.yml", text: customAppYaml
             sh "cat env/custom-env.yml"
 
-
             for (serviceSet in ocDeployerServiceSets.split(',')) {
                 deployTasks["Deploy ${serviceSet}"] = {
                     sh(
