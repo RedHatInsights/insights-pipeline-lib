@@ -91,9 +91,10 @@ private def deployEnvironment(
 
             // Deploy the other service sets
             for (serviceSet in ocDeployerServiceSets.split(',')) {
+                def set = serviceSet // https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
                 deployTasks["Deploy ${serviceSet}"] = {
                     sh(
-                        "ocdeployer deploy -w -f -l e2esmoke=true -s ${serviceSet} " +
+                        "ocdeployer deploy -w -f -l e2esmoke=true -s ${set} " +
                         "-e custom-env -e smoke ${project} --secrets-src-project secrets"
                     )
                 }
