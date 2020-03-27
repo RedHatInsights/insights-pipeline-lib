@@ -56,6 +56,8 @@ private def deployEnvironment(
      */
     stage("Deploy test environment") {
         dir(pipelineVars.e2eDeployDir) {
+            def deployTasks = [:]
+
             // Deploy the builder for only this app to build the PR image in this project
             def builderTask = {
                 def customBuildYaml = (
@@ -74,31 +76,34 @@ private def deployEnvironment(
                     "-e smoke ${project} --secrets-src-project secrets"
                 )
             }
+            
+            deployTasks["Deploy buildConfig"] = builderTask
 
             // Also deploy the test env apps, but set the image for the PR app to be pulled
             // from this local project instead of buildfactory
-            def serviceTask = {
-                def customAppYaml = (
-                    """
-                    "${ocDeployerComponentPath}":
-                        parameters:
-                            IMAGE_NAMESPACE: ${project}
-                            IMAGE_TAG: latest
-                    """
-                ).stripIndent()
-                writeFile file: "env/custom-env.yml", text: customAppYaml
-                sh "cat env/custom-env.yml"
-                sh(
-                    "ocdeployer deploy -w -f -l e2esmoke=true -s ${ocDeployerServiceSets} " +
-                    "-e custom-env -e smoke ${project} --secrets-src-project secrets"
-                )
+            def customAppYaml = (
+                """
+                "${ocDeployerComponentPath}":
+                    parameters:
+                        IMAGE_NAMESPACE: ${project}
+                        IMAGE_TAG: latest
+                """
+            ).stripIndent()
+            writeFile file: "env/custom-env.yml", text: customAppYaml
+            sh "cat env/custom-env.yml"
+
+
+            for (serviceSet in ocDeployerServiceSets.split(',')) {
+                deployTasks["Deploy ${serviceSet}"] = {
+                    sh(
+                        "ocdeployer deploy -w -f -l e2esmoke=true -s ${serviceSet} " +
+                        "-e custom-env -e smoke ${project} --secrets-src-project secrets"
+                    )
+                }
             }
 
             // Run the deployments in parallel
-            parallel([
-                "Deploy custom buildConfig": builderTask,
-                "Deploy service sets: ${ocDeployerServiceSets}": serviceTask
-            ])
+            parallel(deployTasks)
         }
     }
 }
