@@ -58,29 +58,18 @@ private def deployEnvironment(
         dir(pipelineVars.e2eDeployDir) {
             def deployTasks = [:]
 
-            // Deploy the builder for only this app to build the PR image in this project
-            def builderTask = {
-                def customBuildYaml = (
-                    """
-                    "${ocDeployerBuilderPath}":
-                        parameters:
-                            SOURCE_REPOSITORY_REF: ${refSpec}
-                    """
-                ).stripIndent()
-                writeFile file: "env/builder-env.yml", text: customBuildYaml
-                sh "cat env/builder-env.yml"
-                def pickArg = ocDeployerBuilderPath.contains("/") ? "-p" : "-s"
-                sh(
-                    "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
-                    "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
-                    "-e smoke ${project} --secrets-src-project secrets"
-                )
-            }
-            
-            deployTasks["Deploy buildConfig"] = builderTask
+            // deploy custom build config that points to this app's PR code
+            def customBuildYaml = (
+               """
+                "${ocDeployerBuilderPath}":
+                    parameters:
+                        SOURCE_REPOSITORY_REF: ${refSpec}
+                """
+            ).stripIndent()
+            writeFile file: "env/builder-env.yml", text: customBuildYaml
+            sh "cat env/builder-env.yml"
 
-            // Also deploy the test env apps, but set the image for the PR app to be pulled
-            // from this local project instead of buildfactory
+            // set image for the PR app to be pulled from this local namespace
             def customAppYaml = (
                 """
                 "${ocDeployerComponentPath}":
@@ -92,6 +81,15 @@ private def deployEnvironment(
             writeFile file: "env/custom-env.yml", text: customAppYaml
             sh "cat env/custom-env.yml"
 
+            // Deploy the builder for only this app to build the PR image in this project
+            def pickArg = ocDeployerBuilderPath.contains("/") ? "-p" : "-s"
+            sh(
+                "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
+                "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
+                "-e smoke ${project} --secrets-src-project secrets"
+            )
+
+            // Deploy the other service sets
             for (serviceSet in ocDeployerServiceSets.split(',')) {
                 deployTasks["Deploy ${serviceSet}"] = {
                     sh(
@@ -101,7 +99,7 @@ private def deployEnvironment(
                 }
             }
 
-            // Run the deployments in parallel
+            // Run the service deployments in parallel
             parallel(deployTasks)
         }
     }
@@ -234,8 +232,8 @@ private def allocateResourcesAndRun(
             image: pipelineVars.iqeCoreImage,
             namespace: env.PROJECT,
             envVars: envVars,
-            limitCpu: '1',
-            limitMemory: '2Gi'
+            resourceLimitCpu: '1',
+            resourceLimitMemory: '2Gi'
         ) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
