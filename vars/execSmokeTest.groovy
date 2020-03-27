@@ -84,10 +84,11 @@ private def deployEnvironment(
             // Deploy the builder for only this app to build the PR image in this project
             stage("Deploy buildConfig") {
                 def pickArg = ocDeployerBuilderPath.contains("/") ? "-p" : "-s"
+                // use --scale-resources to beef up the build resources to help the app build quickly
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
                     "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
-                    "-e smoke ${project} --secrets-src-project secrets"
+                    "-e smoke ${project} --scale-resources 3 --secrets-src-project secrets"
                 )
             }
 
