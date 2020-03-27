@@ -88,7 +88,7 @@ private def deployEnvironment(
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
                     "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
-                    "-e smoke ${project} --scale-resources 3 --secrets-src-project secrets"
+                    "-e smoke ${project} --scale-resources 2 --secrets-src-project secrets"
                 )
             }
 
