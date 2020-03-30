@@ -32,14 +32,14 @@ import groovy.transform.Field
     inventory: "/ops/deployInventory",
     marketplace: "/ops/deployMarketplace",
     mnm: "/ops/deployMnm",
-    patchman: "/ops/deployPatchman",
+    //patchman: "/ops/deployPatchman",
     "payload-tracker": "/ops/deployPayloadTracker",
     rbac: "/ops/deployRbac",
     sources: "/ops/deploySources",
     subscriptions: "/ops/deploySubscriptions",
     "system-baseline": "/ops/deployBaseline",
     "topological-inventory": "/ops/deployTopologicalInventory",
-    vmaas: "/ops/deployVmaas",
+    //vmaas: "/ops/deployVmaas",
     vulnerability: "/ops/deployVulnerability",
 ]
 
