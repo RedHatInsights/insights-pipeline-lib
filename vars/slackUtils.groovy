@@ -69,3 +69,15 @@ def sendMsg(parameters = [:]) {
         message: txt
     )
 }
+
+
+def sendTestsFailedSlackMsg(failedPlugins, slackChannel, slackUrl) {
+    mentionsString = ""
+    for (plugin in failedPlugins) {
+        def slackNames = plugin.collect { "<$it>" }.join(" ")
+        if (!slackNames) slackNames = ["(no users set for plugin)"]
+        mentionsString += "\n* ${plugin}: ${slackNames}"
+    }
+    msg = "tests failed for plugins:\n${mentionsString}"
+    sendMsg(slackChannel: slackChannel, slackUrl: slackUrl, msg: msg, result: "failure")
+}
