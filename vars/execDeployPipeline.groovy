@@ -219,7 +219,7 @@ def call(p = [:]) {
         runDeploy(parsed)
     } catch (err) {
         slackUtils.sendMsg(
-            slackChannel: slackChannel,
+            slackChannel: [slackChannel, pipelineVars.slackDeployAlertsChannel],
             slackUrl: slackUrl,
             result: "failure",
             msg: "failed for env *${envName}* (selected components: ${boxesChecked})",

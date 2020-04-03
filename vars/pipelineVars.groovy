@@ -35,6 +35,7 @@ class pipelineVars implements Serializable {
 
     String slackDefaultUrl = 'https://ansible.slack.com/services/hooks/jenkins-ci/'
     String slackDefaultChannel = '#insights-qe-feed'
+    String slackDeployAlertsChannel = "#deploy-alerts"
 
     String quayBaseUri = 'quay.io/cloudservices'
     String quayUser = "cloudservices+push"

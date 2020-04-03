@@ -61,11 +61,15 @@ def sendMsg(parameters = [:]) {
     txt = msgPrefix[result]
     txt += stage ? " stage: ${stage} " : " "
     txt += msg ? msg : defaultMsg()
-    slackSend(
-        baseUrl: slackUrl,
-        botUser: true,
-        channel: slackChannel,
-        color: color ? color : colorMap[result],
-        message: txt
-    )
-}
+
+    if (slackChannel instanceof String) slackChannel = [slackChannel]
+
+    slackChannel.each { channel ->
+        slackSend(
+            baseUrl: slackUrl,
+            botUser: true,
+            channel: channel,
+            color: color ? color : colorMap[result],
+            message: txt
+        )
+    }
