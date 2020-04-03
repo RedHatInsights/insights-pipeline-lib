@@ -73,3 +73,4 @@ def sendMsg(parameters = [:]) {
             message: txt
         )
     }
+}
