@@ -40,7 +40,7 @@ private def getRefSpec() {
 
 
 private def deployEnvironment(
-    refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets
+    refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets, buildScaleFactor
 ) {
     /**
      * Pipeline stages for running ocdeployer.
@@ -88,7 +88,7 @@ private def deployEnvironment(
                 sh(
                     "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
                     "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
-                    "-e smoke ${project} --scale-resources 2 --secrets-src-project secrets"
+                    "-e smoke ${project} --scale-resources ${buildScaleFactor} --secrets-src-project secrets"
                 )
             }
 
@@ -113,7 +113,7 @@ private def deployEnvironment(
 private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
-    String configFileCredentialsId
+    String configFileCredentialsId, int buildScaleFactor
 ) {
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
 
@@ -151,7 +151,7 @@ private def runPipeline(
 
     try {
         deployEnvironment(
-            refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets
+            refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets, buildScaleFactor
         )
     } catch (err) {
         echo("Hit error during deploy!")
@@ -220,7 +220,7 @@ private def runPipeline(
 private def allocateResourcesAndRun(
     String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
-    String configFileCredentialsId
+    String configFileCredentialsId, int buildScaleFactor
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
@@ -237,7 +237,7 @@ private def allocateResourcesAndRun(
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                 ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars,
-                configFileCredentialsId
+                configFileCredentialsId, buildScaleFactor
             )
         }
     }
@@ -265,6 +265,7 @@ def call(p = [:]) {
     def iqePlugins = p.get('iqePlugins')
     def extraEnvVars = p.get('extraEnvVars', [:])
     def configFileCredentialsId = p.get('configFileCredentialsId', "")
+    def buildScaleFactor = p.get('buildScaleFactor', 2)
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
@@ -285,7 +286,7 @@ def call(p = [:]) {
         gitUtils.withStatusContext("e2e-smoke") {
             allocateResourcesAndRun(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId
+                pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
@@ -296,7 +297,7 @@ def call(p = [:]) {
         def refSpec = params["GIT_REF"]
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId
+            pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor
         )
     }
 }
