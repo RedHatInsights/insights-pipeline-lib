@@ -265,7 +265,7 @@ def call(p = [:]) {
     def iqePlugins = p.get('iqePlugins')
     def extraEnvVars = p.get('extraEnvVars', [:])
     def configFileCredentialsId = p.get('configFileCredentialsId', "")
-    def buildScaleFactor = p.get('buildScaleFactor', 2)
+    def buildScaleFactor = p.get('buildScaleFactor', 1)
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
