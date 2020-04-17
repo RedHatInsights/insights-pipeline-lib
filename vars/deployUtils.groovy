@@ -22,7 +22,8 @@ import groovy.transform.Field
     "buck-it": "/ops/deployBuckIt",
     catalog: "/ops/deployCatalog",
     "ccx-data-pipeline": "/ops/deployCCX",
-    cloudigrade: "/ops/deployCloudigrade",
+    // temporarily disable cloudigrade
+    //cloudigrade: "/ops/deployCloudigrade",
     compliance: "/ops/deployCompliance",
     policies: "/ops/deployPolicies",
     drift: "/ops/deployDrift",
