@@ -127,6 +127,9 @@ private def runPipeline(
             repoUrl: pipelineVars.e2eDeployRepo,
             credentialsId: "InsightsDroidGitHubHTTP"
         )
+        dir(pipelineVars.e2eDeployDir) {
+            sh "pip install -r requirements.txt"
+        }
     }
 
     pipelineUtils.stageIf(iqePlugins, "Install plugins") {
