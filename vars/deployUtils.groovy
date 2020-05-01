@@ -236,9 +236,10 @@ def getDeployTask(parameters = [:]) {
     def extraJobParameters = parameters.get('extraJobParameters', [])
     jobParameters.addAll(extraJobParameters)
 
-    def buildJob = deployJobs[setToDeploy]
     def closure
-    if (remote) closure = getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHostname)
+    def buildJob = deployJobs.get(setToDeploy)
+    if (!buildJob) closure = { echo "Unable to find entry in deployJobs for service set ${setToDeploy} }
+    else if (remote) closure = getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHostname)
     else closure = { build job: buildJob, parameters: jobParameters }
 
     echo(
