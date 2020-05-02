@@ -12,7 +12,7 @@ Required Jenkins plugins:
  * Kubernetes Plugin
  * Pipeline Utility Steps Plugin
  * HTTP Request Plugin
- * Parametrized Remote Job Trigger Plugin (custom fork -- https://github.com/bsquizz/parameterized-remote-trigger-plugin -- you'll need to 'mvn compile' and load the `.hpi` via the `Manage Plugins -> Advanced` page). This is for remote triggering on a jenkins master with Open Shift auth enabled (which requires a Bearer token matching an Open Shift user's login token). Note that CSRF checking will need to be disabled for this to work due to https://github.com/openshift/jenkins-openshift-login-plugin/issues/47
+ * Parametrized Remote Job Trigger Plugin
 
 For `openShift.withNode`, add a 'jenkins' service account to the namespace and give it "Edit" access. Also add your service
 account used by Jenkins in the namespace it is deployed to as an editor (e.g.: "jenkins" svc account from the "jenkins" namespace should also be an editor)
