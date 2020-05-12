@@ -113,7 +113,7 @@ private def deployEnvironment(
 private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
-    String configFileCredentialsId, int parallelWorkerCount
+    String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount
 ) {
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
 
