@@ -190,7 +190,7 @@ private def runPipeline(
         )
         iqeParallelCommand = (
             "iqe tests all --junitxml=junit-parallel.xml -s -v " +
-            "-m \"parallel and (${pytestMarker.join(" or ")})\" -n ${parallelWorkerCount}" +
+            "-m \"parallel and (${pytestMarker.join(" or ")})\" -n ${parallelWorkerCount} " +
             "--log-file=iqe-parallel.log --log-file-level=DEBUG 2>&1 " +
             "| tee pytest-stdout-parallel.log"
         )
@@ -277,7 +277,7 @@ def call(p = [:]) {
     def extraEnvVars = p.get('extraEnvVars', [:])
     def configFileCredentialsId = p.get('configFileCredentialsId', "")
     def buildScaleFactor = p.get('buildScaleFactor', 1)
-    def parallelWorkerCount = p.get('parallelWorkerCount', 3)
+    def parallelWorkerCount = p.get('parallelWorkerCount', 2)
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
