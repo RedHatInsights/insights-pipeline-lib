@@ -113,7 +113,7 @@ private def deployEnvironment(
 private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
-    String configFileCredentialsId, int buildScaleFactor
+    String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount
 ) {
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
 
@@ -184,10 +184,16 @@ private def runPipeline(
 
         // tee the output -- the 'junit' step later will change build status if any tests fail
         iqeCommand = (
-            "iqe tests all --junitxml=junit.xml -s -v -m \"${pytestMarker.join(" or ")}\" --log-file=iqe.log " +
-            "--log-file-level=DEBUG 2>&1 | tee pytest-stdout.log"
+            "iqe tests all --junitxml=junit.xml -s -v " +
+            "-m \"not parallel and (${pytestMarker.join(" or ")})\" " +
+            "--log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log"
         )
-
+        iqeParallelCommand = (
+            "iqe tests all --junitxml=junit-parallel.xml -s -v " +
+            "-m \"parallel and (${pytestMarker.join(" or ")})\" -n ${parallelWorkerCount} " +
+            "--log-file=iqe-parallel.log --log-file-level=DEBUG 2>&1 " +
+            "| tee pytest-stdout-parallel.log"
+        )
         sh(
             """
             export DYNACONF_OCPROJECT=${project}
@@ -195,12 +201,13 @@ private def runPipeline(
 
             set +e
             ${iqeCommand}
+            ${iqeParallelCommand}
             set -e
             """.stripIndent()
         )
         try {
-            archiveArtifacts "pytest-stdout.log"
-            archiveArtifacts "iqe.log"
+            archiveArtifacts "pytest-stdout*.log"
+            archiveArtifacts "iqe*.log"
         } catch (err) {
             echo "Error archiving log files: ${err.toString()}"
         }
@@ -213,6 +220,7 @@ private def runPipeline(
     }
 
     junit "junit.xml"
+    junit "junit-parallel.xml"
 
     if (currentBuild.result != "SUCCESS") {
         error("Smoke test failed");
@@ -223,7 +231,7 @@ private def runPipeline(
 private def allocateResourcesAndRun(
     String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
-    String configFileCredentialsId, int buildScaleFactor
+    String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
@@ -240,7 +248,7 @@ private def allocateResourcesAndRun(
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                 ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars,
-                configFileCredentialsId, buildScaleFactor
+                configFileCredentialsId, buildScaleFactor, parallelWorkerCount
             )
         }
     }
@@ -269,6 +277,7 @@ def call(p = [:]) {
     def extraEnvVars = p.get('extraEnvVars', [:])
     def configFileCredentialsId = p.get('configFileCredentialsId', "")
     def buildScaleFactor = p.get('buildScaleFactor', 1)
+    def parallelWorkerCount = p.get('parallelWorkerCount', 2)
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
@@ -289,7 +298,8 @@ def call(p = [:]) {
         gitUtils.withStatusContext("e2e-smoke") {
             allocateResourcesAndRun(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor
+                pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
+                parallelWorkerCount
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
@@ -300,7 +310,8 @@ def call(p = [:]) {
         def refSpec = params["GIT_REF"]
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor
+            pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
+            parallelWorkerCount
         )
     }
 }
