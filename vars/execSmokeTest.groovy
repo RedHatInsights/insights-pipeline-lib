@@ -184,7 +184,7 @@ private def runPipeline(
 
         // tee the output -- the 'junit' step later will change build status if any tests fail
         iqeCommand = (
-            "iqe tests all --junitxml=junit.xml -s -v " +
+            "iqe tests all --junitxml=junit-sequential.xml -s -v " +
             "-m \"not parallel and (${pytestMarker.join(" or ")})\" " +
             "--log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log"
         )
@@ -219,8 +219,7 @@ private def runPipeline(
         sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
-    junit "junit.xml"
-    junit "junit-parallel.xml"
+    junit "junit-*.xml"
 
     if (currentBuild.result != "SUCCESS") {
         error("Smoke test failed");
