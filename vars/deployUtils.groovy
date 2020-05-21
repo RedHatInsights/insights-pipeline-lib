@@ -25,7 +25,6 @@ import groovy.transform.Field
     compliance: "/ops/deployCompliance",
     policies: "/ops/deployPolicies",
     drift: "/ops/deployDrift",
-    engine: "/ops/deployEngine",
     hccm: "/ops/deployHccm",
     ingress: "/ops/deployIngress",
     inventory: "/ops/deployInventory",
