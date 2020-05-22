@@ -139,13 +139,6 @@ def prepareStages(appConfigs) {
                 envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
             ]
 
-            IntConsumer withNodeFunc
-            if (ui) {
-                withNodeFunc = openShiftUtils::withUINode
-            } else {
-                withNodeFunc = openShiftUtils::withNode
-            }
-
             def withNodeParams = [envVars: envVars, image: pipelineVars.iqeCoreImage]
             withNodeSelector(withNodeParams, ui) {
                 if (!envName) error("No env specified")
