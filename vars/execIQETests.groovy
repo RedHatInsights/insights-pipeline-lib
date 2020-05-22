@@ -25,9 +25,10 @@ def call(args = [:]) {
     p.add(
         [
             $class: 'BooleanParameterDefinition',
-            name: "reload", defaultValue: true, description: "Reload the job's config and quit"
+            name: "reload", defaultValue: false, description: "Reload the job's config and quit"
         ]
     )
+
     // Add a dropdown to select env
     p.add(
         [
@@ -37,15 +38,17 @@ def call(args = [:]) {
             description: "The target environment to run tests against"
         ]
     )
+
     // Add checkboxes for each app name, checked by default
-    appConfigs.each { name, appConfig ->
+    appConfigs.each { appName, appConfig ->
         p.add(
             [
                 $class: 'BooleanParameterDefinition',
-                name: name, defaultValue: true, description: name
+                name: appName, defaultValue: true, description: "Run tests for ${appName}"
             ]
         )
     }
+
     // Add text field for test markers
     p.add(
         [
