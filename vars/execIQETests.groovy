@@ -5,11 +5,13 @@
  * - When the job is built, it will run iqe tests for each "app" in parallel.
  * - Within each app, the given plugins will be installed and tests run in sequential order
  * - 'ui' indicates whether the tests require selenium, if so, a UI pod is spun up (default: false)
+ * - 'settingsFileCredentialsId' sets the settings file secret to load for that plugin
+ *      (if unset, uses "${envName}IQESettingsYaml")
  * - Return the parallel stage run results to the caller
  *
  * @param appConfigs Map with the following format:
  *      ["app1": ["plugins": ["plugin1", "plugin2"], "ui": true]
- *      "app2": ["plugins": ["plugin3"], "ui": false]]
+ *      "app2": ["plugins": ["plugin3"], "ui": false, "settingsFileCredentialsId": "mySettings"]]
  * @param envs String[] of env names
  * @param marker String with default marker expression (optional, if blank "envName" is used)
  *
@@ -112,6 +114,9 @@ def prepareStages(appConfigs) {
         def appConfig = v
         def plugins = appConfig['plugins']
         def ui = appConfig.get('ui', false)
+        def settingsFileCredentialsId = appConfig.get(
+            'settingsFileCredentialsId', "${envName}IQESettingsYaml"
+        )
         def pluginErrors = [:]
 
         stages[app] = {
@@ -125,7 +130,7 @@ def prepareStages(appConfigs) {
 
                 stage("Inject credentials") {
                     withCredentials(
-                        [file(credentialsId: "${envName}IQESettingsYaml", variable: "YAML_FILE")]
+                        [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
                     ) {
                         sh "mkdir -p \$IQE_TESTS_LOCAL_CONF_PATH"
                         sh "cp \$YAML_FILE \$IQE_TESTS_LOCAL_CONF_PATH"
