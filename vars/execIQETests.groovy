@@ -4,14 +4,14 @@
  *      for the listed envs
  * - When the job is built, it will run iqe tests for each "app" in parallel.
  * - Within each app, the given plugins will be installed and tests run in sequential order
- * - 'ui' indicates whether the tests require selenium, if so, a UI pod is spun up (default: true)
+ * - 'ui' indicates whether the tests require selenium, if so, a UI pod is spun up (default: false)
  * - Return the parallel stage run results to the caller
  *
  * @param appsConfig Map with the following format:
  *      ["app1": ["plugins": ["plugin1", "plugin2"], "ui": true]
  *      "app2": ["plugins": ["plugin3"], "ui": false]]
  * @param envs String[] of env names
- * @param marker String with default marker expression (optional, if blank "-m envName" is used)
+ * @param marker String with default marker expression (optional, if blank "envName" is used)
  *
  * returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
@@ -38,7 +38,7 @@ def call(args = [:]) {
         ]
     )
     // Add checkboxes for each app name, checked by default
-    appsConfig.each { name, appConfig
+    appsConfig.each { name, appConfig ->
         p.add(
             [
                 $class: 'BooleanParameterDefinition',
@@ -51,7 +51,7 @@ def call(args = [:]) {
         [
             $class: 'StringParameterDefinition',
             name: "marker", defaultValue: defaultMarker ? defaultMarker : "",
-            description: "Enter pytest marker expression, leave blank to use '-m <envName>'"
+            description: "Enter pytest marker expression, leave blank to use '<envName>'"
         ]
     )
 
