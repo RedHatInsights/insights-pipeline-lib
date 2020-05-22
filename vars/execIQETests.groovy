@@ -38,7 +38,7 @@ def call(args = [:]) {
         ]
     )
     // Add checkboxes for each app name, checked by default
-    appsConfig.each { name, appConfig ->
+    appConfigs.each { name, appConfig ->
         p.add(
             [
                 $class: 'BooleanParameterDefinition',
