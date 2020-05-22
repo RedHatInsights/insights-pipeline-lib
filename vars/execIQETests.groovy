@@ -55,6 +55,8 @@ def call(args = [:]) {
         ]
     )
 
+    properties([parameters(p)])
+
     // Exit the job if the "reload" box was checked
     if (params.reload) {
         echo "Job is only reloading"
