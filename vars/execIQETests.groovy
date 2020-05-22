@@ -25,7 +25,7 @@ def call(args = [:]) {
     p.add(
         [
             $class: 'BooleanParameterDefinition',
-            name: "reload", defaultValue: true, description: name
+            name: "reload", defaultValue: true, description: "Reload the job's config and quit"
         ]
     )
     // Add a dropdown to select env
