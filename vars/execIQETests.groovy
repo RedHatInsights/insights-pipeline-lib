@@ -17,6 +17,9 @@
  *
  * returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
+import java.util.function.IntConsumer
+
+
 def call(args = [:]) {
     def appConfigs = args['appConfigs']
     def envs = args['envs']
@@ -124,7 +127,7 @@ def prepareStages(appConfigs) {
                 envVar(key: 'ENV_FOR_DYNACONF', value: envName),
                 envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
             ]
-            def withNodeFunc = ui ? openShiftUtils.withUINode : openShiftUtils.withNode
+            IntConsumer withNodeFunc = ui ? openShiftUtils::withUINode : openShiftUtils::withNode
             withNodeFunc(envVars: envVars, image: pipelineVars.iqeCoreImage) {
                 if (!envName) error("No env specified")
 
