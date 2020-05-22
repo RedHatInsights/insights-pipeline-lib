@@ -17,9 +17,6 @@
  *
  * returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
-import java.util.function.IntConsumer
-
-
 def call(args = [:]) {
     def appConfigs = args['appConfigs']
     def envs = args['envs']
@@ -106,6 +103,20 @@ def call(args = [:]) {
 }
 
 
+def withNodeSelector(Map parameters = [:], Boolean ui, Closure body) {
+    /* A wrapper that selects a different closure based on if 'ui' is true or false */
+    if (ui) {
+        openShiftUtils.withUINode(parameters) {
+            body()
+        }
+    } else {
+        openShiftUtils.withNode(parameters) {
+            body()
+        }   
+    }
+}
+
+
 def prepareStages(appConfigs) {
     def stages = [:]
     def envName = params.env
@@ -132,10 +143,11 @@ def prepareStages(appConfigs) {
             if (ui) {
                 withNodeFunc = openShiftUtils::withUINode
             } else {
-                openShiftUtils::withNode
+                withNodeFunc = openShiftUtils::withNode
             }
 
-            withNodeFunc(envVars: envVars, image: pipelineVars.iqeCoreImage) {
+            def withNodeParams = [envVars: envVars, image: pipelineVars.iqeCoreImage]
+            withNodeSelector(withNodeParams, ui) {
                 if (!envName) error("No env specified")
 
                 stage("Inject credentials") {
