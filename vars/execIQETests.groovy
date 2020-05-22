@@ -20,6 +20,7 @@
 def call(args = [:]) {
     def appConfigs = args['appConfigs']
     def envs = args['envs']
+    def cloud = args.get('cloud', pipelineVars.upshiftCloud)
     def defaultMarker = args.get('defaultMarker')
 
     p = []
@@ -80,7 +81,7 @@ def call(args = [:]) {
     // Run the tests
     lock("${params.env}-test") {
         timeout(time: 150, unit: "MINUTES") {
-            results = pipelineUtils.runParallel(prepareStages(appConfigs))
+            results = pipelineUtils.runParallel(prepareStages(appConfigs, cloud))
         }
     }
 
@@ -117,7 +118,7 @@ def withNodeSelector(Map parameters = [:], Boolean ui, Closure body) {
 }
 
 
-def prepareStages(appConfigs) {
+def prepareStages(Map appConfigs, String cloud) {
     def stages = [:]
     def envName = params.env
     def markerArg = params.marker ? "-m \"${params.marker}\"" : "-m ${envName}"
@@ -139,7 +140,11 @@ def prepareStages(appConfigs) {
                 envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
             ]
 
-            def withNodeParams = [envVars: envVars, image: pipelineVars.iqeCoreImage]
+            def withNodeParams = [
+                envVars: envVars,
+                image: pipelineVars.iqeCoreImage,
+                cloud: cloud,
+            ]
             withNodeSelector(withNodeParams, ui) {
                 if (!envName) error("No env specified")
 
