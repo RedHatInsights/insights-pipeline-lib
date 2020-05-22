@@ -7,7 +7,7 @@
  * - 'ui' indicates whether the tests require selenium, if so, a UI pod is spun up (default: false)
  * - Return the parallel stage run results to the caller
  *
- * @param appsConfig Map with the following format:
+ * @param appConfigs Map with the following format:
  *      ["app1": ["plugins": ["plugin1", "plugin2"], "ui": true]
  *      "app2": ["plugins": ["plugin3"], "ui": false]]
  * @param envs String[] of env names
@@ -16,7 +16,7 @@
  * returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
 def call(args = [:]) {
-    def appsConfig = args['appsConfig']
+    def appConfigs = args['appConfigs']
     def envs = args['envs']
     def defaultMarker = args.get('defaultMarker')
 
@@ -96,12 +96,12 @@ def call(args = [:]) {
 }
 
 
-def prepareStages(apps) {
+def prepareStages(appConfigs) {
     def stages = [:]
     def envName = params.env
     def markerArg = params.marker ? "-m \"${params.marker}\"" : "-m ${envName}"
 
-    apps.each{ k, v ->
+    appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
         def app = k
         def appConfig = v
