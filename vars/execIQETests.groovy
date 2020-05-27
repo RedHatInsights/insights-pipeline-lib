@@ -180,12 +180,13 @@ def prepareStages(Map appConfigs, String cloud) {
                             pluginErrors[plugin] = err.getMessage()
                         } finally {
                             archiveArtifacts "${plugin}-iqe.log"
-                            junit "${plugin}-junit.xml"
                         }
                     }
                 }
 
                 stage("Check plugin results") {
+                    junit "*-junit.xml"
+
                     def pluginsFailed = pluginErrors.findAll { it.value != null }
                     def pluginsPassed = pluginErrors.findAll { it.value == null }
 
