@@ -172,27 +172,39 @@ def prepareStages(Map appConfigs, String cloud) {
                     stage("Run ${plugin} integration tests") {
                         try {
                             // run parallel tests
-                            sh(
-                                """
-                                iqe tests plugin ${plugin} -s -v \
-                                --junitxml=junit-${plugin}-parallel.xml \
-                                -m "parallel and (${marker})" -n ${parallelWorkerCount} \
-                                -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
-                                -o ibutsu_source=${env.BUILD_TAG} \
-                                --log-file=iqe-${plugin}-parallel.log --log-file-level=DEBUG 2>&1 \
-                                """.stripIndent()
+                            def status = sh(
+                                script: (
+                                    """
+                                    iqe tests plugin ${plugin} -s -v \
+                                    --junitxml=junit-${plugin}-parallel.xml \
+                                    -m "parallel and (${marker})" -n ${parallelWorkerCount} \
+                                    -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
+                                    -o ibutsu_source=${env.BUILD_TAG} \
+                                    --log-file=iqe-${plugin}-parallel.log --log-file-level=DEBUG 2>&1 \
+                                    """.stripIndent()
+                                ),
+                                returnStatus: true
                             )
+                            // status code 5 means no tests collected, ignore this error.
+                            if (status > 0 && status != 5) error("Parallel test run hit an error")
+
                             // run sequential tests
-                            sh(
-                                """
-                                iqe tests plugin ${plugin} -s -v \
-                                --junitxml=junit-${plugin}-sequential.xml \
-                                -m "not parallel and (${marker})" \
-                                -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
-                                -o ibutsu_source=${env.BUILD_TAG} \
-                                --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
-                                """.stripIndent()
+                            status = sh(
+                                script: (
+                                    """
+                                    iqe tests plugin ${plugin} -s -v \
+                                    --junitxml=junit-${plugin}-sequential.xml \
+                                    -m "not parallel and (${marker})" \
+                                    -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
+                                    -o ibutsu_source=${env.BUILD_TAG} \
+                                    --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
+                                    """.stripIndent()
+                                ),
+                                returnStatus: true
                             )
+                            // status code 5 means no tests collected, ignore this error.
+                            if (status > 0 && status != 5) error("Sequential test run hit an error")
+
                             pluginErrors[plugin] = null  // null == passed
                         } catch (err) {
                             pluginErrors[plugin] = err.getMessage()
@@ -203,6 +215,7 @@ def prepareStages(Map appConfigs, String cloud) {
                 }
 
                 stage("Check plugin results") {
+                    // if no plugins ran any tests, this will fail
                     junit "junit-*.xml"
 
                     def pluginsFailed = pluginErrors.findAll { it.value != null }
