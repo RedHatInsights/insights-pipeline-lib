@@ -7,6 +7,8 @@
  * - 'ui' indicates whether the tests require selenium, if so, a UI pod is spun up (default: false)
  * - 'settingsFileCredentialsId' sets the settings file secret to load for that plugin
  *      (if unset, uses "${envName}IQESettingsYaml")
+ * - 'parallelWorkerCount' defines number of workers for pytest-xdist
+ * - 'extraEnvVars' -- an optional list of envVar objects to set on the test container
  * - Return the parallel stage run results to the caller
  *
  * @param appConfigs Map with the following format:
@@ -121,7 +123,7 @@ def withNodeSelector(Map parameters = [:], Boolean ui, Closure body) {
 def prepareStages(Map appConfigs, String cloud) {
     def stages = [:]
     def envName = params.env
-    def markerArg = params.marker ? "-m \"${params.marker}\"" : "-m ${envName}"
+    def marker = params.marker ? "${params.marker}" : "${envName}"
 
     appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
@@ -129,6 +131,8 @@ def prepareStages(Map appConfigs, String cloud) {
         def appConfig = v
         def plugins = appConfig['plugins']
         def ui = appConfig.get('ui', false)
+        def parallelWorkerCount = appConfig.get('parallelWorkerCount', 2)
+        def extraEnvVars = appConfig.get('extraEnvVars', [])
         def settingsFileCredentialsId = appConfig.get(
             'settingsFileCredentialsId', "${envName}IQESettingsYaml"
         )
@@ -139,6 +143,7 @@ def prepareStages(Map appConfigs, String cloud) {
                 envVar(key: 'ENV_FOR_DYNACONF', value: envName),
                 envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
             ]
+            envVars.addAll(extraEnvVars)
 
             def withNodeParams = [
                 envVars: envVars,
@@ -166,26 +171,39 @@ def prepareStages(Map appConfigs, String cloud) {
 
                     stage("Run ${plugin} integration tests") {
                         try {
+                            // run parallel tests
                             sh(
                                 """
-                                iqe tests plugin ${plugin} -v -s ${markerArg} \
-                                --junitxml=${plugin}-junit.xml \
+                                iqe tests plugin ${plugin} -s -v \
+                                --junitxml=junit-${plugin}-parallel.xml \
+                                -m "parallel and (${marker})" -n ${parallelWorkerCount} \
                                 -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
                                 -o ibutsu_source=${env.BUILD_TAG} \
-                                --log-file=${plugin}-iqe.log
+                                --log-file=iqe-${plugin}-parallel.log --log-file-level=DEBUG 2>&1 \
+                                """.stripIndent()
+                            )
+                            // run sequential tests
+                            sh(
+                                """
+                                iqe tests plugin ${plugin} -s -v \
+                                --junitxml=junit-${plugin}-sequential.xml \
+                                -m "not parallel and (${marker})" \
+                                -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
+                                -o ibutsu_source=${env.BUILD_TAG} \
+                                --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
                                 """.stripIndent()
                             )
                             pluginErrors[plugin] = null  // null == passed
                         } catch (err) {
                             pluginErrors[plugin] = err.getMessage()
                         } finally {
-                            archiveArtifacts "${plugin}-iqe.log"
+                            archiveArtifacts "iqe-*.log"
                         }
                     }
                 }
 
                 stage("Check plugin results") {
-                    junit "*-junit.xml"
+                    junit "junit-*.xml"
 
                     def pluginsFailed = pluginErrors.findAll { it.value != null }
                     def pluginsPassed = pluginErrors.findAll { it.value == null }
