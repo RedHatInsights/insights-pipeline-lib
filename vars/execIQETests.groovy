@@ -120,7 +120,7 @@ def withNodeSelector(Map parameters = [:], Boolean ui, Closure body) {
 }
 
 
-def runIQE(plugin) {
+def runIQE(plugin, marker, parallelWorkerCount) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
      *
@@ -231,7 +231,7 @@ def prepareStages(Map appConfigs, String cloud) {
                     }
 
                     stage("Run ${plugin} integration tests") {
-                        pluginResults[plugin] = runIQE(plugin)
+                        pluginResults[plugin] = runIQE(plugin, marker, parallelWorkerCount)
                     }
                 }
 
