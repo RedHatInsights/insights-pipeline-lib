@@ -239,8 +239,10 @@ def prepareStages(Map appConfigs, String cloud) {
                 }
 
                 stage("Results") {
-                    // if no plugins ran any tests, this junit step will fail
-                    junit "junit-${plugin}-*.xml"
+                    // if none of the app's plugins ran any tests, this junit step will catch that
+                    for (plugin in appConfig["plugins"]) {
+                        junit "junit-${plugin}-*.xml"
+                    }
 
                     def pluginsFailed = pluginResults.findAll { it.value == "FAILURE" }
                     def pluginsPassed = pluginResults.findAll { it.value == "SUCCESS" }
