@@ -208,7 +208,7 @@ def prepareStages(Map appConfigs, String cloud) {
             def withNodeParams = [
                 envVars: envVars,
                 //image: pipelineVars.iqeCoreImage,
-                image: "iqe-core:latest",
+                image: "docker-registry.default.svc:5000/insights-qe-ci/iqe-core",
                 cloud: cloud,
             ]
             withNodeSelector(withNodeParams, ui) {
