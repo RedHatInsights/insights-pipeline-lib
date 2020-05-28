@@ -128,7 +128,7 @@ def runIQE(plugin, marker, parallelWorkerCount) {
      *
      * Returns result of "SUCCESS" or "FAILURE"
      */
-    def result = "SUCCESS"
+    def result
     def status
     catchError(stageResult: "FAILURE") {
         // run parallel tests
@@ -147,8 +147,8 @@ def runIQE(plugin, marker, parallelWorkerCount) {
         )
         // status code 5 means no tests collected, ignore this error.
         if (status > 0 && status != 5) {
-            error("Parallel test run failed")
             result = "FAILURE"
+            error("Parallel test run failed")
         }
 
         // run sequential tests
@@ -167,9 +167,11 @@ def runIQE(plugin, marker, parallelWorkerCount) {
         )
         // status code 5 means no tests collected, ignore this error.
         if (status > 0 && status != 5) {
-            error("Sequential test run hit an error")
             result = "FAILURE"
+            error("Sequential test run hit an error")
         }
+
+        result = "SUCCESS"
     }
 
     catchError {
