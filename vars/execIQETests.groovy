@@ -147,7 +147,7 @@ def runIQE(plugin, marker, parallelWorkerCount) {
         )
         // status code 5 means no tests collected, ignore this error.
         if (status > 0 && status != 5) {
-            error("Parallel test run hit an error")
+            error("Parallel test run failed")
             result = "FAILURE"
         }
 
@@ -231,11 +231,12 @@ def prepareStages(Map appConfigs, String cloud) {
                     }
 
                     stage("Run ${plugin} integration tests") {
-                        pluginResults[plugin] = runIQE(plugin, marker, parallelWorkerCount)
+                        def result = runIQE(plugin, marker, parallelWorkerCount)
+                        pluginResults[plugin] = result
                     }
                 }
 
-                stage("Check plugin results") {
+                stage("Results") {
                     // if no plugins ran any tests, this junit step will fail
                     junit "junit-*.xml"
 
