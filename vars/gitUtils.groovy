@@ -186,3 +186,22 @@ def stageWithContext(String name, Boolean shortenURL = true, Closure body) {
         }
     }
 }
+
+def getBaseCommit() {
+    /**
+    * GIT_COMMIT can point to a no repo commit SHA. A workaround is taken from
+    * https://issues.jenkins-ci.org/browse/JENKINS-56341
+    */
+    def baseCommit = ''
+    def latestCommit = sh(label: 'Get previous commit', script: "git rev-parse HEAD", returnStdout: true)?.trim()
+    def previousCommit = sh(label: 'Get previous commit', script: "git rev-parse HEAD^", returnStdout: true)?.trim()
+    if (env?.CHANGE_ID == null) {
+        baseCommit = env.GIT_COMMIT
+    } else if("${env.GIT_COMMIT}".equals("${latestCommit}")) {
+        baseCommit = env.GIT_COMMIT
+    } else {
+        baseCommit = previousCommit
+    }
+    env.GIT_BASE_COMMIT = baseCommit
+    return baseCommit
+}
