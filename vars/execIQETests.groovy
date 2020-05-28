@@ -175,7 +175,7 @@ def runIQE(plugin, marker, parallelWorkerCount) {
     }
 
     catchError {
-        archiveArtifacts "iqe-*.log"
+        archiveArtifacts "iqe-${plugin}-*.log"
     }
 
     return result
@@ -240,7 +240,7 @@ def prepareStages(Map appConfigs, String cloud) {
 
                 stage("Results") {
                     // if no plugins ran any tests, this junit step will fail
-                    junit "junit-*.xml"
+                    junit "junit-${plugin}-*.xml"
 
                     def pluginsFailed = pluginResults.findAll { it.value == "FAILURE" }
                     def pluginsPassed = pluginResults.findAll { it.value == "SUCCESS" }
