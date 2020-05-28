@@ -130,6 +130,7 @@ def runIQE(plugin, marker, parallelWorkerCount) {
      */
     def result
     def status
+    def noTests
     catchError(stageResult: "FAILURE") {
         // run parallel tests
         status = sh(
@@ -145,8 +146,12 @@ def runIQE(plugin, marker, parallelWorkerCount) {
             ),
             returnStatus: true
         )
-        // status code 5 means no tests collected, ignore this error.
-        if (status > 0 && status != 5) {
+
+        // status code 5 means no tests collected
+        if (status == 5) {
+            noTests = true
+        }
+        else if (status > 0) {
             result = "FAILURE"
             error("Parallel test run failed")
         }
@@ -165,17 +170,27 @@ def runIQE(plugin, marker, parallelWorkerCount) {
             ),
             returnStatus: true
         )
-        // status code 5 means no tests collected, ignore this error.
-        if (status > 0 && status != 5) {
+
+        // status code 5 means no tests collected
+        if (status == 5) {
+            if (noTests) {
+                // the parallel run had no results, and so did the sequential run. Fail this plugin.
+                result = "FAILURE"
+                error("Tests produced no results")
+            }
+        }
+        else if (status > 0) {
             result = "FAILURE"
             error("Sequential test run hit an error")
         }
-
-        result = "SUCCESS"
+        else {
+            result = "SUCCESS"
+        }
     }
 
     catchError {
         archiveArtifacts "iqe-${plugin}-*.log"
+        junit "junit-${plugin}-*.xml"
     }
 
     return result
@@ -239,11 +254,6 @@ def prepareStages(Map appConfigs, String cloud) {
                 }
 
                 stage("Results") {
-                    // if none of the app's plugins ran any tests, this junit step will catch that
-                    for (plugin in appConfig["plugins"]) {
-                        junit "junit-${plugin}-*.xml"
-                    }
-
                     def pluginsFailed = pluginResults.findAll { it.value == "FAILURE" }
                     def pluginsPassed = pluginResults.findAll { it.value == "SUCCESS" }
 
