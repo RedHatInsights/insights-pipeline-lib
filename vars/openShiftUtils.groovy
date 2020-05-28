@@ -48,7 +48,7 @@ def withNode(Map parameters = [:], Closure body) {
 
     def label = "node-${UUID.randomUUID().toString()}"
 
-    podParameters = [
+    def podParameters = [
         label: label,
         slaveConnectTimeout: 120,
         serviceAccount: pipelineVars.jenkinsSvcAccount,
@@ -127,7 +127,7 @@ def withUINode(Map parameters = [:], Closure body) {
 
     setDevPiEnvVars(image, cloud, envVars)
 
-    podParameters = [
+    def podParameters = [
         label: label,
         slaveConnectTimeout: 120,
         serviceAccount: pipelineVars.jenkinsSvcAccount,
@@ -206,7 +206,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
 
     def label = "node-${UUID.randomUUID().toString()}"
 
-    podParameters = [
+    def podParameters = [
         label: label,
         slaveConnectTimeout: 120,
         serviceAccount: pipelineVars.jenkinsSvcAccount,
@@ -274,7 +274,7 @@ def collectLogs(parameters = [:]) {
             archiveArtifacts "oc_export_all.yaml"
             archiveArtifacts "applogs/*.log"
         } catch (err) {
-            errString = err.toString()
+            def errString = err.toString()
             echo "Collecting logs failed: ${errString}"
         }
     }
