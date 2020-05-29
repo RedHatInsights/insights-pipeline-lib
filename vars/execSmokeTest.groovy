@@ -56,8 +56,6 @@ private def deployEnvironment(
      * Deploys the specified `ocDeployerServiceSets` using the above config
      */
     stage("Create env files") {
-        def deployTasks = [:]
-
         // deploy custom build config that points to this app's PR code
         def customBuildYaml = (
             """
@@ -81,6 +79,8 @@ private def deployEnvironment(
         writeFile file: "env/custom-env.yml", text: customAppYaml
         sh "cat env/custom-env.yml"
     }
+
+    def deployTasks = [:]
 
     // Deploy the builder for only this app to build the PR image in this project
     // Make this a closure so we can decide whether to run it stand-alone or in parallel later...
