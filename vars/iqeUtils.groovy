@@ -173,7 +173,7 @@ def prepareStages(
             envVars.addAll(extraEnvVars)
 
             [appConfig, settingsFileCredentialsId, marker, parallelWorkerCount].each {
-                System.out.println("type: ${it.getClass()}")
+                echo("type: ${it.getClass()}")
             }
 
             if (allocateNode) {
