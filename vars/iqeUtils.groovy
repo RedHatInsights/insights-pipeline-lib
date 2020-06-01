@@ -192,7 +192,7 @@ def prepareStages(
                 }
             }
             else {
-                def envVarExprs = envVars.collect { "${it.key}=${it.value}" }
+                def envVarExprs = envVars.collect { "${it.getKey()}=${it.getValue()}" }
                 withEnv(envVarExprs) {
                     runTestStages(
                         appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
