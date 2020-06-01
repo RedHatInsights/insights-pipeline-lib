@@ -1,4 +1,4 @@
-def runIQE(plugin, marker, parallelWorkerCount) {
+def runIQE(String plugin, String marker, int parallelWorkerCount) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
      *
@@ -9,10 +9,6 @@ def runIQE(plugin, marker, parallelWorkerCount) {
     def result
     def status
     def noTests
-
-    if (marker instanceof String[]) {
-        marker = marker.join(" or ")
-    }
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
@@ -149,6 +145,9 @@ def prepareStages(
 
     def stages = [:]
     marker = marker ? marker : envName
+    if (marker instanceof String[]) {
+        marker = marker.join(" or ")
+    }
 
     appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
