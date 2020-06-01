@@ -170,15 +170,15 @@ def prepareStages(
             settingsFileCredentialsId = "${envName}IQESettingsYaml"
         }
 
+        def envVars = [
+            envVar(key: 'ENV_FOR_DYNACONF', value: envName),
+            envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
+        ]
+        envVars.addAll(extraEnvVars)
+
         def pluginResults = [:]
 
         stages[app] = {
-            envVars = [
-                envVar(key: 'ENV_FOR_DYNACONF', value: envName),
-                envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
-            ]
-            envVars.addAll(extraEnvVars)
-
             if (allocateNode) {
                 def withNodeParams = [
                     envVars: envVars,
@@ -192,9 +192,12 @@ def prepareStages(
                 }
             }
             else {
-                runTestStages(
-                    appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
-                )
+                def envVarExprs = envVars.collect { "${it.key}=${it.value}" }
+                withEnv(envVarExprs) {
+                    runTestStages(
+                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
+                    )
+                }
             }
         }
     }
