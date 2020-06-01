@@ -124,7 +124,7 @@ private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
     String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
-    Boolean parallelBuild
+    Boolean parallelBuild, String cloud
 ) {
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
 
@@ -140,21 +140,6 @@ private def runPipeline(
         )
         dir(pipelineVars.e2eDeployDir) {
             sh "pip install -r requirements.txt"
-        }
-    }
-
-    pipelineUtils.stageIf(iqePlugins, "Install plugins") {
-        for (plugin in iqePlugins) {
-            def pluginName
-
-            // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
-            // strip unnecessary whitespace first
-            plugin = plugin.replaceAll("\\s", "")
-
-            if (plugin ==~ /iqe-\S+-plugin.*/) pluginName = plugin.replaceAll(/iqe-(\S+)-plugin/, '$1')
-            else pluginName = plugin
-
-            sh "iqe plugin install ${pluginName}"
         }
     }
 
@@ -174,58 +159,23 @@ private def runPipeline(
         echo("Hit error during deploy!")
         echo(err.toString())
         openShiftUtils.collectLogs(project: project)
-        throw err
+        error("Deployment failed")
     }
 
-    if (configFileCredentialsId) {
-        stage("Inject custom config") {
-            withCredentials(
-                [file(credentialsId: configFileCredentialsId, variable: 'SETTINGS_YAML')]
-            ) {
-                sh "cp \$SETTINGS_YAML \"\$WORKSPACE/settings.local.yaml\""
-            }
-        }
-    }
-    
-    if (pytestMarker instanceof String) {
-        pytestMarker = [pytestMarker]
-    }
-    
-    stage("Run tests (pytest markers: ${pytestMarker})") {
-        extraEnvVars.each { key, val ->
-            sh "export ${key}=${val}"
-        }
+    // create the appConfig
+    def appConfigs = [
+        smoke: [
+            plugins: iqePlugins,
+            ui: needsUI,
+            parallelWorkerCount: parallelWorkerCount,
+            settingsFileCredentialsId: configFileCredentialsId,
+            extraEnvVars: [envVar(key: 'DYNACONF_OCPROJECT', value: project)]
+        ]
+    ]
 
-        // tee the output -- the 'junit' step later will change build status if any tests fail
-        iqeCommand = (
-            "iqe tests all --junitxml=junit-sequential.xml -s -v " +
-            "-m \"not parallel and (${pytestMarker.join(" or ")})\" " +
-            "--log-file=iqe.log --log-file-level=DEBUG 2>&1 | tee pytest-stdout.log"
-        )
-        iqeParallelCommand = (
-            "iqe tests all --junitxml=junit-parallel.xml -s -v " +
-            "-m \"parallel and (${pytestMarker.join(" or ")})\" -n ${parallelWorkerCount} " +
-            "--log-file=iqe-parallel.log --log-file-level=DEBUG 2>&1 " +
-            "| tee pytest-stdout-parallel.log"
-        )
-        sh(
-            """
-            export DYNACONF_OCPROJECT=${project}
-            export IQE_TESTS_LOCAL_CONF_PATH="$WORKSPACE"
-
-            set +e
-            ${iqeCommand}
-            ${iqeParallelCommand}
-            set -e
-            """.stripIndent()
-        )
-        try {
-            archiveArtifacts "pytest-stdout*.log"
-            archiveArtifacts "iqe*.log"
-        } catch (err) {
-            echo "Error archiving log files: ${err.toString()}"
-        }
-    }
+    def results = pipelineUtils.runParallel(
+        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker)
+    )
 
     openShiftUtils.collectLogs(project: project)
 
@@ -233,9 +183,7 @@ private def runPipeline(
         sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
     }
 
-    junit "junit-*.xml"
-
-    if (currentBuild.result != "SUCCESS") {
+    if (currentBuild.result != "SUCCESS" || results['failed'].size() > 0) {
         error("Smoke test failed");
     }
 }
@@ -245,7 +193,7 @@ private def allocateResourcesAndRun(
     String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
     String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
-    Boolean parallelBuild
+    Boolean parallelBuild, String cloud
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
@@ -262,7 +210,8 @@ private def allocateResourcesAndRun(
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                 ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars,
-                configFileCredentialsId, buildScaleFactor, parallelWorkerCount, parallelBuild
+                configFileCredentialsId, buildScaleFactor, parallelWorkerCount, parallelBuild,
+                cloud
             )
         }
     }
@@ -293,6 +242,7 @@ def call(p = [:]) {
     def buildScaleFactor = p.get('buildScaleFactor', 1)
     def parallelWorkerCount = p.get('parallelWorkerCount', 2)
     def parallelBuild = p.get('parallelBuild', false)
+    def cloud = p.get('cloud', "openshift")
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
@@ -314,7 +264,7 @@ def call(p = [:]) {
             allocateResourcesAndRun(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
                 pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
-                parallelWorkerCount, parallelBuild
+                parallelWorkerCount, parallelBuild, cloud
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
@@ -326,7 +276,7 @@ def call(p = [:]) {
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
             pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
-            parallelWorkerCount, parallelBuild
+            parallelWorkerCount, parallelBuild, cloud
         )
     }
 }
