@@ -172,6 +172,10 @@ def prepareStages(
             ]
             envVars.addAll(extraEnvVars)
 
+            [appConfig, settingsFileCredentialsId, marker, parallelWorkerCount].each {
+                System.out.println("type: ${it.getClass()}")
+            }
+
             if (allocateNode) {
                 def withNodeParams = [
                     envVars: envVars,
@@ -179,17 +183,15 @@ def prepareStages(
                     cloud: cloud,
                 ]
                 openShiftUtils.withNodeSelector(withNodeParams, ui) {
-                    runTestStages([something: "test"], "nothing", "nothing", 1)
-                    //runTestStages(
-                    //    appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
-                    //)
+                    runTestStages(
+                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
+                    )
                 }
             }
             else {
-                runTestStages([something: "test"], "nothing", "nothing", 1)
-                //runTestStages(
-                //    appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
-                //)
+                runTestStages(
+                    appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
+                )
             }
         }
     }
