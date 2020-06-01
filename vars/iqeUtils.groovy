@@ -143,8 +143,6 @@ def prepareStages(
      */
     if (!envName) error("No env specified")
 
-    runTestStages([something: "test"], "nothing", "nothing", 1)
-
     def stages = [:]
     marker = marker ? marker : envName
     if (marker instanceof String[]) {
@@ -181,15 +179,17 @@ def prepareStages(
                     cloud: cloud,
                 ]
                 openShiftUtils.withNodeSelector(withNodeParams, ui) {
-                    runTestStages(
-                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
-                    )
+                    runTestStages([something: "test"], "nothing", "nothing", 1)
+                    //runTestStages(
+                    //    appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
+                    //)
                 }
             }
             else {
-                runTestStages(
-                    appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
-                )
+                runTestStages([something: "test"], "nothing", "nothing", 1)
+                //runTestStages(
+                //    appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
+                //)
             }
         }
     }
