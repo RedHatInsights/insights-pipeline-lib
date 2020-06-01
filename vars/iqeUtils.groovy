@@ -148,7 +148,7 @@ def prepareStages(
     if (!envName) error("No env specified")
 
     def stages = [:]
-    def marker = marker ? marker : envName
+    marker = marker ? marker : envName
 
     appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
