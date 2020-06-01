@@ -114,7 +114,7 @@ def runTestStages(
 
 
 def prepareStages(
-    Map appConfigs, String cloud, String envName, marker, Boolean allocateNode = false
+    Map appConfigs, String cloud, String envName, marker, Boolean allocateNode
 ) {
     /*
      * Given a Map of appConfigs and the kubernetes cloud name, env name, and pytest expression,
@@ -153,6 +153,9 @@ def prepareStages(
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
         def app = k
         def appConfig = v
+        if (!appConfig instanceof Map) {
+            error("Incorrect syntax for appConfigs: appConfig is not a Map")
+        }
         def plugins = appConfig['plugins']
         def ui = appConfig.get('ui', false)
         def parallelWorkerCount = appConfig.get('parallelWorkerCount', 2)

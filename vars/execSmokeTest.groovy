@@ -170,7 +170,7 @@ private def runPipeline(
             parallelWorkerCount: parallelWorkerCount,
             settingsFileCredentialsId: configFileCredentialsId,
             extraEnvVars: [envVar(key: 'DYNACONF_OCPROJECT', value: project)]
-        ]
+        ],
     ]
 
     def results = pipelineUtils.runParallel(

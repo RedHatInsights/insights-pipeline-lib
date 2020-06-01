@@ -76,7 +76,7 @@ def call(args = [:]) {
     lock("${params.env}-test") {
         timeout(time: 150, unit: "MINUTES") {
             results = pipelineUtils.runParallel(
-                iqeUtils.prepareStages(appConfigs, cloud, params.env, params.marker)
+                iqeUtils.prepareStages(appConfigs, cloud, params.env, params.marker, true)
             )
         }
     }
