@@ -166,6 +166,10 @@ def prepareStages(
         def settingsFileCredentialsId = appConfig.get(
             'settingsFileCredentialsId', "${envName}IQESettingsYaml"
         )
+        if (settingsFileCredentialsId?.trim()) {
+            settingsFileCredentialsId = "${envName}IQESettingsYaml"
+        }
+
         def pluginResults = [:]
 
         stages[app] = {
