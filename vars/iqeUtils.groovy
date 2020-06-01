@@ -114,8 +114,6 @@ def runTestStages(
             error "Plugins failed: ${pluginsFailed.keySet().join(",")}"
         }
     }
-
-    return results
 }
 
 
@@ -145,7 +143,7 @@ def prepareStages(
      * @param envName String -- name of IQE environment
      * @param marker String or String[] -- pytest marker expression(s)
      * @param allocateNode Boolean -- if true, uses openShiftUtils to spin up test pod
-     * @return Map with format ["success": String[] successStages, "failed": String[] failedStages]
+     * @return Map with key = stage name, value = closure
      */
     if (!envName) error("No env specified")
 
