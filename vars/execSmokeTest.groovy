@@ -143,7 +143,6 @@ private def runPipeline(
         }
     }
 
-    /*
     // wipe all resources that have label 'e2esmoke=true'
     stage("Wipe test environment") {
         sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
@@ -162,7 +161,6 @@ private def runPipeline(
         openShiftUtils.collectLogs(project: project)
         error("Deployment failed")
     }
-    */
 
     // create the appConfig used by iqeUtils
     def appConfigs = [
