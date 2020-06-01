@@ -162,7 +162,7 @@ private def runPipeline(
         error("Deployment failed")
     }
 
-    // create the appConfig
+    // create the appConfig used by iqeUtils
     def appConfigs = [
         smoke: [
             plugins: iqePlugins,
@@ -193,20 +193,21 @@ private def allocateResourcesAndRun(
     String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
     String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
-    Boolean parallelBuild, String cloud
+    Boolean parallelBuild, String cloud, Boolean ui
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
         echo "Using project: ${env.PROJECT}"
 
         envVars = [envVar(key: 'ENV_FOR_DYNACONF', value: 'smoke')]
-        openShiftUtils.withNode(
+        parameters = [
             image: pipelineVars.iqeCoreImage,
             namespace: env.PROJECT,
             envVars: envVars,
             resourceLimitCpu: '1',
             resourceLimitMemory: '2Gi'
-        ) {
+        ]
+        openShiftUtils.withNodeSelector(parameters, ui) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                 ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars,
@@ -243,6 +244,7 @@ def call(p = [:]) {
     def parallelWorkerCount = p.get('parallelWorkerCount', 2)
     def parallelBuild = p.get('parallelBuild', false)
     def cloud = p.get('cloud', "openshift")
+    def ui = p.get('ui', false)
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
@@ -264,7 +266,7 @@ def call(p = [:]) {
             allocateResourcesAndRun(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
                 pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
-                parallelWorkerCount, parallelBuild, cloud
+                parallelWorkerCount, parallelBuild, cloud, ui
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
@@ -276,7 +278,7 @@ def call(p = [:]) {
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
             pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
-            parallelWorkerCount, parallelBuild, cloud
+            parallelWorkerCount, parallelBuild, cloud, ui
         )
     }
 }
