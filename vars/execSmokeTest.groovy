@@ -124,7 +124,7 @@ private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
     String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
     String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
-    Boolean parallelBuild, String cloud
+    Boolean parallelBuild, String cloud, Boolean ui
 ) {
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
 
@@ -166,7 +166,7 @@ private def runPipeline(
     def appConfigs = [
         smoke: [
             plugins: iqePlugins,
-            ui: needsUI,
+            ui: ui,
             parallelWorkerCount: parallelWorkerCount,
             settingsFileCredentialsId: configFileCredentialsId,
             extraEnvVars: [envVar(key: 'DYNACONF_OCPROJECT', value: project)]
@@ -174,7 +174,7 @@ private def runPipeline(
     ]
 
     def results = pipelineUtils.runParallel(
-        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker)
+        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker, false)
     )
 
     openShiftUtils.collectLogs(project: project)
@@ -207,12 +207,12 @@ private def allocateResourcesAndRun(
             resourceLimitCpu: '1',
             resourceLimitMemory: '2Gi'
         ]
-        openShiftUtils.withNodeSelector(parameters, ui) {
+        openShiftUtils.withNode(parameters) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                 ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars,
                 configFileCredentialsId, buildScaleFactor, parallelWorkerCount, parallelBuild,
-                cloud
+                cloud, ui
             )
         }
     }

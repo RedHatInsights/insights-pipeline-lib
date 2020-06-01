@@ -80,7 +80,48 @@ def runIQE(plugin, marker, parallelWorkerCount) {
 }
 
 
-def prepareStages(Map appConfigs, String cloud, String envName, marker) {
+def runTestStages(
+    Map appConfig, String settingsFileCredentialsId, String marker, int parallelWorkerCount
+) {
+    stage("Inject credentials") {
+        withCredentials(
+            [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
+        ) {
+            sh "mkdir -p \$IQE_TESTS_LOCAL_CONF_PATH"
+            sh "cp \$YAML_FILE \$IQE_TESTS_LOCAL_CONF_PATH/settings.local.yaml"
+        }
+    }
+    stage("Install red-hat-internal-envs plugin") {
+        sh "iqe plugin install red-hat-internal-envs"
+    }
+    for (plugin in appConfig["plugins"]) {
+        stage("Install iqe-${plugin}-plugin") {
+            sh "iqe plugin install ${plugin}"
+        }
+
+        stage("Run ${plugin} integration tests") {
+            def result = runIQE(plugin, marker, parallelWorkerCount)
+            pluginResults[plugin] = result
+        }
+    }
+
+    stage("Results") {
+        def pluginsFailed = pluginResults.findAll { it.value == "FAILURE" }
+        def pluginsPassed = pluginResults.findAll { it.value == "SUCCESS" }
+
+        echo "Plugins passed: ${pluginsPassed.keySet().join(",")}"
+        if (pluginsFailed) {
+            error "Plugins failed: ${pluginsFailed.keySet().join(",")}"
+        }
+    }
+
+    return results
+}
+
+
+def prepareStages(
+    Map appConfigs, String cloud, String envName, marker, Boolean allocateNode = false
+) {
     /*
      * Given a Map of appConfigs and the kubernetes cloud name, env name, and pytest expression,
      * prepare a Map of stage closures that will be later run using 'parallel()' to execute tests
@@ -103,8 +144,11 @@ def prepareStages(Map appConfigs, String cloud, String envName, marker) {
      * @param cloud String -- name of the kubernetes plugin cloud to use
      * @param envName String -- name of IQE environment
      * @param marker String or String[] -- pytest marker expression(s)
+     * @param allocateNode Boolean -- if true, uses openShiftUtils to spin up test pod
      * @return Map with format ["success": String[] successStages, "failed": String[] failedStages]
      */
+    if (!envName) error("No env specified")
+
     def stages = [:]
     def marker = marker ? marker : envName
 
@@ -128,46 +172,18 @@ def prepareStages(Map appConfigs, String cloud, String envName, marker) {
             ]
             envVars.addAll(extraEnvVars)
 
-            def withNodeParams = [
-                envVars: envVars,
-                //image: pipelineVars.iqeCoreImage,
-                image: "docker-registry.default.svc:5000/insights-qe-ci/iqe-core",
-                cloud: cloud,
-            ]
-            openShiftUtils.withNodeSelector(withNodeParams, ui) {
-                if (!envName) error("No env specified")
-
-                stage("Inject credentials") {
-                    withCredentials(
-                        [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
-                    ) {
-                        sh "mkdir -p \$IQE_TESTS_LOCAL_CONF_PATH"
-                        sh "cp \$YAML_FILE \$IQE_TESTS_LOCAL_CONF_PATH/settings.local.yaml"
-                    }
+            if (allocateNode) {
+                def withNodeParams = [
+                    envVars: envVars,
+                    image: pipelineVars.iqeCoreImage,
+                    cloud: cloud,
+                ]
+                openShiftUtils.withNodeSelector(withNodeParams, ui) {
+                    runTestStages(appConfig, settingsFileCredentialsId, marker, parallelWorkerCount)
                 }
-                stage("Install red-hat-internal-envs plugin") {
-                    sh "iqe plugin install red-hat-internal-envs"
-                }
-                for (plugin in appConfig["plugins"]) {
-                    stage("Install iqe-${plugin}-plugin") {
-                        sh "iqe plugin install ${plugin}"
-                    }
-
-                    stage("Run ${plugin} integration tests") {
-                        def result = runIQE(plugin, marker, parallelWorkerCount)
-                        pluginResults[plugin] = result
-                    }
-                }
-
-                stage("Results") {
-                    def pluginsFailed = pluginResults.findAll { it.value == "FAILURE" }
-                    def pluginsPassed = pluginResults.findAll { it.value == "SUCCESS" }
-
-                    echo "Plugins passed: ${pluginsPassed.keySet().join(",")}"
-                    if (pluginsFailed) {
-                        error "Plugins failed: ${pluginsFailed.keySet().join(",")}"
-                    }
-                }
+            }
+            else {
+                runTestStages(appConfig, settingsFileCredentialsId, marker, parallelWorkerCount)
             }
         }
     }
