@@ -236,7 +236,7 @@ def prepareStages(Map appConfigs, String cloud) {
                         [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
                     ) {
                         sh "mkdir -p \$IQE_TESTS_LOCAL_CONF_PATH"
-                        sh "cp \$YAML_FILE \$IQE_TESTS_LOCAL_CONF_PATH"
+                        sh "cp \$YAML_FILE \$IQE_TESTS_LOCAL_CONF_PATH/settings.local.yaml"
                     }
                 }
                 stage("Install red-hat-internal-envs plugin") {
