@@ -10,7 +10,7 @@ def runIQE(plugin, marker, parallelWorkerCount) {
     def status
     def noTests
 
-    if (marker instanceof Array) {
+    if (marker instanceof String[]) {
         marker = marker.join(" or ")
     }
 
