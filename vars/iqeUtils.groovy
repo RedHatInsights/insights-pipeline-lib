@@ -1,3 +1,6 @@
+import java.util.ArrayList
+
+
 def runIQE(String plugin, String marker, int parallelWorkerCount) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
@@ -145,7 +148,7 @@ def prepareStages(
 
     def stages = [:]
     marker = marker ? marker : envName
-    if (marker instanceof String[]) {
+    if (marker instanceof java.util.ArrayList) {
         marker = marker.join(" or ")
     }
 
@@ -171,10 +174,6 @@ def prepareStages(
                 envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
             ]
             envVars.addAll(extraEnvVars)
-
-            [appConfig, settingsFileCredentialsId, marker, parallelWorkerCount].each {
-                echo("type: ${it.getClass()}")
-            }
 
             if (allocateNode) {
                 def withNodeParams = [
