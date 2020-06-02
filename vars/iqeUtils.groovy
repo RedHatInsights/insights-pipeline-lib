@@ -94,6 +94,12 @@ def runTestStages(
         sh "iqe plugin install red-hat-internal-envs"
     }
     for (plugin in appConfig["plugins"]) {
+        // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
+        // strip unnecessary whitespace first
+        plugin = plugin.replaceAll("\\s", "")
+
+        if (plugin ==~ /iqe-\S+-plugin.*/) plugin = plugin.replaceAll(/iqe-(\S+)-plugin/, '$1')
+
         stage("Install iqe-${plugin}-plugin") {
             sh "iqe plugin install ${plugin}"
         }
