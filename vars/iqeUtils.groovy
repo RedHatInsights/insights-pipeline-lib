@@ -16,12 +16,8 @@ def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu
     def ibutsuArgs = ""
 
     if (ibutsu) {
-        ibutsuArgs = (
-            """
-            -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
-            -o ibutsu_source=${env.BUILD_TAG}
-            """.stripIndent()
-        )
+        ibutsuArgs += "-o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com "
+        ibutsuArgs += "-o ibutsu_source=${env.BUILD_TAG}"
     }
 
     catchError(stageResult: "FAILURE") {
