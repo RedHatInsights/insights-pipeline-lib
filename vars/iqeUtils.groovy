@@ -93,6 +93,9 @@ def runTestStages(
     stage("Install red-hat-internal-envs plugin") {
         sh "iqe plugin install red-hat-internal-envs"
     }
+
+    def pluginResults = [:]
+
     for (plugin in appConfig["plugins"]) {
         // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
         // strip unnecessary whitespace first
@@ -181,8 +184,6 @@ def prepareStages(
             envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
         ]
         envVars.addAll(extraEnvVars)
-
-        def pluginResults = [:]
 
         stages[app] = {
             if (allocateNode) {
