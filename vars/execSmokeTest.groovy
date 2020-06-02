@@ -173,10 +173,10 @@ private def runPipeline(
         ],
     ]
 
-    def envName = ui ? "smoke_ui" : "smoke"
+   // def envName = ui ? "smoke_ui" : "smoke"
 
     def results = pipelineUtils.runParallel(
-        iqeUtils.prepareStages(appConfigs, cloud, envName, pytestMarker, false, false)
+        iqeUtils.prepareStages(appConfigs, cloud, "smoke_ui", pytestMarker, false, false)
     )
 
     openShiftUtils.collectLogs(project: project)
