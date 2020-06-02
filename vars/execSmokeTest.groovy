@@ -205,7 +205,8 @@ private def allocateResourcesAndRun(
             namespace: env.PROJECT,
             envVars: envVars,
             resourceLimitCpu: '1',
-            resourceLimitMemory: '2Gi'
+            resourceLimitMemory: '2Gi',
+            cloud: cloud,
         ]
         openShiftUtils.withNodeSelector(parameters, ui) {
             runPipeline(
