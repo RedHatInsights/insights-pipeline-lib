@@ -206,7 +206,8 @@ private def allocateResourcesAndRun(
             envVars: envVars,
             resourceLimitCpu: '1',
             resourceLimitMemory: '2Gi',
-           ]
+            cloud: cloud,
+            ]
         openShiftUtils.withNodeSelector(parameters, ui) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
@@ -243,7 +244,7 @@ def call(p = [:]) {
     def buildScaleFactor = p.get('buildScaleFactor', 1)
     def parallelWorkerCount = p.get('parallelWorkerCount', 2)
     def parallelBuild = p.get('parallelBuild', false)
-    def cloud = p.get('cloud', "openshift")
+    def cloud = p.get('cloud', "upshift")
     def ui = p.get('ui', false)
 
     // If testing via a PR webhook trigger
