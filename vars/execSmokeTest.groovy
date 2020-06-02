@@ -206,8 +206,7 @@ private def allocateResourcesAndRun(
             envVars: envVars,
             resourceLimitCpu: '1',
             resourceLimitMemory: '2Gi',
-            cloud: cloud,
-        ]
+           ]
         openShiftUtils.withNodeSelector(parameters, ui) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
