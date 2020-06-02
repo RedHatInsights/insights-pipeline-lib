@@ -189,6 +189,20 @@ def withUINode(Map parameters = [:], Closure body) {
 }
 
 
+def withNodeSelector(Map parameters = [:], Boolean ui, Closure body) {
+    /* A wrapper that selects a different closure based on if 'ui' is true or false */
+    if (ui) {
+        withUINode(parameters) {
+            body()
+        }
+    } else {
+        withNode(parameters) {
+            body()
+        }   
+    }
+}
+
+
 def withJnlpNode(Map parameters = [:], Closure body) {
     /*
     Spins up a pod with a single jnlp container
