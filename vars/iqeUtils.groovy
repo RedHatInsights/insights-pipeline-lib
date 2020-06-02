@@ -1,7 +1,7 @@
 import java.util.ArrayList
 
 
-def runIQE(String plugin, String marker, int parallelWorkerCount) {
+def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
      *
@@ -13,6 +13,17 @@ def runIQE(String plugin, String marker, int parallelWorkerCount) {
     def status
     def noTests
 
+    def ibutsuArgs = ""
+
+    if (ibutsu) {
+        ibutsuArgs = (
+            """
+            -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
+            -o ibutsu_source=${env.BUILD_TAG}
+            """.stripIndent()
+        )
+    }
+
     catchError(stageResult: "FAILURE") {
         // run parallel tests
         status = sh(
@@ -21,8 +32,7 @@ def runIQE(String plugin, String marker, int parallelWorkerCount) {
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-parallel.xml \
                 -m "parallel and (${marker})" -n ${parallelWorkerCount} \
-                -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
-                -o ibutsu_source=${env.BUILD_TAG} \
+                ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-parallel.log --log-file-level=DEBUG 2>&1 \
                 """.stripIndent()
             ),
@@ -45,8 +55,7 @@ def runIQE(String plugin, String marker, int parallelWorkerCount) {
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-sequential.xml \
                 -m "not parallel and (${marker})" \
-                -o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com \
-                -o ibutsu_source=${env.BUILD_TAG} \
+                ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
                 """.stripIndent()
             ),
@@ -80,7 +89,8 @@ def runIQE(String plugin, String marker, int parallelWorkerCount) {
 
 
 def runTestStages(
-    Map appConfig, String settingsFileCredentialsId, String marker, int parallelWorkerCount
+    Map appConfig, String settingsFileCredentialsId, String marker, int parallelWorkerCount,
+    Boolean ibutsu
 ) {
     stage("Inject credentials") {
         withCredentials(
@@ -108,7 +118,7 @@ def runTestStages(
         }
 
         stage("Run ${plugin} integration tests") {
-            def result = runIQE(plugin, marker, parallelWorkerCount)
+            def result = runIQE(plugin, marker, parallelWorkerCount, ibutsu)
             pluginResults[plugin] = result
         }
     }
@@ -126,7 +136,7 @@ def runTestStages(
 
 
 def prepareStages(
-    Map appConfigs, String cloud, String envName, marker, Boolean allocateNode
+    Map appConfigs, String cloud, String envName, marker, Boolean allocateNode, Boolean ibutsu
 ) {
     /*
      * Given a Map of appConfigs and the kubernetes cloud name, env name, and pytest expression,
@@ -151,6 +161,7 @@ def prepareStages(
      * @param envName String -- name of IQE environment
      * @param marker String or String[] -- pytest marker expression(s)
      * @param allocateNode Boolean -- if true, uses openShiftUtils to spin up test pod
+     * @param ibutsu Boolean -- whether or not to report results to ibutsu
      * @return Map with key = stage name, value = closure
      */
     if (!envName) error("No env specified")
@@ -194,7 +205,7 @@ def prepareStages(
                 ]
                 openShiftUtils.withNodeSelector(withNodeParams, ui) {
                     runTestStages(
-                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
+                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount, ibutsu
                     )
                 }
             }
@@ -204,7 +215,7 @@ def prepareStages(
                 }
                 withEnv(envVarExprs) {
                     runTestStages(
-                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount
+                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount, ibutsu
                     )
                 }
             }

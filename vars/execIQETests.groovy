@@ -8,7 +8,7 @@
  * @param appConfigs Map -- see iqeUtils.prepareStages()
  * @param envs String[] of env names
  * @param marker String with default marker expression (optional, if blank "envName" is used)
- *
+ * @param ibutsu Boolean -- whether or not to report results to ibutsu (default: true)
  * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
 def call(args = [:]) {
@@ -16,6 +16,7 @@ def call(args = [:]) {
     def envs = args['envs']
     def cloud = args.get('cloud', pipelineVars.upshiftCloud)
     def defaultMarker = args.get('defaultMarker')
+    def ibutsu = args.get('ibutsu', true)
 
     p = []
     // Add a param option for simply reloading this job
@@ -76,24 +77,25 @@ def call(args = [:]) {
     lock("${params.env}-test") {
         timeout(time: 150, unit: "MINUTES") {
             results = pipelineUtils.runParallel(
-                iqeUtils.prepareStages(appConfigs, cloud, params.env, params.marker, true)
+                iqeUtils.prepareStages(appConfigs, cloud, params.env, params.marker, true, ibutsu)
             )
         }
     }
 
+    if (ibutsu) {
     // archive an artifact containing the ibutsu URL for this run
-    node {
-        writeFile(
-            file: "ibutsu.html",
-            text: (
-                "<a href=\"https://ibutsu.cloud.paas.psi.redhat.com/results?" +
-                "metadata.jenkins.build_number=${env.BUILD_NUMBER}&metadata.jenkins.job_name=" +
-                "${env.JOB_NAME}\">Click here</a>"
+        node {
+            writeFile(
+                file: "ibutsu.html",
+                text: (
+                    "<a href=\"https://ibutsu.cloud.paas.psi.redhat.com/results?" +
+                    "metadata.jenkins.build_number=${env.BUILD_NUMBER}&metadata.jenkins.job_name=" +
+                    "${env.JOB_NAME}\">Click here</a>"
+                )
             )
-        )
 
-        archiveArtifacts "ibutsu.html"
-
+            archiveArtifacts "ibutsu.html"
+        }
     }
 
     return results

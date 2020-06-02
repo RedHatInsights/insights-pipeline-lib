@@ -174,7 +174,7 @@ private def runPipeline(
     ]
 
     def results = pipelineUtils.runParallel(
-        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker, false)
+        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker, false, false)
     )
 
     openShiftUtils.collectLogs(project: project)
