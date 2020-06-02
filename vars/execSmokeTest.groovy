@@ -207,7 +207,7 @@ private def allocateResourcesAndRun(
             resourceLimitCpu: '1',
             resourceLimitMemory: '2Gi'
         ]
-        openShiftUtils.withNode(parameters) {
+        openShiftUtils.withNodeSelector(parameters, ui) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
                 ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars,
