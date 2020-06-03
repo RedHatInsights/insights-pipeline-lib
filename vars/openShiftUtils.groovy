@@ -107,7 +107,7 @@ def withUINode(Map parameters = [:], Closure body) {
     /* 
     Spins up a pod with 3 containers: jnlp, selenium, and specified 'image'
     */
-    def cloud = parameters.get('cloud', pipelineVars.upshiftCloud)
+    def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
     def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
     def slaveImage = parameters.get('slaveImage', getDefaultSlaveImage(cloud))
     def seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)

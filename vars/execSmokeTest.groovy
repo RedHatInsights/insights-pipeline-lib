@@ -244,7 +244,7 @@ def call(p = [:]) {
     def buildScaleFactor = p.get('buildScaleFactor', 1)
     def parallelWorkerCount = p.get('parallelWorkerCount', 2)
     def parallelBuild = p.get('parallelBuild', false)
-    def cloud = p.get('cloud', "upshift")
+    def cloud = p.get('cloud', "openshift")
     def ui = p.get('ui', false)
 
     // If testing via a PR webhook trigger
