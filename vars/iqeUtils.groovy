@@ -41,7 +41,7 @@ def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu
         }
         else if (status > 0) {
             result = "FAILURE"
-            error("Parallel test run failed")
+            error("Parallel test run failed with exit code ${status}")
         }
 
         // run sequential tests
@@ -68,7 +68,7 @@ def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu
         }
         else if (status > 0) {
             result = "FAILURE"
-            error("Sequential test run hit an error")
+            error("Sequential test run hit an error with exit code ${status}")
         }
         else {
             result = "SUCCESS"
