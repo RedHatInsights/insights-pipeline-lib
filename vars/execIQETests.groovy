@@ -16,6 +16,7 @@ def call(args = [:]) {
     def envs = args['envs']
     def cloud = args.get('cloud', pipelineVars.upshiftCloud)
     def defaultMarker = args.get('defaultMarker')
+    def defaultFilter = args.get('defaultFilter')
     def ibutsu = args.get('ibutsu', true)
 
     p = []
@@ -56,6 +57,15 @@ def call(args = [:]) {
         ]
     )
 
+    // Add text field for test filter
+    p.add(
+        [
+            $class: 'StringParameterDefinition',
+            name: "filter", defaultValue: defaultFilter ? defaultFilter : "",
+            description: "Enter pytest filter expression, leave blank for none"
+        ]
+    )
+
     properties([parameters(p)])
 
     // Exit the job if the "reload" box was checked
@@ -77,7 +87,9 @@ def call(args = [:]) {
     lock("${params.env}-test") {
         timeout(time: 150, unit: "MINUTES") {
             results = pipelineUtils.runParallel(
-                iqeUtils.prepareStages(appConfigs, cloud, params.env, params.marker, true, ibutsu)
+                iqeUtils.prepareStages(
+                    appConfigs, cloud, params.env, params.marker, params.filter, true, ibutsu
+                )
             )
         }
     }
