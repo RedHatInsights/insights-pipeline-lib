@@ -60,6 +60,7 @@ def runIQE(String plugin, String marker, String filter, int parallelWorkerCount,
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-sequential.xml \
                 ${markerArgs} \
+                ${filterArgs} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
                 """.stripIndent()
