@@ -27,7 +27,7 @@ def runIQE(String plugin, String marker, String filter, int parallelWorkerCount,
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
-        def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"not parallel\""
+        def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
         status = sh(
             script: (
                 """
