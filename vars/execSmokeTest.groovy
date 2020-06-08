@@ -220,7 +220,11 @@ private def allocateResourcesAndRun(
 }
 
 
-private def setParamDefaults(String refSpec, String pytestMarker, String pytestFilter) {
+private def setParamDefaults(String refSpec, pytestMarker, String pytestFilter) {
+    if (pytestMarker instanceof java.util.ArrayList) {
+        pytestMarker = pytestMarker.join(" or ")
+    }
+
     properties(
         [
             parameters(
