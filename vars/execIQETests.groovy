@@ -53,7 +53,7 @@ def call(args = [:]) {
         [
             $class: 'StringParameterDefinition',
             name: "marker", defaultValue: defaultMarker ? defaultMarker : "",
-            description: "Enter pytest marker expression, leave blank to use '<envName>'"
+            description: "Enter pytest marker expression, leave blank for none"
         ]
     )
 

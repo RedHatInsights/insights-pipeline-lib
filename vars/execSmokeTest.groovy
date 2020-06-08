@@ -237,7 +237,7 @@ private def setParamDefaults(String refSpec, pytestMarker, String pytestFilter) 
                     string(
                         name: "MARKER",
                         defaultValue: pytestMarker ? pytestMarker : "",
-                        description: "Enter pytest marker expression (-m), leave blank to use 'smoke'"
+                        description: "Enter pytest marker expression (-m), leave blank for none"
                     ),
                     string(
                         name: "FILTER",

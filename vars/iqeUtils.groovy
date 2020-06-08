@@ -27,12 +27,13 @@ def runIQE(String plugin, String marker, String filter, int parallelWorkerCount,
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
+        def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"not parallel\""
         status = sh(
             script: (
                 """
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-parallel.xml \
-                -m "parallel and (${marker})" \
+                ${markerArgs} \
                 ${filterArgs} \
                 -n ${parallelWorkerCount} \
                 ${ibutsuArgs} \
@@ -52,12 +53,13 @@ def runIQE(String plugin, String marker, String filter, int parallelWorkerCount,
         }
 
         // run sequential tests
+        markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
         status = sh(
             script: (
                 """
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-sequential.xml \
-                -m "not parallel and (${marker})" \
+                ${markerArgs} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
                 """.stripIndent()
@@ -172,7 +174,7 @@ def prepareStages(
     if (!envName) error("No env specified")
 
     def stages = [:]
-    marker = marker ? marker : envName
+    marker = marker ? marker : ""
     filter = filter ? filter : ""
     if (marker instanceof java.util.ArrayList) {
         marker = marker.join(" or ")
