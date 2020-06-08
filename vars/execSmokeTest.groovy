@@ -282,9 +282,9 @@ def call(p = [:]) {
         setParamDefaults(refSpec, pytestMarker, pytestFilter)
 
         // Re-read the values incase they were changed by the user when clicking "build"
-        def refSpec = params["GIT_REF"]
-        def pytestMarker = params["MARKER"]
-        def pytestFilter = params["FILTER"]
+        refSpec = params["GIT_REF"]
+        pytestMarker = params["MARKER"]
+        pytestFilter = params["FILTER"]
 
         // Run the job using github status notifications so the test status is reported to the PR
         gitUtils.withStatusContext("e2e-smoke") {
@@ -297,12 +297,13 @@ def call(p = [:]) {
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
     } else {
         // Define a string parameter to set the git ref on manual runs
-        setParamDefaults(env.BRANCH_NAME ? env.BRANCH_NAME : "master", pytestMarker, pytestFilter)
+        def refSpec = env.BRANCH_NAME ? env.BRANCH_NAME : "master"
+        setParamDefaults(refSpec, pytestMarker, pytestFilter)
 
         // Re-read the values incase they were changed by the user when clicking "build"
-        def refSpec = params["GIT_REF"]
-        def pytestMarker = params["MARKER"]
-        def pytestFilter = params["FILTER"]
+        refSpec = params["GIT_REF"]
+        pytestMarker = params["MARKER"]
+        pytestFilter = params["FILTER"]
 
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
