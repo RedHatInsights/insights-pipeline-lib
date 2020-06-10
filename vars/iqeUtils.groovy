@@ -127,6 +127,9 @@ def runTestStages(
         if (pluginsFailed) {
             error "Plugins failed: ${pluginsFailed.keySet().join(",")}"
         }
+        else if (!pluginsPassed) {
+            error "No plugins failed nor passed. Were the test runs aborted early?"
+        }
     }
 }
 
