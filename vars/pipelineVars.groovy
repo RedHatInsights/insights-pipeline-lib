@@ -19,6 +19,7 @@ class pipelineVars implements Serializable {
     String prodCluster = "api.insights.openshift.com"
     String devCluster = "api.insights-dev.openshift.com"
     String defaultVaultUrl = "https://vault.devshift.net"
+    String defaultIbutsuUrl = "https://ibutsu-api.cloud.paas.psi.redhat.com"
 
     String jenkinsSlaveImage = (
         'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'

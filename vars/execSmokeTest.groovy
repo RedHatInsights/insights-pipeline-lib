@@ -162,20 +162,24 @@ private def runPipeline(
         error("Deployment failed")
     }
 
-    // create the appConfig used by iqeUtils
+    // create the appConfig/options used by iqeUtils
     def appConfigs = [
-        smoke: [
-            plugins: iqePlugins,
-            ui: ui,
-            parallelWorkerCount: parallelWorkerCount,
-            settingsFileCredentialsId: configFileCredentialsId,
-            extraEnvVars: [envVar(key: 'DYNACONF_OCPROJECT', value: project)]
-        ],
+        smoke: [plugins: iqePlugins]
     ]
 
-    def results = pipelineUtils.runParallel(
-        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker, pytestFilter, false, false)
-    )
+    def options = [
+        ui: ui,
+        parallelWorkerCount: parallelWorkerCount,
+        settingsFileCredentialsId: configFileCredentialsId,
+        extraEnvVars: ['DYNACONF_OCPROJECT': project]
+        ibutsu: false,
+        allocateNode: false,
+        envName: "smoke",
+        marker: pytestMarker,
+        filter: pytestFilter
+    ]
+
+    def results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
 
     openShiftUtils.collectLogs(project: project)
 

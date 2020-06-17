@@ -1,7 +1,73 @@
 import java.util.ArrayList
 
 
-def runIQE(String plugin, String marker, String filter, int parallelWorkerCount, Boolean ibutsu) {
+private def parseOptions(Map options) {
+    /*
+     * Take the options map provided by the caller in prepareStages and populate it with defaults
+     * if needed
+     */
+    if (!options['envName']) error('envName must be defined')
+
+    def envName = options['envName']
+
+    options['image'] = options.get('image', pipelineVars.iqeCoreImage)
+    options['cloud'] = options.get('cloud', pipelineVars.defaultCloud)
+    options['marker'] = options.get('marker', envName)
+    options['filter'] = options.get('filter', "")
+    options['allocateNode'] = options.get('allocateNode', true)
+    options['ibutsu'] = options.get('ibutsu', true)
+    options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
+    options['ui'] = options.get('ui', true)
+    options['settingsFileCredentialsId'] = options.get(
+        'settingsFileCredentialsId', "${envName}IQESettingsYaml"
+    )
+    options['settingsGitRepo'] = options.get(
+        'settingsRepo', pipelineVars.jenkinsConfigRepo
+    )
+    options['settingsGitPath'] = options.get(
+        'settingsGitPath', "configs/default-${envName}-settings.yaml"
+    )
+    options['settingsGitBranch'] = options.get(
+        'settingsGitBranch', "master"
+    )
+    options['settingsGitCredentialsId'] = options.get(
+        'settingsGitCredentialsId', pipelineVars.gitSshCreds
+    )
+    options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
+    options['extraEnvVars'] = options.get('extraEnvVars', [:])
+
+    options['iqeVaultUrl'] = options.get('iqeVaultUrl')
+    options['iqeVaultAppRole'] = options.get('iqeVaultAppRole')
+    options['iqeVaultTokenCredentialsId'] = options.get('iqeVaultTokenCredentialsId')
+    options['iqeVaultVerify'] = options.get('iqeVaultVerify')
+    options['iqeVaultAppRoleTokenCredentialsId'] = options.get('iqeVaultAppRoleTokenCredentialsId')
+    options['iqeVaultMountPoint'] = options.get('iqeVaultMountPoint')
+
+    return options
+}
+
+
+private def mergeAppOptions(Map options, Map appOptions) {
+    if (!appOptions instanceof Map) {
+        error("Incorrect syntax for appConfigs: 'options' for app is not a Map")
+    }
+
+    def mergedOptions = [:]
+
+    options.each { key, defaultValue ->
+        mergedOptions[key] = appOptions.get(key, defaultValue)
+    }
+
+    // Support compatibility w/ smoke test syntax which specifies markers as a list of strings
+    if (mergedOptions['marker'] instanceof java.util.ArrayList) {
+        mergedOptions['marker'] = mergedOptions['marker'].join(" or ")
+    }
+
+    return mergedOptions
+}
+
+
+def runIQE(String plugin, Map appOptions) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
      *
@@ -16,14 +82,15 @@ def runIQE(String plugin, String marker, String filter, int parallelWorkerCount,
     def filterArgs = ""
     def ibutsuArgs = ""
 
-    if (filter) {
-        filterArgs = "-k \"${filter}\""
+    if (appOptions['filter']) {
+        filterArgs = "-k \"${appOptions['filter']}\""
     }
 
-    if (ibutsu) {
-        ibutsuArgs += "-o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com "
-        ibutsuArgs += "-o ibutsu_source=${env.BUILD_TAG}"
+    if (appOptions['ibutsu']) {
+        ibutsuArgs = "-o ibutsu_server=${appOptions['ibutsuUrl']} -o ibutsu_source=${env.BUILD_TAG}"
     }
+
+    def marker = appOptions['marker']
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
@@ -35,7 +102,7 @@ def runIQE(String plugin, String marker, String filter, int parallelWorkerCount,
                 --junitxml=junit-${plugin}-parallel.xml \
                 ${markerArgs} \
                 ${filterArgs} \
-                -n ${parallelWorkerCount} \
+                -n ${appOptions['parallelWorkerCount']} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-parallel.log --log-file-level=DEBUG 2>&1 \
                 """.stripIndent()
@@ -94,18 +161,96 @@ def runIQE(String plugin, String marker, String filter, int parallelWorkerCount,
 }
 
 
-def runTestStages(
-    Map appConfig, String settingsFileCredentialsId, String marker, String filter,
-    int parallelWorkerCount, Boolean ibutsu
+private def getSettingsFromGit(
+    String settingsGitRepo, String settingsGitPath, String settingsGitCredentialsId,
+    String settingsGitBranch, String settingsDir
 ) {
-    stage("Inject credentials") {
-        withCredentials(
-            [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
-        ) {
-            sh "mkdir -p \$IQE_TESTS_LOCAL_CONF_PATH"
-            sh "cp \$YAML_FILE \$IQE_TESTS_LOCAL_CONF_PATH/settings.local.yaml"
-        }
+    def repoDir = "${env.WORKSPACE}/settings_repo"
+    sh "rm -fr \"${repoDir}\""
+
+    gitUtils.checkOutRepo(
+        targetDir: repoDir,
+        repoUrl: settingsGitRepo,
+        branch: settingsGitBranch,
+        credentialsId: settingsFileCredentialsId
+    )
+
+    dir(repoDir) {
+        sh "cp \"${settingsGitPath}\" \"${settingsDir}/settings.local.yaml\""
     }
+}
+
+
+private def getSettingsFromJenkinsSecret(String settingsFileCredentialsId, String settingsDir) {
+    withCredentials(
+        [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
+    ) {
+        sh "cp \$YAML_FILE \"${settingsDir}/settings.local.yaml\""
+    }
+}
+
+
+private def writeEnvFromCredential(String key, String credentialsId) {
+    withCredentials(
+        [string(credentialsId: credentialsId, variable: "SECRET")]
+    ) {
+        sh "echo "${key}=\"\$SECRET\" >> \"${env.WORKSPACE}/.env\""
+    }
+}
+
+
+private def writeEnv(String key, String value) {
+    sh "echo "${key}=\"${value}\" >> \"${env.WORKSPACE}/.env\""
+}
+
+
+private def writeVaultEnvVars(Map options) {
+    if (options['iqeVaultUrl']) writeEnv('DYNACONF_IQE_VAULT_URL', options['iqeVaultUrl'])
+    if (options['iqeVaultAppRole']) {
+        writeEnv('DYNACONF_IQE_VAULT_APPROLE', options['iqeVaultAppRole'])
+    }
+    if (options['iqeVaultTokenCredentialsId']) {
+        writeEnvFromCredential('DYNACONF_IQE_VAULT_TOKEN', options['iqeVaultTokenCredentialsId'])
+    }
+    if (options['iqeVaultAppRoleTokenCredentialsId']) {
+        writeEnvFromCredential(
+            'DYNACONF_IQE_VAULT_APPROLE_TOKEN',
+            options['iqeVaultAppRoleTokenCredentialsId']
+        )
+    }
+
+    writeEnv('DYNACONF_IQE_VAULT_VERIFY', options['iqeVaultVerify'])
+    writeEnv('DYNACONF_IQE_VAULT_MOUNT_POINT', options['iqeVaultMountPoint'])
+}
+
+
+private def configIQE(Map options) {
+    /* Sets up the settings.local.yaml and .env files */
+    def settingsDir = "${env.WORKSPACE}/iqe_local_settings"
+    sh "rm -fr ${settingsDir}"
+    sh "mkdir -p ${settingsDir}"
+
+    if (options['settingsGitRepo']) getSettingsFromGit(options)
+    else if (options['settingsFileCredentialsId']) getSettingsFromJenkinsSecret(options)
+
+    sh "rm -f \"${env.WORKSPACE}/.env\""
+    writeEnv('ENV_FOR_DYNACONF', options['envName'])
+    writeEnv('IQE_TESTS_LOCAL_CONF_PATH', settingsDir)
+
+    writeVaultEnvVars(options)
+    options['extraEnvVars'].each { key, value ->
+        writeEnv(key, value)
+    }
+}
+
+
+private def createTestStages(Map appConfig) {
+    def appOptions = appConfig['options']
+
+    stage("Configure IQE") {
+        configIQE(appOptions)
+    }
+
     stage("Install red-hat-internal-envs plugin") {
         sh "iqe plugin install red-hat-internal-envs"
     }
@@ -124,7 +269,7 @@ def runTestStages(
         }
 
         stage("Run ${plugin} integration tests") {
-            def result = runIQE(plugin, marker, filter, parallelWorkerCount, ibutsu)
+            def result = runIQE(plugin, appOptions)
             pluginResults[plugin] = result
         }
     }
@@ -144,7 +289,7 @@ def runTestStages(
 }
 
 
-def prepareStages(Map options = [:]) {
+def prepareStages(Map defaultOptions, Map appConfigs) {
     /*
      * Given a Map of appConfigs and the kubernetes cloud name, env name, and pytest expression,
      * prepare a Map of stage closures that will be later run using 'parallel()' to execute tests
@@ -153,107 +298,43 @@ def prepareStages(Map options = [:]) {
      * For each app defined in the appConfig, the specified plugins will be installed
      * and tests will fire in sequential order. Tests for each 'app', however, run in parallel.
      *
-     * @param appConfigs -- Map with keys = app name, values a Map with config for that app
-     * - 'ui' indicates whether the tests require selenium, if so, a UI pod is spun up (default: false)
-     * - 'settingsFileCredentialsId' sets the settings file secret to load for that plugin
-     *      (if unset, uses "${envName}IQESettingsYaml")
-     * - 'parallelWorkerCount' defines number of workers for pytest-xdist
-     * - 'extraEnvVars' -- an optional list of envVar objects to set on the test container
+
      *
      * Example:
      *  ["app1": ["plugins": ["plugin1", "plugin2"], "ui": true]
      *   "app2": ["plugins": ["plugin3"], "ui": false, "settingsFileCredentialsId": "mySettings"]]
      *
-     * @param cloud String -- name of the kubernetes plugin cloud to use
-     * @param envName String -- name of IQE environment
-     * @param marker String or String[] -- pytest marker expression(s)
-     * @param filter String -- pytest filter expression (used with -k)
-     * @param allocateNode Boolean -- if true, uses openShiftUtils to spin up test pod
-     * @param ibutsu Boolean -- whether or not to report results to ibutsu
      * @return Map with key = stage name, value = closure
      */
     def stages = [:]
 
-    def appConfigs = options['appConfigs']
-    def envName = options['envName']
-
-    def cloud = options.get('cloud', pipelineVars.defaultCloud)
-    def defaultMarker = options.get('defaultMarker', envName)
-    def defaultFilter = options.get('defaultFilter')
-    def allocateNode = options.get('allocateNode', true)
-    def ibutsu = options.get('ibutsu', true)
-    def defaultSettingsFileCredentialsId = options.get(
-        'defaultSettingsFileCredentialsId', "${envName}IQESettingsYaml"
-    )
-    def defaultSettingsGitRepo = options.get(
-        'defaultSettingsRepo', pipelineVars.jenkinsConfigRepo
-    )
-    def defaultSettingsGitPath = options.get(
-        'defaultSettingsGitPath', "configs/default-${envName}-settings.yaml"
-    )
-    def defaultSettingsGitCredentialsId = options.get(
-        'defaultSettingsGitCredentialsId', pipelineVars.gitSshCreds
-    )
-    // TODO: add func to pull settings from either local file secret or git repo
-    def iqeVaultUrl = options.get('iqeVaultUrl')
-    def iqeVaultAppRole = options.get('iqeVaultAppRole')
-    def iqeVaultToken = options.get('iqeVaultToken')
-    def iqeVaultVerify = options.get('iqeVaultVerify')
-    def iqeVaultAppRoleToken = options.get('iqeVaultAppRoleToken')
-    def iqeVaultMountPoint = options.get('iqeVaultMountPoint', "")
-    // TODO: add func to build vault env vars
+    def options = parseOptions(defaultOptions)
 
     appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
         def app = k
         def appConfig = v
+
         if (!appConfig instanceof Map) {
-            error("Incorrect syntax for appConfigs: appConfig is not a Map")
-        }
-        def plugins = appConfig['plugins']
-        def ui = appConfig.get('ui', false)
-        def parallelWorkerCount = appConfig.get('parallelWorkerCount', 2)
-        def marker = appConfig.get('marker', defaultMarker)
-        def extraEnvVars = appConfig.get('extraEnvVars', [])
-        def settingsFileCredentialsId = appConfig.get(
-            'settingsFileCredentialsId', defaultSettingsFileCredentialsId
-        )
-
-        if (marker instanceof java.util.ArrayList) {
-            marker = marker.join(" or ")
+            error("Incorrect syntax for appConfig: must be a Map")
         }
 
-        // TODO: move env var stuff into runTestStages
-        def envVars = [
-            envVar(key: 'ENV_FOR_DYNACONF', value: envName),
-            envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
-        ]
-        envVars.addAll(extraEnvVars)
+        def appOptions = appConfig.get('options', [:])
+        if (appOptions) appOptions = mergeAppOptions(options, appOptions)
+        appConfig['options'] = appOptions
 
         stages[app] = {
-            if (allocateNode) {
+            if (appOptions['allocateNode']) {
                 def withNodeParams = [
-                    envVars: envVars,
-                    image: pipelineVars.iqeCoreImage,
-                    cloud: cloud,
+                    image: appOptions['image'],
+                    cloud: appOptions['cloud'],
                 ]
-                openShiftUtils.withNodeSelector(withNodeParams, ui) {
-                    runTestStages(
-                        appConfig, settingsFileCredentialsId, marker, filter, parallelWorkerCount,
-                        ibutsu
-                    )
+                openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
+                    createTestStages(appConfig)
                 }
             }
             else {
-                def envVarExprs = envVars.collect {
-                    "${it.getArguments()['key']}=${it.getArguments()['value']}"
-                }
-                withEnv(envVarExprs) {
-                    runTestStages(
-                        appConfig, settingsFileCredentialsId, marker, filter, parallelWorkerCount,
-                        ibutsu
-                    )
-                }
+                createTestStages(appConfig)
             }
         }
     }
