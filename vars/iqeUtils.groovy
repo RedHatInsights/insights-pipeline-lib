@@ -200,7 +200,7 @@ private def writeEnvFromCredential(String key, String credentialsId) {
 
 
 private def writeEnv(String key, String value) {
-    sh "echo "${key}=\"${value}\" >> \"${env.WORKSPACE}/.env\""
+    sh "echo \"${key}=\"${value}\" >> \"${env.WORKSPACE}/.env\""
 }
 
 
@@ -248,6 +248,7 @@ private def createTestStages(Map appConfig) {
     def appOptions = appConfig['options']
 
     stage("Configure IQE") {
+        echo "appOptions: ${appOptions}"
         configIQE(appOptions)
     }
 
