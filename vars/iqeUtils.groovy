@@ -18,6 +18,7 @@ private def parseOptions(Map options) {
     options['ibutsu'] = options.get('ibutsu', true)
     options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
     options['ui'] = options.get('ui', true)
+    options['settingsFromGit'] = options.get('settingsFromGit', false)
     options['settingsFileCredentialsId'] = options.get(
         'settingsFileCredentialsId', "${envName}IQESettingsYaml"
     )
@@ -172,7 +173,7 @@ private def getSettingsFromGit(
         targetDir: repoDir,
         repoUrl: settingsGitRepo,
         branch: settingsGitBranch,
-        credentialsId: settingsFileCredentialsId
+        credentialsId: settingsGitCredentialsId
     )
 
     dir(repoDir) {
@@ -230,7 +231,7 @@ private def configIQE(Map options) {
     sh "rm -fr ${settingsDir}"
     sh "mkdir -p ${settingsDir}"
 
-    if (options['settingsGitRepo']) {
+    if (options['settingsFromGit']) {
         getSettingsFromGit(
             options['settingsGitRepo'],
             options['settingsGitPath'],
