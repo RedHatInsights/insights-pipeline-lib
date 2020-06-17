@@ -311,6 +311,8 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
 
     def options = parseOptions(defaultOptions)
 
+    echo "options: ${options}"
+
     appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
         def app = k
