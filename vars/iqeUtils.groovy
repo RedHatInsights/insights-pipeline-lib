@@ -248,7 +248,6 @@ private def createTestStages(Map appConfig) {
     def appOptions = appConfig['options']
 
     stage("Configure IQE") {
-        echo "appOptions: ${appOptions}"
         configIQE(appOptions)
     }
 
@@ -324,6 +323,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
 
         def appOptions = mergeAppOptions(options, appConfig.get('options', [:]))
         appConfig['options'] = appOptions
+        echo "appOptions: ${appOptions}"
 
         stages[app] = {
             if (appOptions['allocateNode']) {
