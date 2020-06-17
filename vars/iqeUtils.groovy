@@ -144,10 +144,7 @@ def runTestStages(
 }
 
 
-def prepareStages(
-    Map appConfigs, String cloud, String envName, marker, filter, Boolean allocateNode,
-    Boolean ibutsu
-) {
+def prepareStages(Map options = [:]) {
     /*
      * Given a Map of appConfigs and the kubernetes cloud name, env name, and pytest expression,
      * prepare a Map of stage closures that will be later run using 'parallel()' to execute tests
@@ -175,14 +172,36 @@ def prepareStages(
      * @param ibutsu Boolean -- whether or not to report results to ibutsu
      * @return Map with key = stage name, value = closure
      */
-    if (!envName) error("No env specified")
-
     def stages = [:]
-    marker = marker ? marker : ""
-    filter = filter ? filter : ""
-    if (marker instanceof java.util.ArrayList) {
-        marker = marker.join(" or ")
-    }
+
+    def appConfigs = options['appConfigs']
+    def envName = options['envName']
+
+    def cloud = options.get('cloud', pipelineVars.defaultCloud)
+    def defaultMarker = options.get('defaultMarker', envName)
+    def defaultFilter = options.get('defaultFilter')
+    def allocateNode = options.get('allocateNode', true)
+    def ibutsu = options.get('ibutsu', true)
+    def defaultSettingsFileCredentialsId = options.get(
+        'defaultSettingsFileCredentialsId', "${envName}IQESettingsYaml"
+    )
+    def defaultSettingsGitRepo = options.get(
+        'defaultSettingsRepo', pipelineVars.jenkinsConfigRepo
+    )
+    def defaultSettingsGitPath = options.get(
+        'defaultSettingsGitPath', "configs/default-${envName}-settings.yaml"
+    )
+    def defaultSettingsGitCredentialsId = options.get(
+        'defaultSettingsGitCredentialsId', pipelineVars.gitSshCreds
+    )
+    // TODO: add func to pull settings from either local file secret or git repo
+    def iqeVaultUrl = options.get('iqeVaultUrl')
+    def iqeVaultAppRole = options.get('iqeVaultAppRole')
+    def iqeVaultToken = options.get('iqeVaultToken')
+    def iqeVaultVerify = options.get('iqeVaultVerify')
+    def iqeVaultAppRoleToken = options.get('iqeVaultAppRoleToken')
+    def iqeVaultMountPoint = options.get('iqeVaultMountPoint', "")
+    // TODO: add func to build vault env vars
 
     appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
@@ -194,14 +213,17 @@ def prepareStages(
         def plugins = appConfig['plugins']
         def ui = appConfig.get('ui', false)
         def parallelWorkerCount = appConfig.get('parallelWorkerCount', 2)
+        def marker = appConfig.get('marker', defaultMarker)
         def extraEnvVars = appConfig.get('extraEnvVars', [])
         def settingsFileCredentialsId = appConfig.get(
-            'settingsFileCredentialsId', "${envName}IQESettingsYaml"
+            'settingsFileCredentialsId', defaultSettingsFileCredentialsId
         )
-        if (!settingsFileCredentialsId?.trim()) {
-            settingsFileCredentialsId = "${envName}IQESettingsYaml"
+
+        if (marker instanceof java.util.ArrayList) {
+            marker = marker.join(" or ")
         }
 
+        // TODO: move env var stuff into runTestStages
         def envVars = [
             envVar(key: 'ENV_FOR_DYNACONF', value: envName),
             envVar(key: 'IQE_TESTS_LOCAL_CONF_PATH', value: '/tmp/settings_yaml'),
