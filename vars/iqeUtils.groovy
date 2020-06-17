@@ -201,7 +201,7 @@ private def writeEnvFromCredential(String key, String credentialsId) {
 
 
 private def writeEnv(String key, String value) {
-    sh "echo \"${key}=\"${value}\" >> \"${env.WORKSPACE}/.env\""
+    sh "echo \"${key}=\'${value}\'\" >> \"${env.WORKSPACE}/.env\""
 }
 
 
