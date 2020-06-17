@@ -122,8 +122,8 @@ private def deployEnvironment(
 
 private def runPipeline(
     String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
-    String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
+    String ocDeployerServiceSets, pytestMarker, pytestFilter, List<String> iqePlugins,
+    Map extraEnvVars, String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
     Boolean parallelBuild, String cloud, Boolean ui
 ) {
     /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
@@ -174,7 +174,7 @@ private def runPipeline(
     ]
 
     def results = pipelineUtils.runParallel(
-        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker, false, false)
+        iqeUtils.prepareStages(appConfigs, cloud, "smoke", pytestMarker, pytestFilter, false, false)
     )
 
     openShiftUtils.collectLogs(project: project)
@@ -191,8 +191,8 @@ private def runPipeline(
 
 private def allocateResourcesAndRun(
     String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, pytestMarker, List<String> iqePlugins, Map extraEnvVars,
-    String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
+    String ocDeployerServiceSets, pytestMarker, pytestFilter, List<String> iqePlugins,
+    Map extraEnvVars, String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
     Boolean parallelBuild, String cloud, Boolean ui
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
@@ -211,7 +211,7 @@ private def allocateResourcesAndRun(
         openShiftUtils.withNodeSelector(parameters, ui) {
             runPipeline(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
-                ocDeployerServiceSets, pytestMarker, iqePlugins, extraEnvVars,
+                ocDeployerServiceSets, pytestMarker, pytestFilter, iqePlugins, extraEnvVars,
                 configFileCredentialsId, buildScaleFactor, parallelWorkerCount, parallelBuild,
                 cloud, ui
             )
@@ -220,15 +220,33 @@ private def allocateResourcesAndRun(
 }
 
 
-private def setParamDefaults(String refSpec) {
+private def setParamDefaults(String refSpec, pytestMarker, String pytestFilter) {
+    if (pytestMarker instanceof java.util.ArrayList) {
+        pytestMarker = pytestMarker.join(" or ")
+    }
+
     properties(
-        [parameters([
-            string(
-                name: 'GIT_REF',
-                defaultValue: refSpec,
-                description: 'The git ref to deploy for this app during the smoke test'
+        [
+            parameters(
+                [
+                    string(
+                        name: 'GIT_REF',
+                        defaultValue: refSpec,
+                        description: 'The git ref to deploy for this app during the smoke test'
+                    ),
+                    string(
+                        name: "MARKER",
+                        defaultValue: pytestMarker ? pytestMarker : "",
+                        description: "Enter pytest marker expression (-m), leave blank for none"
+                    ),
+                    string(
+                        name: "FILTER",
+                        defaultValue: pytestFilter ? pytestFilter : "",
+                        description: "Enter pytest filter expression (-k), leave blank for none"
+                    )
+                ]
             )
-        ])]
+        ]
     )
 }
 
@@ -238,6 +256,7 @@ def call(p = [:]) {
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
     def ocDeployerServiceSets = p['ocDeployerServiceSets']
     def pytestMarker = p['pytestMarker']
+    def pytestFilter = p.get('pytestFilter')
     def iqePlugins = p.get('iqePlugins')
     def extraEnvVars = p.get('extraEnvVars', [:])
     def configFileCredentialsId = p.get('configFileCredentialsId', "")
@@ -260,26 +279,36 @@ def call(p = [:]) {
         def refSpec = getRefSpec()
 
         // Define a string parameter to set the git ref on manual runs
-        setParamDefaults(refSpec)
+        setParamDefaults(refSpec, pytestMarker, pytestFilter)
+
+        // Re-read the values incase they were changed by the user when clicking "build"
+        refSpec = params["GIT_REF"]
+        pytestMarker = params["MARKER"]
+        pytestFilter = params["FILTER"]
 
         // Run the job using github status notifications so the test status is reported to the PR
         gitUtils.withStatusContext("e2e-smoke") {
             allocateResourcesAndRun(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
-                parallelWorkerCount, parallelBuild, cloud, ui
+                pytestMarker, pytestFilter, iqePlugins, extraEnvVars, configFileCredentialsId,
+                buildScaleFactor, parallelWorkerCount, parallelBuild, cloud, ui
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
     } else {
         // Define a string parameter to set the git ref on manual runs
-        setParamDefaults(env.BRANCH_NAME ? env.BRANCH_NAME : "master")
-        // Grab the value of the parameter passed in by the user
-        def refSpec = params["GIT_REF"]
+        def refSpec = env.BRANCH_NAME ? env.BRANCH_NAME : "master"
+        setParamDefaults(refSpec, pytestMarker, pytestFilter)
+
+        // Re-read the values incase they were changed by the user when clicking "build"
+        refSpec = params["GIT_REF"]
+        pytestMarker = params["MARKER"]
+        pytestFilter = params["FILTER"]
+
         allocateResourcesAndRun(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            pytestMarker, iqePlugins, extraEnvVars, configFileCredentialsId, buildScaleFactor,
-            parallelWorkerCount, parallelBuild, cloud, ui
+            pytestMarker, pytestFilter, iqePlugins, extraEnvVars, configFileCredentialsId,
+            buildScaleFactor, parallelWorkerCount, parallelBuild, cloud, ui
         )
     }
 }

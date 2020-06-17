@@ -1,7 +1,7 @@
 import java.util.ArrayList
 
 
-def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu) {
+def runIQE(String plugin, String marker, String filter, int parallelWorkerCount, Boolean ibutsu) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
      *
@@ -13,7 +13,12 @@ def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu
     def status
     def noTests
 
+    def filterArgs = ""
     def ibutsuArgs = ""
+
+    if (filter) {
+        filterArgs = "-k \"${filter}\""
+    }
 
     if (ibutsu) {
         ibutsuArgs += "-o ibutsu_server=https://ibutsu-api.cloud.paas.psi.redhat.com "
@@ -22,12 +27,15 @@ def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
+        def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
         status = sh(
             script: (
                 """
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-parallel.xml \
-                -m "parallel and (${marker})" -n ${parallelWorkerCount} \
+                ${markerArgs} \
+                ${filterArgs} \
+                -n ${parallelWorkerCount} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-parallel.log --log-file-level=DEBUG 2>&1 \
                 """.stripIndent()
@@ -45,12 +53,14 @@ def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu
         }
 
         // run sequential tests
+        markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
         status = sh(
             script: (
                 """
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-sequential.xml \
-                -m "not parallel and (${marker})" \
+                ${markerArgs} \
+                ${filterArgs} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
                 """.stripIndent()
@@ -85,8 +95,8 @@ def runIQE(String plugin, String marker, int parallelWorkerCount, Boolean ibutsu
 
 
 def runTestStages(
-    Map appConfig, String settingsFileCredentialsId, String marker, int parallelWorkerCount,
-    Boolean ibutsu
+    Map appConfig, String settingsFileCredentialsId, String marker, String filter,
+    int parallelWorkerCount, Boolean ibutsu
 ) {
     stage("Inject credentials") {
         withCredentials(
@@ -114,7 +124,7 @@ def runTestStages(
         }
 
         stage("Run ${plugin} integration tests") {
-            def result = runIQE(plugin, marker, parallelWorkerCount, ibutsu)
+            def result = runIQE(plugin, marker, filter, parallelWorkerCount, ibutsu)
             pluginResults[plugin] = result
         }
     }
@@ -135,7 +145,8 @@ def runTestStages(
 
 
 def prepareStages(
-    Map appConfigs, String cloud, String envName, marker, Boolean allocateNode, Boolean ibutsu
+    Map appConfigs, String cloud, String envName, marker, filter, Boolean allocateNode,
+    Boolean ibutsu
 ) {
     /*
      * Given a Map of appConfigs and the kubernetes cloud name, env name, and pytest expression,
@@ -159,6 +170,7 @@ def prepareStages(
      * @param cloud String -- name of the kubernetes plugin cloud to use
      * @param envName String -- name of IQE environment
      * @param marker String or String[] -- pytest marker expression(s)
+     * @param filter String -- pytest filter expression (used with -k)
      * @param allocateNode Boolean -- if true, uses openShiftUtils to spin up test pod
      * @param ibutsu Boolean -- whether or not to report results to ibutsu
      * @return Map with key = stage name, value = closure
@@ -166,7 +178,8 @@ def prepareStages(
     if (!envName) error("No env specified")
 
     def stages = [:]
-    marker = marker ? marker : envName
+    marker = marker ? marker : ""
+    filter = filter ? filter : ""
     if (marker instanceof java.util.ArrayList) {
         marker = marker.join(" or ")
     }
@@ -204,7 +217,8 @@ def prepareStages(
                 ]
                 openShiftUtils.withNodeSelector(withNodeParams, ui) {
                     runTestStages(
-                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount, ibutsu
+                        appConfig, settingsFileCredentialsId, marker, filter, parallelWorkerCount,
+                        ibutsu
                     )
                 }
             }
@@ -214,7 +228,8 @@ def prepareStages(
                 }
                 withEnv(envVarExprs) {
                     runTestStages(
-                        appConfig, settingsFileCredentialsId, marker, parallelWorkerCount, ibutsu
+                        appConfig, settingsFileCredentialsId, marker, filter, parallelWorkerCount,
+                        ibutsu
                     )
                 }
             }
