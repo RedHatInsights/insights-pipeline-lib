@@ -322,8 +322,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
             error("Incorrect syntax for appConfig: must be a Map")
         }
 
-        def appOptions = appConfig.get('options', [:])
-        if (appOptions) appOptions = mergeAppOptions(options, appOptions)
+        def appOptions = mergeAppOptions(options, appConfig.get('options', [:]))
         appConfig['options'] = appOptions
 
         stages[app] = {
