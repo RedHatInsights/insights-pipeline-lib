@@ -85,7 +85,7 @@ def call(args = [:]) {
 
     def options = [
         cloud: cloud,
-        env: params.env,
+        envName: params.env,
         marker: params.marker,
         filter: params.filter,
         allocateNote: true,
