@@ -230,8 +230,18 @@ private def configIQE(Map options) {
     sh "rm -fr ${settingsDir}"
     sh "mkdir -p ${settingsDir}"
 
-    if (options['settingsGitRepo']) getSettingsFromGit(options)
-    else if (options['settingsFileCredentialsId']) getSettingsFromJenkinsSecret(options)
+    if (options['settingsGitRepo']) {
+        getSettingsFromGit(
+            options['settingsGitRepo'],
+            options['settingsGitPath'],
+            options['settingsGitCredentialsId'],
+            options['settingsGitBranch'],
+            settingsDir
+        )
+    }
+    else if (options['settingsFileCredentialsId']) {
+        getSettingsFromJenkinsSecret(options['settingsFileCredentialsId'], settingsDir)
+    }
 
     sh "rm -f \"${env.WORKSPACE}/.env\""
     writeEnv('ENV_FOR_DYNACONF', options['envName'])
