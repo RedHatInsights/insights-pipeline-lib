@@ -83,14 +83,19 @@ def call(args = [:]) {
         return
     }
 
+    def options = [
+        cloud: cloud,
+        env: params.env,
+        marker: params.marker,
+        filter: params.filter,
+        allocateNote: true,
+        ibutsu: ibutsu
+    ]
+
     // Run the tests
     lock("${params.env}-test") {
         timeout(time: 150, unit: "MINUTES") {
-            results = pipelineUtils.runParallel(
-                iqeUtils.prepareStages(
-                    appConfigs, cloud, params.env, params.marker, params.filter, true, ibutsu
-                )
-            )
+            results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
         }
     }
 
