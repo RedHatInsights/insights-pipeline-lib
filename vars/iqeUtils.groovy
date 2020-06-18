@@ -93,11 +93,13 @@ def runIQE(String plugin, Map appOptions) {
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
-        sh "python -c 'from iqe.base import conf; print(conf.MAIN); print(conf.USERS)'"
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
+        // export the .env file to load env vars that should be present even before dynaconf is
+        // invoked such as IQE_TESTS_LOCAL_CONF_PATH
         status = sh(
             script: (
                 """
+                export $(cat "${env.WORKSPACE}/.env" | xargs) && \
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-parallel.xml \
                 ${markerArgs} \
@@ -121,9 +123,12 @@ def runIQE(String plugin, Map appOptions) {
 
         // run sequential tests
         markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
+        // export the .env file to load env vars that should be present even before dynaconf is
+        // invoked such as IQE_TESTS_LOCAL_CONF_PATH
         status = sh(
             script: (
                 """
+                export $(cat "${env.WORKSPACE}/.env" | xargs) && \
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-sequential.xml \
                 ${markerArgs} \
