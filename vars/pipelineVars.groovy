@@ -20,8 +20,8 @@ class pipelineVars implements Serializable {
     String prodCluster = "api.insights.openshift.com"
     String devCluster = "api.insights-dev.openshift.com"
     String defaultVaultUrl = "https://vault.devshift.net"
-    String defaultVaultAppRoleIdCredential = "vaultAppRoleId"
-    String defaultVaultAppRoleTokenCredential = "vaultAppRoleToken"
+    String defaultVaultRoleIdCredential = "vaultRoleId"
+    String defaultVaultSecretIdCredential = "vaultSecretId"
     String defaultVaultMountPoint = "insights"
     String defaultIbutsuUrl = "https://ibutsu-api.cloud.paas.psi.redhat.com"
 
