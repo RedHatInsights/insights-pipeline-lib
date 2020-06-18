@@ -99,7 +99,7 @@ def runIQE(String plugin, Map appOptions) {
         status = sh(
             script: (
                 """
-                export \$(cat "${env.WORKSPACE}/.env" | xargs) && \
+                set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-parallel.xml \
                 ${markerArgs} \
@@ -128,7 +128,7 @@ def runIQE(String plugin, Map appOptions) {
         status = sh(
             script: (
                 """
-                export \$(cat "${env.WORKSPACE}/.env" | xargs) && \
+                set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-sequential.xml \
                 ${markerArgs} \
