@@ -100,6 +100,7 @@ def runIQE(String plugin, Map appOptions) {
             script: (
                 """
                 set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
+                python -c 'from iqe.base import conf; print(conf.USERS)'
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-parallel.xml \
                 ${markerArgs} \
