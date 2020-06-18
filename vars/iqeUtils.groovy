@@ -28,7 +28,7 @@ private def parseOptions(Map options) {
     options['settingsGitBranch'] = options.get(
         'settingsGitBranch', "master")
     options['settingsGitCredentialsId'] = options.get(
-        'settingsGitCredentialsId', pipelineVars.gitSshCreds)
+        'settingsGitCredentialsId', pipelineVars.gitHttpCreds)
     options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
     options['extraEnvVars'] = options.get('extraEnvVars', [:])
     options['iqeVaultEnabled'] = options.get('iqeVaultEnabled', false)
