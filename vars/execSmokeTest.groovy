@@ -171,7 +171,7 @@ private def runPipeline(
         ui: ui,
         parallelWorkerCount: parallelWorkerCount,
         settingsFileCredentialsId: configFileCredentialsId,
-        extraEnvVars: ['DYNACONF_OCPROJECT': project]
+        extraEnvVars: ['DYNACONF_OCPROJECT': project],
         ibutsu: false,
         allocateNode: false,
         envName: "smoke",
