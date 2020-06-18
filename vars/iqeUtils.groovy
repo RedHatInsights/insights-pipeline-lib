@@ -38,7 +38,7 @@ private def parseOptions(Map options) {
     options['iqeVaultTokenCredentialsId'] = options.get('iqeVaultTokenCredentialsId')
     options['iqeVaultVerify'] = options.get('iqeVaultVerify', true)
     options['iqeVaultAppRoleTokenCredentialsId'] = options.get(
-        'iqeVaultAppRoleTokenCredentialsId', defaultVaultAppRoleTokenCredential)
+        'iqeVaultAppRoleTokenCredentialsId', pipelineVars.defaultVaultAppRoleTokenCredential)
     options['iqeVaultMountPoint'] = options.get(
         'iqeVaultMountPoint', pipelineVars.defaultVaultMountPoint)
 
