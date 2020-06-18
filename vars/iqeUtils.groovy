@@ -226,9 +226,9 @@ private def writeVaultEnvVars(Map options) {
         }
     }
 
-    writeEnv('DYNACONF_IQE_VAULT_VERIFY', options['iqeVaultVerify'])
+    writeEnv('DYNACONF_IQE_VAULT_VERIFY', options['iqeVaultVerify'].toString())
     writeEnv('DYNACONF_IQE_VAULT_MOUNT_POINT', options['iqeVaultMountPoint'])
-    writeEnv('DYNACONF_IQE_VAULT_LOADER_ENABLED', options['iqeVaultEnabled'])
+    writeEnv('DYNACONF_IQE_VAULT_LOADER_ENABLED', options['iqeVaultEnabled'].toString())
 }
 
 
