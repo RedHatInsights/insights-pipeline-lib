@@ -93,6 +93,7 @@ def runIQE(String plugin, Map appOptions) {
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
+        sh "python -c 'from iqe.base import conf; print(conf.USERS)'"
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
         status = sh(
             script: (
