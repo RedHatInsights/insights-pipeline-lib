@@ -20,29 +20,27 @@ private def parseOptions(Map options) {
     options['ui'] = options.get('ui', true)
     options['settingsFromGit'] = options.get('settingsFromGit', false)
     options['settingsFileCredentialsId'] = options.get(
-        'settingsFileCredentialsId', "${envName}IQESettingsYaml"
-    )
+        'settingsFileCredentialsId', "${envName}IQESettingsYaml")
     options['settingsGitRepo'] = options.get(
-        'settingsRepo', pipelineVars.jenkinsConfigRepo
-    )
+        'settingsRepo', pipelineVars.jenkinsConfigRepo)
     options['settingsGitPath'] = options.get(
-        'settingsGitPath', "configs/default-${envName}-settings.yaml"
-    )
+        'settingsGitPath', "configs/default-${envName}-settings.yaml")
     options['settingsGitBranch'] = options.get(
-        'settingsGitBranch', "master"
-    )
+        'settingsGitBranch', "master")
     options['settingsGitCredentialsId'] = options.get(
-        'settingsGitCredentialsId', pipelineVars.gitSshCreds
-    )
+        'settingsGitCredentialsId', pipelineVars.gitSshCreds)
     options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
     options['extraEnvVars'] = options.get('extraEnvVars', [:])
-
-    options['iqeVaultUrl'] = options.get('iqeVaultUrl')
-    options['iqeVaultAppRole'] = options.get('iqeVaultAppRole')
+    options['iqeVaultEnabled'] = options.get('iqeVaultEnabled', false)
+    options['iqeVaultUrl'] = options.get('iqeVaultUrl', pipelineVars.defaultVaultUrl)
+    options['iqeVaultAppRoleCredentialsId'] = options.get(
+        'iqeVaultAppRoleCredentialsId', pipelineVars.defaultVaultAppRoleIdCredential)
     options['iqeVaultTokenCredentialsId'] = options.get('iqeVaultTokenCredentialsId')
-    options['iqeVaultVerify'] = options.get('iqeVaultVerify')
-    options['iqeVaultAppRoleTokenCredentialsId'] = options.get('iqeVaultAppRoleTokenCredentialsId')
-    options['iqeVaultMountPoint'] = options.get('iqeVaultMountPoint')
+    options['iqeVaultVerify'] = options.get('iqeVaultVerify', true)
+    options['iqeVaultAppRoleTokenCredentialsId'] = options.get(
+        'iqeVaultAppRoleTokenCredentialsId', defaultVaultAppRoleTokenCredential)
+    options['iqeVaultMountPoint'] = options.get(
+        'iqeVaultMountPoint', pipelineVars.defaultVaultMountPoint)
 
     return options
 }
@@ -206,22 +204,31 @@ private def writeEnv(String key, String value) {
 
 
 private def writeVaultEnvVars(Map options) {
+    if (!options['iqeVaultEnabled']) return
+
     if (options['iqeVaultUrl']) writeEnv('DYNACONF_IQE_VAULT_URL', options['iqeVaultUrl'])
-    if (options['iqeVaultAppRole']) {
-        writeEnv('DYNACONF_IQE_VAULT_APPROLE', options['iqeVaultAppRole'])
-    }
+
+    // if a token is specified, use it, otherwise use an app role to authenticate
     if (options['iqeVaultTokenCredentialsId']) {
         writeEnvFromCredential('DYNACONF_IQE_VAULT_TOKEN', options['iqeVaultTokenCredentialsId'])
-    }
-    if (options['iqeVaultAppRoleTokenCredentialsId']) {
-        writeEnvFromCredential(
-            'DYNACONF_IQE_VAULT_APPROLE_TOKEN',
-            options['iqeVaultAppRoleTokenCredentialsId']
-        )
+    } else {
+        if (options['iqeVaultAppRoleTokenCredentialsId']) {
+            writeEnvFromCredential(
+                'DYNACONF_IQE_VAULT_APPROLE_TOKEN',
+                options['iqeVaultAppRoleTokenCredentialsId']
+            )
+        }
+        if (options['iqeVaultAppRoleCredentialsId']) {
+            writeEnvFromCredential(
+                'DYNACONF_IQE_VAULT_APPROLE',
+                options['iqeVaultAppRoleCredentialsId']
+            )
+        }
     }
 
     writeEnv('DYNACONF_IQE_VAULT_VERIFY', options['iqeVaultVerify'])
     writeEnv('DYNACONF_IQE_VAULT_MOUNT_POINT', options['iqeVaultMountPoint'])
+    writeEnv('DYNACONF_IQE_VAULT_LOADER_ENABLED', options['iqeVaultEnabled'])
 }
 
 

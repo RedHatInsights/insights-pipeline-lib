@@ -8,16 +8,14 @@
  * @param appConfigs Map -- see iqeUtils.prepareStages()
  * @param envs String[] of env names
  * @param marker String with default marker expression (optional, if blank "envName" is used)
- * @param ibutsu Boolean -- whether or not to report results to ibutsu (default: true)
  * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
 def call(args = [:]) {
     def appConfigs = args['appConfigs']
     def envs = args['envs']
-    def cloud = args.get('cloud', pipelineVars.upshiftCloud)
+    def options = args.get('options', [:])
     def defaultMarker = args.get('defaultMarker')
     def defaultFilter = args.get('defaultFilter')
-    def ibutsu = args.get('ibutsu', true)
 
     p = []
     // Add a param option for simply reloading this job
@@ -83,14 +81,10 @@ def call(args = [:]) {
         return
     }
 
-    def options = [
-        cloud: cloud,
-        envName: params.env,
-        marker: params.marker,
-        filter: params.filter,
-        allocateNote: true,
-        ibutsu: ibutsu
-    ]
+    options['envName'] = params.env
+    options['marker'] = params.marker
+    options['filter'] = params.filter
+    options['ibutsu'] = options.get('ibutsu', true)
 
     // Run the tests
     lock("${params.env}-test") {
@@ -99,7 +93,7 @@ def call(args = [:]) {
         }
     }
 
-    if (ibutsu) {
+    if (options['ibutsu']) {
     // archive an artifact containing the ibutsu URL for this run
         node {
             writeFile(
