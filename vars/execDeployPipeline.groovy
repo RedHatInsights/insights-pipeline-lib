@@ -178,15 +178,18 @@ def call(p = [:]) {
     def slackChannel = p.get('slackChannel')
     def slackUrl = p.get('slackUrl')
 
-    properties([parameters(getJobParams(envs, svcs) + extraParams)])
-    parsed = parseParams(envs, svcs)
-
-    // Exit the job if the "reload" box was checked
-    if (params.RELOAD) {
+    // if there's no params supplied at build time we can assume the job has not yet
+    // downloaded the Jenkinsfile to populate params. If this happens, or if the
+    // "reload" checkbox is explicitly checked, just set the properties and quit
+    if (!params.ENV || params.RELOAD) {
         echo "Job is only reloading"
         currentBuild.description = "reload"
+        properties([parameters(getJobParams(envs, svcs) + extraParams)])
         return
     }
+
+    properties([parameters(getJobParams(envs, svcs) + extraParams)])
+    parsed = parseParams(envs, svcs)
 
     // Exit the job if this env should be ignored
     if (parsed['envConfig'].get('disabled')) {
