@@ -85,6 +85,7 @@ def call(args = [:]) {
     options['marker'] = params.marker
     options['filter'] = params.filter
     options['ibutsu'] = options.get('ibutsu', true)
+    options['cloud'] = options.get('cloud', pipelineVars.upshiftCloud)
 
     // Run the tests
     lock("${params.env}-test") {

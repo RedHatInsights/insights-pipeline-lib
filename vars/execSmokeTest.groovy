@@ -168,6 +168,7 @@ private def runPipeline(
     ]
 
     def options = [
+        cloud: "openshift",
         ui: ui,
         parallelWorkerCount: parallelWorkerCount,
         settingsFileCredentialsId: configFileCredentialsId,
