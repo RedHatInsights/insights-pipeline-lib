@@ -93,6 +93,7 @@ def runIQE(String plugin, Map appOptions) {
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
+        sh "python -c 'from iqe.base import conf; print(conf.MAIN); print(conf.USERS)'"
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
         status = sh(
             script: (
@@ -259,8 +260,6 @@ private def configIQE(Map options) {
     options['extraEnvVars'].each { key, value ->
         writeEnv(key, value)
     }
-
-    sh "cat ${env.WORKSPACE}/.env"
 }
 
 
