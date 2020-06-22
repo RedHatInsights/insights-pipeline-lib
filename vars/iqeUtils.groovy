@@ -224,7 +224,7 @@ private def writeVaultEnvVars(Map options) {
         }
         if (options['vaultSecretIdCredential']) {
             writeEnvFromCredential(
-                'DYNACONF_IQE_VAULT_ROLE_SECRET',
+                'DYNACONF_IQE_VAULT_SECRET_ID',
                 options['vaultSecretIdCredential']
             )
         }
