@@ -88,11 +88,6 @@ def runIQE(String plugin, Map appOptions) {
 
     def marker = appOptions['marker']
 
-    sh "git clone https://gitlab.cee.redhat.com/insights-qe/iqe-tests.git"
-    dir("iqe-tests") {
-        sh "pip install -c iqe/data/all_external_constraints.txt -e ."
-    }
-
     catchError(stageResult: "FAILURE") {
         // run parallel tests
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
