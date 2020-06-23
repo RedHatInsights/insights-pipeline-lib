@@ -81,6 +81,9 @@ def call(args = [:]) {
         return
     }
 
+    // if an app has been unchecked do not run tests for it
+    appConfigs = appConfigs.findAll { params[it.key] == true }
+
     options['envName'] = params.env
     options['marker'] = params.marker
     options['filter'] = params.filter
