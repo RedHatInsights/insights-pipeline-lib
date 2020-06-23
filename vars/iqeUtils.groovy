@@ -19,7 +19,9 @@
  * appConfigs is a Map of keys = arbitrary name of app, values = a Map with 'plugins' and 'options'
  *
  * 'plugins' is a list of the iqe plugins that tests will run for. Tests for each plugin in this
- * list will be run sequentially (but each app will run in parallel)
+ * list will be run sequentially (but each app will run in parallel). Any tests marked with the
+ * "parallel" marker will be executed with pytest-xdist, and all other tests will be executed with a
+ * single pytest process. The results from the parallel and sequential run are then merged.
  *
  * 'options' is a Map that can be used to override the 'options' passed into prepareStages for a
  * particular app.
