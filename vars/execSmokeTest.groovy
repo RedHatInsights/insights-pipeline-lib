@@ -260,6 +260,9 @@ def call(p = [:]) {
     def ocDeployerBuilderPath = p['ocDeployerBuilderPath']
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
     def ocDeployerServiceSets = p['ocDeployerServiceSets']
+
+    // TODO: migrate smoke tests to allow user to define 'appConfigs' and 'options' used by iqeUtils
+    // here.
     def pytestMarker = p['pytestMarker']
     def pytestFilter = p.get('pytestFilter')
     def iqePlugins = p.get('iqePlugins')
