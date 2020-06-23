@@ -1,3 +1,37 @@
+/*
+ * Helper methods used for running iqe tests
+ *
+ * Most users will call the 'prepareStages' method. This sets up a Map containing closures that
+ * can be used to run iqe tests in parallel with the specified appConfigs and options.
+ *
+ * Example:
+ *     results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+ *
+ * 'results' will be a Map with two keys: 'success' and 'failed'. Each key contains a list of which
+ * parallel stage failed.
+ *
+ * OPTIONS
+ * -------
+ * For information on the syntax of 'options', see the 'parseOptions' method below.
+ *
+ * APPCONFIGS
+ * ----------
+ * appConfigs is a Map of keys = arbitrary name of app, values = a Map with 'plugins' and 'options'
+ *
+ * 'plugins' is a list of the iqe plugins that tests will run for. Tests for each plugin in this
+ * list will be run sequentially (but each app will run in parallel)
+ *
+ * 'options' is a Map that can be used to override the 'options' passed into prepareStages for a
+ * particular app.
+ *
+ * Example:
+ *     def options = [ui: false, envName: "my_env"]
+ *     def appConfigs = [app1: [plugins: ["plugin1", "plugin2"], options: [ui: true]],
+ *                       app2: [plugins: ["plugin3"], options: [envName: "my_other_env"]]]
+ *     def results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+ */
+
+
 import java.util.ArrayList
 
 
@@ -8,35 +42,81 @@ private def parseOptions(Map options) {
      */
     if (!options['envName']) error('envName must be defined')
 
+    // the ENV_FOR_DYNACONF environment name
     def envName = options['envName']
 
+    // the container image that the tests will run with in OpenShift
     options['image'] = options.get('image', pipelineVars.iqeCoreImage)
+
+    // the name of the 'cloud' under the Jenkins kubernetes plugin settings
     options['cloud'] = options.get('cloud', pipelineVars.defaultCloud)
+
+    // the pytest marker expression (-m) used when running tests
     options['marker'] = options.get('marker', envName)
+
+    // the pytest filter expression (-k) used when running tests
     options['filter'] = options.get('filter', "")
+
+    // whether or not to spin up a jenkins pod for running the tests
     options['allocateNode'] = options.get('allocateNode', true)
+
+    // whether or not to report results to ibutsu
     options['ibutsu'] = options.get('ibutsu', true)
+
+    // the URL of ibutsu
     options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
+
+    // whether or not to provision a selenium container in the test pod
     options['ui'] = options.get('ui', true)
+
+    // whether or not to load the IQE settings file from a git repo
     options['settingsFromGit'] = options.get('settingsFromGit', false)
+
+    // if loading settings from a Jenkins file credential, the name of the credential
     options['settingsFileCredentialsId'] = options.get(
         'settingsFileCredentialsId', "${envName}IQESettingsYaml")
+
+    // if loading settings from git, the repo URL
     options['settingsGitRepo'] = options.get('settingsRepo', pipelineVars.jenkinsConfigRepo)
+
+    // if loading settings from git, the path in the repo to the config file
     options['settingsGitPath'] = options.get(
         'settingsGitPath', "configs/default-${envName}-settings.yaml")
+
+    // if loading settings from git, the repo branch
     options['settingsGitBranch'] = options.get('settingsGitBranch', "master")
+
+    // if loading settings from git, the Jenkins credentials ID for github authentication
     options['settingsGitCredentialsId'] = options.get(
         'settingsGitCredentialsId', pipelineVars.gitHttpCreds)
+
+    // number of pytest-xdist workers to use for parallel tests
     options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
+
+    // a Map of additional env vars to set in the .env file before running iqe
     options['extraEnvVars'] = options.get('extraEnvVars', [:])
+
+    // whether or not to use IQE's vault loader for importing secrets listed in the config file
     options['vaultEnabled'] = options.get('iqeVaultEnabled', false)
+
+    // if using vault, the URL of the vault server
     options['vaultUrl'] = options.get('vaultUrl', pipelineVars.defaultVaultUrl)
+
+    // if using vault, the Jenkins credential ID that holds the vault AppRole role ID
     options['vaultRoleIdCredential'] = options.get(
         'vaultRoleIdCredential', pipelineVars.defaultVaultRoleIdCredential)
+
+    // if using vault, the Jenkins credential ID that holds the vault AppRole secret ID
     options['vaultSecretIdCredential'] = options.get(
         'vaultSecretIdCredential', pipelineVars.defaultVaultSecretIdCredential)
+
+    // if using vault, and not using approle, the Jenkins credential ID that holds the vault token
     options['vaultTokenCredential'] = options.get('vaultTokenCredential')
+
+    // if using vault, whether or not to verify SSL connections
     options['vaultVerify'] = options.get('vaultVerify', true)
+
+    // if using vault, the vault mount point for the kv engine
     options['vaultMountPoint'] = options.get('vaultMountPoint', pipelineVars.defaultVaultMountPoint)
 
     return options
@@ -44,6 +124,7 @@ private def parseOptions(Map options) {
 
 
 private def mergeAppOptions(Map options, Map appOptions) {
+    /* Merge an app's options with the default options */
     if (!appOptions instanceof Map) {
         error("Incorrect syntax for appConfigs: 'options' for app is not a Map")
     }
@@ -168,6 +249,7 @@ private def getSettingsFromGit(
     String settingsGitRepo, String settingsGitPath, String settingsGitCredentialsId,
     String settingsGitBranch, String settingsDir
 ) {
+    /* Download the IQE settings file from a git repo */
     def repoDir = "${env.WORKSPACE}/settings_repo"
     sh "rm -fr \"${repoDir}\""
 
@@ -185,6 +267,7 @@ private def getSettingsFromGit(
 
 
 private def getSettingsFromJenkinsSecret(String settingsFileCredentialsId, String settingsDir) {
+    /* Load the IQE settings file from a jenkins file credentials */
     withCredentials(
         [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
     ) {
@@ -194,6 +277,7 @@ private def getSettingsFromJenkinsSecret(String settingsFileCredentialsId, Strin
 
 
 private def writeEnvFromCredential(String key, String credentialsId) {
+    /* Helper to write a secret value to the .env file */
     withCredentials(
         [string(credentialsId: credentialsId, variable: "SECRET")]
     ) {
@@ -203,11 +287,13 @@ private def writeEnvFromCredential(String key, String credentialsId) {
 
 
 private def writeEnv(String key, String value) {
+    /* Helper to write a String env value to the .env file */
     sh "echo \"${key}=${value}\" >> \"${env.WORKSPACE}/.env\""
 }
 
 
 private def writeVaultEnvVars(Map options) {
+    /* Parse options for vault settings and write the vault env vars to the .env file */
     if (!options['vaultEnabled']) return
 
     if (options['vaultUrl']) writeEnv('DYNACONF_IQE_VAULT_URL', options['vaultUrl'])
@@ -313,18 +399,14 @@ private def createTestStages(Map appConfig) {
 
 def prepareStages(Map defaultOptions, Map appConfigs) {
     /*
-     * Given a Map of appConfigs and the kubernetes cloud name, env name, and pytest expression,
-     * prepare a Map of stage closures that will be later run using 'parallel()' to execute tests
-     * for multiple IQE plugins.
+     * Given a Map of defaultOptions (see parseOptions above) and appConfigs, prepare a Map of
+     * stage closures that will be later run using 'parallel()' to execute tests for multiple IQE
+     * plugins.
      *
      * For each app defined in the appConfig, the specified plugins will be installed
      * and tests will fire in sequential order. Tests for each 'app', however, run in parallel.
      *
-
-     *
-     * Example:
-     *  ["app1": ["plugins": ["plugin1", "plugin2"], "ui": true]
-     *   "app2": ["plugins": ["plugin3"], "ui": false, "settingsFileCredentialsId": "mySettings"]]
+     * See comment at the top of this file for description of options/appConfigs
      *
      * @return Map with key = stage name, value = closure
      */

@@ -1,13 +1,16 @@
 /*
  * This function will do the following:
- * - Create a Jenkins job, with checkbox parameters for each 'app' name, and a dropdown parameter
- *      for the listed envs
+ * - Create a Jenkins job, with checkbox parameters for each 'app' name, text boxes for the pytest
+ *     marker and filter expression, and a dropdown parameter to select a different env
  * - Use iqeUtils to run test stages
  * - Return the parallel stage run results to the caller
  *
- * @param appConfigs Map -- see iqeUtils.prepareStages()
- * @param envs String[] of env names
- * @param marker String with default marker expression (optional, if blank "envName" is used)
+ * @param appConfigs Map -- see iqeUtils
+ * @param envs String[] -- list of environments this test job can run against
+ * @param options Map -- see iqeUtils
+ * @param defaultMarker String with default marker expression (optional, if blank "envName" is used)
+ * @param defaultFilter String for default pytest filter expression (optional)
+ *
  * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
 def call(args = [:]) {
