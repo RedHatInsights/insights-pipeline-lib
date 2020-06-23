@@ -3,6 +3,7 @@ class pipelineVars implements Serializable {
     String defaultNameSpace = "jenkins"
 
     String gitSshCreds = "insightsdroid-ssh-git"
+    String gitHttpCreds = "InsightsDroidGitHubHTTP"
 
     String userPath = "~/.local/bin"
     String venvDir = "~/.venv"
@@ -10,6 +11,7 @@ class pipelineVars implements Serializable {
     String smokeTestResourceLabel = "smoke_test_projects"
     String e2eDeployDir = 'e2e-deploy'
     String e2eDeployRepo = 'https://github.com/RedHatInsights/e2e-deploy.git'
+    String jenkinsConfigRepo = 'https://github.com/RedHatInsights/iqe-jenkins.git'
     String e2eDeployRepoSsh = 'git@github.com:RedHatInsights/e2e-deploy.git'
     String e2eTestsDir = 'e2e-tests'
     String e2eTestsRepo = 'https://github.com/RedHatInsights/e2e-tests.git'
@@ -17,6 +19,11 @@ class pipelineVars implements Serializable {
 
     String prodCluster = "api.insights.openshift.com"
     String devCluster = "api.insights-dev.openshift.com"
+    String defaultVaultUrl = "https://vault.devshift.net"
+    String defaultVaultRoleIdCredential = "vaultRoleId"
+    String defaultVaultSecretIdCredential = "vaultSecretId"
+    String defaultVaultMountPoint = "insights"
+    String defaultIbutsuUrl = "https://ibutsu-api.cloud.paas.psi.redhat.com"
 
     String jenkinsSlaveImage = (
         'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'

@@ -1,23 +1,24 @@
 /*
  * This function will do the following:
- * - Create a Jenkins job, with checkbox parameters for each 'app' name, and a dropdown parameter
- *      for the listed envs
+ * - Create a Jenkins job, with checkbox parameters for each 'app' name, text boxes for the pytest
+ *     marker and filter expression, and a dropdown parameter to select a different env
  * - Use iqeUtils to run test stages
  * - Return the parallel stage run results to the caller
  *
- * @param appConfigs Map -- see iqeUtils.prepareStages()
- * @param envs String[] of env names
- * @param marker String with default marker expression (optional, if blank "envName" is used)
- * @param ibutsu Boolean -- whether or not to report results to ibutsu (default: true)
+ * @param appConfigs Map -- see iqeUtils
+ * @param envs String[] -- list of environments this test job can run against
+ * @param options Map -- see iqeUtils
+ * @param defaultMarker String with default marker expression (optional, if blank "envName" is used)
+ * @param defaultFilter String for default pytest filter expression (optional)
+ *
  * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  */
 def call(args = [:]) {
     def appConfigs = args['appConfigs']
     def envs = args['envs']
-    def cloud = args.get('cloud', pipelineVars.upshiftCloud)
+    def options = args.get('options', [:])
     def defaultMarker = args.get('defaultMarker')
     def defaultFilter = args.get('defaultFilter')
-    def ibutsu = args.get('ibutsu', true)
 
     p = []
     // Add a param option for simply reloading this job
@@ -83,18 +84,23 @@ def call(args = [:]) {
         return
     }
 
+    // if an app has been unchecked do not run tests for it
+    appConfigs = appConfigs.findAll { params[it.key] == true }
+
+    options['envName'] = params.env
+    options['marker'] = params.marker
+    options['filter'] = params.filter
+    options['ibutsu'] = options.get('ibutsu', true)
+    options['cloud'] = options.get('cloud', pipelineVars.upshiftCloud)
+
     // Run the tests
     lock("${params.env}-test") {
         timeout(time: 150, unit: "MINUTES") {
-            results = pipelineUtils.runParallel(
-                iqeUtils.prepareStages(
-                    appConfigs, cloud, params.env, params.marker, params.filter, true, ibutsu
-                )
-            )
+            results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
         }
     }
 
-    if (ibutsu) {
+    if (options['ibutsu']) {
     // archive an artifact containing the ibutsu URL for this run
         node {
             writeFile(
