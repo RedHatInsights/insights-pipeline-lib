@@ -125,7 +125,7 @@ def withUINode(Map parameters = [:], Closure body) {
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
     def volumes = parameters.get('volumes', [])
-    volumes = volumes.add(emptyDirVolume(mountPath: '/dev/shm', memory: true))
+    volumes.add(emptyDirVolume(mountPath: '/dev/shm', memory: true))
 
     def label = "node-${UUID.randomUUID().toString()}"
 
