@@ -186,7 +186,7 @@ def runIQE(String plugin, Map appOptions) {
                 ${filterArgs} \
                 -n ${appOptions['parallelWorkerCount']} \
                 ${ibutsuArgs} \
-                --log-file=iqe-${plugin}-parallel.log --log-file-level=DEBUG 2>&1 \
+                --log-file=iqe-${plugin}-parallel.log
                 """.stripIndent()
             ),
             returnStatus: true
@@ -214,7 +214,7 @@ def runIQE(String plugin, Map appOptions) {
                 ${markerArgs} \
                 ${filterArgs} \
                 ${ibutsuArgs} \
-                --log-file=iqe-${plugin}-sequential.log --log-file-level=DEBUG 2>&1 \
+                --log-file=iqe-${plugin}-sequential.log
                 """.stripIndent()
             ),
             returnStatus: true
