@@ -26,6 +26,7 @@ import groovy.transform.Field
     policies: "/ops/deployPolicies",
     drift: "/ops/deployDrift",
     hccm: "/ops/deployHccm",
+    "historical-system-profiles": "/ops/deployHistoricalSystemProfiles",
     ingress: "/ops/deployIngress",
     inventory: "/ops/deployInventory",
     marketplace: "/ops/deployMarketplace",
