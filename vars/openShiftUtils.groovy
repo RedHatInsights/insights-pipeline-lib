@@ -125,6 +125,7 @@ def withUINode(Map parameters = [:], Closure body) {
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
     def volumes = parameters.get('volumes', [])
+    volumes = volumes.add(emptyDirVolume(mountPath: '/dev/shm', memory: true))
 
     def label = "node-${UUID.randomUUID().toString()}"
 
@@ -170,10 +171,7 @@ def withUINode(Map parameters = [:], Closure body) {
                 envVars: envVars,
             ),
         ],
-        volumes: [
-            emptyDirVolume(mountPath: '/dev/shm', memory: true),
-            *volumes
-        ],
+        volumes: volumes,
         annotations: [
             podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
             podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
