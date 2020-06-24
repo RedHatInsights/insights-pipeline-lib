@@ -45,6 +45,7 @@ def withNode(Map parameters = [:], Closure body) {
     def yaml = parameters.get('yaml')
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
+    def volumes = parameters.get('volumes', [])
 
     def label = "node-${UUID.randomUUID().toString()}"
 
@@ -57,7 +58,8 @@ def withNode(Map parameters = [:], Closure body) {
         annotations: [
             podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
             podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
-        ]
+        ],
+        volumes: volumes
     ]
     if (yaml) {
         podParameters['yaml'] = readTrusted(yaml)
@@ -122,6 +124,7 @@ def withUINode(Map parameters = [:], Closure body) {
     def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
+    def volumes = parameters.get('volumes', [])
 
     def label = "node-${UUID.randomUUID().toString()}"
 
@@ -169,6 +172,7 @@ def withUINode(Map parameters = [:], Closure body) {
         ],
         volumes: [
             emptyDirVolume(mountPath: '/dev/shm', memory: true),
+            *volumes
         ],
         annotations: [
             podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
@@ -217,6 +221,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
     def yaml = parameters.get('yaml')
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
+    def volumes = parameters.get('volumes', [])
 
     def label = "node-${UUID.randomUUID().toString()}"
 
@@ -229,7 +234,8 @@ def withJnlpNode(Map parameters = [:], Closure body) {
         annotations: [
             podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
             podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
-        ]
+        ],
+        volumes: volumes
     ]
     if (yaml) {
         podParameters['yaml'] = readTrusted(yaml)
