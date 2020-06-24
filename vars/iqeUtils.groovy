@@ -99,7 +99,7 @@ private def parseOptions(Map options) {
     options['extraEnvVars'] = options.get('extraEnvVars', [:])
 
     // whether or not to use IQE's vault loader for importing secrets listed in the config file
-    options['vaultEnabled'] = options.get('iqeVaultEnabled', false)
+    options['vaultEnabled'] = options.get('vaultEnabled', false)
 
     // if using vault, the URL of the vault server
     options['vaultUrl'] = options.get('vaultUrl', pipelineVars.defaultVaultUrl)
