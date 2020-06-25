@@ -226,7 +226,7 @@ private def setParamDefaults(refSpec, pytestMarker, pytestFilter) {
                     booleanParam(
                         name: "RELOAD",
                         defaultValue: false,
-                        description "Reload this job's pipeline file and quit"
+                        description: "Reload this job's pipeline file and quit"
                     )
                 ]
             )
