@@ -373,6 +373,7 @@ private def createTestStages(Map appConfig) {
     def pluginResults = [:]
 
     for (plugin in appConfig["plugins"]) {
+    	// Loop to install our iqe plugins before our custom_packages
         // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
         // strip unnecessary whitespace first
         plugin = plugin.replaceAll("\\s", "")
@@ -382,16 +383,25 @@ private def createTestStages(Map appConfig) {
         stage("Install iqe-${plugin}-plugin") {
             sh "iqe plugin install ${plugin}"
         }
-
-        stage("Run ${plugin} integration tests") {
-            def result = runIQE(plugin, appOptions)
-            pluginResults[plugin] = result
-        }
     }
 
     if (appOptions['customPackages']) {
         stage("Install custom packages") {
             sh "pip install ${appOptions['customPackages'].join(" ")}"
+        }
+    }
+
+    for (plugin in appConfig["plugins"]) {
+    	// Final plugin loop to run our tests after the custom_packages install
+        // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
+        // strip unnecessary whitespace first
+        plugin = plugin.replaceAll("\\s", "")
+
+        if (plugin ==~ /iqe-\S+-plugin.*/) plugin = plugin.replaceAll(/iqe-(\S+)-plugin/, '$1')
+
+        stage("Run ${plugin} integration tests") {
+            def result = runIQE(plugin, appOptions)
+            pluginResults[plugin] = result
         }
     }
 
