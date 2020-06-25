@@ -131,6 +131,7 @@ private def runDeployStages(
         resourceLimitMemory: '2Gi',
         cloud: cloud,
     ]
+    stage("Allocating deploy node")
     openShiftUtils.withNode(parameters) {
         // check out e2e-deploy
         stage("Check out e2e-deploy") {
@@ -178,17 +179,12 @@ private def runPipeline(
         echo "Using project: ${env.PROJECT}"
         options['extraEnvVars']['DYNACONF_OCPROJECT'] = project
 
-        stage("Deploying") {
-            runDeployStages(
-                refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
-                ocDeployerServiceSets, buildScaleFactor, parallelBuild, options['cloud']
-            )
-        }
+        runDeployStages(
+            refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
+            ocDeployerServiceSets, buildScaleFactor, parallelBuild, options['cloud']
+        )
 
-        def results
-        stage("Testing") {
-            results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
-        }
+        def results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
 
         stage("Collecting logs") {
             openShiftUtils.collectLogs(project: project)
