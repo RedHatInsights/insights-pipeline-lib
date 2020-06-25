@@ -177,6 +177,7 @@ private def runPipeline(
         currentBuild.result = "SUCCESS"
 
         echo "Using project: ${env.PROJECT}"
+        options['extraEnvVars']['DYNACONF_OCPROJECT'] = project
 
         stage("Deploying") {
             runDeployStages(
@@ -274,7 +275,6 @@ def call(p = [:]) {
     options['filter'] = params.FILTER
     options['envName'] = options.get('envName', "smoke")
     options['extraEnvVars'] = options.get("extraEnvVars", extraEnvVars)
-    options['extraEnvVars']['DYNACONF_OCPROJECT'] = project
     options['ibutsu'] = options.get('ibutsu')
     options['settingsFileCredentialsId'] = options.get(
         "settingsFileCredentialsId", configFileCredentialsId
