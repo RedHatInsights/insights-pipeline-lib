@@ -391,9 +391,7 @@ private def createTestStages(Map appConfig) {
 
     if (appOptions['customPackages']) {
         stage("Install custom packages") {
-            appOptions['customPackages'].each { packageName ->
-                sh "pip install ${packageName}"
-            }
+            sh "pip install ${appOptions['customPackages'].join(" ")}"
         }
     }
 
