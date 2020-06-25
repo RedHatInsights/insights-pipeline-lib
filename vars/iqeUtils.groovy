@@ -443,7 +443,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
                 stage("Allocating node") {
                     echo("Requesting node")
                     openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
-                        echo("Node allocated")
+                        echo("Node provisioned")
                         createTestStages(appConfig)
                     }
                 }
