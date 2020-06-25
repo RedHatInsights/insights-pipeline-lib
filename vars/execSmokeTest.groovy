@@ -222,6 +222,11 @@ private def setParamDefaults(refSpec, pytestMarker, pytestFilter) {
                         name: "FILTER",
                         defaultValue: pytestFilter ? pytestFilter : "",
                         description: "Enter pytest filter expression (-k), leave blank for none"
+                    ),
+                    booleanParam(
+                        name: "RELOAD",
+                        defaultValue: false,
+                        description "Reload this job's pipeline file and quit"
                     )
                 ]
             )
