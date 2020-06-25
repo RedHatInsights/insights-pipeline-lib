@@ -373,7 +373,7 @@ private def createTestStages(Map appConfig) {
     def pluginResults = [:]
 
     for (plugin in appConfig["plugins"]) {
-    	// Loop to install our iqe plugins before our custom_packages
+        // Loop to install our iqe plugins before our custom_packages
         // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
         // strip unnecessary whitespace first
         plugin = plugin.replaceAll("\\s", "")
@@ -392,7 +392,7 @@ private def createTestStages(Map appConfig) {
     }
 
     for (plugin in appConfig["plugins"]) {
-    	// Final plugin loop to run our tests after the custom_packages install
+        // Final plugin loop to run our tests after the custom_packages install
         // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
         // strip unnecessary whitespace first
         plugin = plugin.replaceAll("\\s", "")
