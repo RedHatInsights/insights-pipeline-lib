@@ -124,6 +124,9 @@ private def parseOptions(Map options) {
     // if using vault, the vault mount point for the kv engine
     options['vaultMountPoint'] = options.get('vaultMountPoint', pipelineVars.defaultVaultMountPoint)
 
+    // list of custom packages to 'pip install' before tests run
+    options['customPackages'] = options.get('customPackages', [])
+
     return options
 }
 
@@ -383,6 +386,14 @@ private def createTestStages(Map appConfig) {
         stage("Run ${plugin} integration tests") {
             def result = runIQE(plugin, appOptions)
             pluginResults[plugin] = result
+        }
+    }
+
+    if (appOptions['customPackages']) {
+        stage("Install custom packages") {
+            appOptions['customPackages'].each { packageName ->
+                sh "pip install ${packageName}"
+            }
         }
     }
 
