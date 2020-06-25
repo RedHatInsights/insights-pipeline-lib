@@ -127,7 +127,6 @@ private def runDeployStages(
     def parameters = [
         image: pipelineVars.iqeCoreImage,
         namespace: project,
-        envVars: envVars,
         resourceLimitCpu: '1',
         resourceLimitMemory: '2Gi',
         cloud: cloud,
