@@ -436,6 +436,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
                     image: appOptions['image'],
                     cloud: appOptions['cloud'],
                 ]
+                stage("Allocating node")
                 echo("Requesting node")
                 openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
                     echo("Node allocated")
