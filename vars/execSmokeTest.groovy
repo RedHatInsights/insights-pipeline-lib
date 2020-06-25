@@ -178,11 +178,13 @@ private def runPipeline(
         pipelineUtils.cancelPriorBuilds()
         currentBuild.result = "SUCCESS"
 
-        echo "Using project: ${env.PROJECT}"
+        def project = env.PROJECT
+        echo "Using project: ${project}"
         options['extraEnvVars']['DYNACONF_OCPROJECT'] = project
+        options['namespace'] = project
 
         runDeployStages(
-            refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
+            refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
             ocDeployerServiceSets, buildScaleFactor, parallelBuild, options['cloud']
         )
 
