@@ -120,112 +120,90 @@ private def deployEnvironment(
 }
 
 
-private def runPipeline(
-    String refSpec, String project, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, pytestMarker, pytestFilter, List<String> iqePlugins,
-    Map extraEnvVars, String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
-    Boolean parallelBuild, String cloud, Boolean ui
+private def runDeployStages(
+    refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
+    ocDeployerServiceSets, buildScaleFactor, parallelBuild, cloud
 ) {
-    /* Deploy a test env to 'project' in openshift, checkout e2e-tests, run the smoke tests */
-
-    pipelineUtils.cancelPriorBuilds()
-    currentBuild.result = "SUCCESS"
-
-    // check out e2e-deploy
-    stage("Check out repos") {
-        gitUtils.checkOutRepo(
-            targetDir: pipelineVars.e2eDeployDir,
-            repoUrl: pipelineVars.e2eDeployRepo,
-            credentialsId: "InsightsDroidGitHubHTTP"
-        )
-        dir(pipelineVars.e2eDeployDir) {
-            sh "pip install -r requirements.txt"
-        }
-    }
-
-    // wipe all resources that have label 'e2esmoke=true'
-    stage("Wipe test environment") {
-        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-    }
-
-    try {
-        dir(pipelineVars.e2eDeployDir) {
-            deployEnvironment(
-                refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
-                ocDeployerServiceSets, buildScaleFactor, parallelBuild
+    def parameters = [
+        image: pipelineVars.iqeCoreImage,
+        namespace: project,
+        envVars: envVars,
+        resourceLimitCpu: '1',
+        resourceLimitMemory: '2Gi',
+        cloud: cloud,
+    ]
+    openShiftUtils.withNode(parameters) {
+        // check out e2e-deploy
+        stage("Check out e2e-deploy") {
+            gitUtils.checkOutRepo(
+                targetDir: pipelineVars.e2eDeployDir,
+                repoUrl: pipelineVars.e2eDeployRepo,
+                credentialsId: "InsightsDroidGitHubHTTP"
             )
+            dir(pipelineVars.e2eDeployDir) {
+                sh "pip install -r requirements.txt"
+            }
         }
-    } catch (err) {
-        echo("Hit error during deploy!")
-        echo(err.toString())
-        openShiftUtils.collectLogs(project: project)
-        error("Deployment failed")
-    }
 
-    // create the appConfig/options used by iqeUtils
-    def appConfigs = [
-        smoke: [plugins: iqePlugins]
-    ]
+        // wipe all resources that have label 'e2esmoke=true'
+        stage("Wipe test environment") {
+            sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+        }
 
-    def options = [
-        cloud: "openshift",
-        ui: ui,
-        parallelWorkerCount: parallelWorkerCount,
-        settingsFileCredentialsId: configFileCredentialsId,
-        extraEnvVars: ['DYNACONF_OCPROJECT': project],
-        ibutsu: false,
-        allocateNode: false,
-        envName: "smoke",
-        marker: pytestMarker,
-        filter: pytestFilter
-    ]
-
-    def results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
-
-    openShiftUtils.collectLogs(project: project)
-
-    stage("Wipe test environment") {
-        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-    }
-
-    if (currentBuild.result != "SUCCESS" || results['failed'].size() > 0) {
-        error("Smoke test failed");
+        try {
+            dir(pipelineVars.e2eDeployDir) {
+                deployEnvironment(
+                    refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
+                    ocDeployerServiceSets, buildScaleFactor, parallelBuild
+                )
+            }
+        } catch (err) {
+            echo("Hit error during deploy!")
+            echo(err.toString())
+            openShiftUtils.collectLogs(project: project)
+            error("Deployment failed")
+        }
     }
 }
 
 
-private def allocateResourcesAndRun(
-    String refSpec, String ocDeployerBuilderPath, String ocDeployerComponentPath,
-    String ocDeployerServiceSets, pytestMarker, pytestFilter, List<String> iqePlugins,
-    Map extraEnvVars, String configFileCredentialsId, int buildScaleFactor, int parallelWorkerCount,
-    Boolean parallelBuild, String cloud, Boolean ui
+private def run(
+    refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
+    buildScaleFactor, parallelBuild, options, appConfigs
 ) {
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
+        pipelineUtils.cancelPriorBuilds()
+        currentBuild.result = "SUCCESS"
+
         echo "Using project: ${env.PROJECT}"
 
-        envVars = [envVar(key: 'ENV_FOR_DYNACONF', value: 'smoke')]
-        parameters = [
-            image: pipelineVars.iqeCoreImage,
-            namespace: env.PROJECT,
-            envVars: envVars,
-            resourceLimitCpu: '1',
-            resourceLimitMemory: '2Gi',
-            cloud: cloud,
-        ]
-        openShiftUtils.withNodeSelector(parameters, ui) {
-            runPipeline(
-                refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath, 
-                ocDeployerServiceSets, pytestMarker, pytestFilter, iqePlugins, extraEnvVars,
-                configFileCredentialsId, buildScaleFactor, parallelWorkerCount, parallelBuild,
-                cloud, ui
+        stage("Deploying") {
+            runDeployStages(
+                refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
+                ocDeployerServiceSets, buildScaleFactor, parallelBuild, options['cloud']
             )
+        }
+
+        def results
+        stage("Testing") {
+            results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+        }
+
+        stage("Collecting logs") {
+            openShiftUtils.collectLogs(project: project)
+        }
+
+        stage("Final result") {
+            if (currentBuild.result != "SUCCESS" || results['failed'].size() > 0) {
+                error("Smoke test failed");
+            }
         }
     }
 }
 
 
-private def setParamDefaults(String refSpec, pytestMarker, String pytestFilter) {
+private def setParamDefaults(refSpec, pytestMarker, pytestFilter) {
     if (pytestMarker instanceof java.util.ArrayList) {
         pytestMarker = pytestMarker.join(" or ")
     }
@@ -257,22 +235,60 @@ private def setParamDefaults(String refSpec, pytestMarker, String pytestFilter) 
 
 
 def call(p = [:]) {
+    // these args are the "new preferred" args to use with this job
     def ocDeployerBuilderPath = p['ocDeployerBuilderPath']
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
     def ocDeployerServiceSets = p['ocDeployerServiceSets']
+    def buildScaleFactor = p.get('buildScaleFactor', 1)
+    def parallelBuild = p.get('parallelBuild', false)
+    def defaultMarker = p.get('defaultMarker')
+    def defaultFilter = p.get('defaultFilter')
+    def appConfigs = p.get('appConfigs', [:])
+    def options = p.get('options', [:])
 
-    // TODO: migrate smoke tests to allow user to define 'appConfigs' and 'options' used by iqeUtils
-    // here.
-    def pytestMarker = p['pytestMarker']
+    // these args are provided for backward compatibility
+    def pytestMarker = p.get('pytestMarker')
     def pytestFilter = p.get('pytestFilter')
     def iqePlugins = p.get('iqePlugins')
     def extraEnvVars = p.get('extraEnvVars', [:])
     def configFileCredentialsId = p.get('configFileCredentialsId', "")
-    def buildScaleFactor = p.get('buildScaleFactor', 1)
     def parallelWorkerCount = p.get('parallelWorkerCount', 2)
-    def parallelBuild = p.get('parallelBuild', false)
     def cloud = p.get('cloud', "openshift")
     def ui = p.get('ui', false)
+
+    def refSpec
+    if (env.CHANGE_ID) refSpec = getRefSpec()
+    else refSpec = env.BRANCH_NAME ? env.BRANCH_NAME : "master"
+
+    // add job parameters to allow users to change job options when clicking 'build'
+    setParamDefaults(
+        refSpec,
+        defaultMarker ? defaultMarker : pytestMarker,
+        defaultFilter ? defaultFilter : pytestFilter
+    )
+
+    // Re-read the values from params incase they were changed by the user when clicking "build"
+    refSpec = params.GIT_REF
+    // set the iqeUtils options based on the args passed into the job
+    options['marker'] = params.MARKER
+    options['filter'] = params.FILTER
+    options['envName'] = options.get('envName', "smoke")
+    options['extraEnvVars'] = options.get("extraEnvVars", extraEnvVars)
+    options['extraEnvVars']['DYNACONF_OCPROJECT'] = project
+    options['ibutsu'] = options.get('ibutsu')
+    options['settingsFileCredentialsId'] = options.get(
+        "settingsFileCredentialsId", configFileCredentialsId
+    )
+    options['parallelWorkerCount'] = options.get("parallelWorkerCount", parallelWorkerCount)
+    options['cloud'] = options.get("cloud", cloud)
+    options['ui'] = options.get("ui", ui)
+
+    // create the appConfig/options used by iqeUtils if it was not specified (for backward compat)
+    if (!appConfigs) {
+        appConfigs = [
+            smoke: [plugins: iqePlugins]
+        ]
+    }
 
     // If testing via a PR webhook trigger
     if (env.CHANGE_ID) {
@@ -283,40 +299,18 @@ def call(p = [:]) {
             echo "Failed to set 'stable' label: ${err.getMessage()}}"
         }
 
-        // Get the refspec of the PR
-        def refSpec = getRefSpec()
-
-        // Define a string parameter to set the git ref on manual runs
-        setParamDefaults(refSpec, pytestMarker, pytestFilter)
-
-        // Re-read the values incase they were changed by the user when clicking "build"
-        refSpec = params["GIT_REF"]
-        pytestMarker = params["MARKER"]
-        pytestFilter = params["FILTER"]
-
         // Run the job using github status notifications so the test status is reported to the PR
         gitUtils.withStatusContext("e2e-smoke") {
-            allocateResourcesAndRun(
+            run(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                pytestMarker, pytestFilter, iqePlugins, extraEnvVars, configFileCredentialsId,
-                buildScaleFactor, parallelWorkerCount, parallelBuild, cloud, ui
+                buildScaleFactor, parallelBuild, options, appConfigs
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
     } else {
-        // Define a string parameter to set the git ref on manual runs
-        def refSpec = env.BRANCH_NAME ? env.BRANCH_NAME : "master"
-        setParamDefaults(refSpec, pytestMarker, pytestFilter)
-
-        // Re-read the values incase they were changed by the user when clicking "build"
-        refSpec = params["GIT_REF"]
-        pytestMarker = params["MARKER"]
-        pytestFilter = params["FILTER"]
-
-        allocateResourcesAndRun(
+        run(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            pytestMarker, pytestFilter, iqePlugins, extraEnvVars, configFileCredentialsId,
-            buildScaleFactor, parallelWorkerCount, parallelBuild, cloud, ui
+            buildScaleFactor, parallelBuild, options, appConfigs
         )
     }
 }
