@@ -25,6 +25,21 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 }
 
 
+private def runBody(Map podParameters, String label, String containerName, Closure body) {
+    stage("Provisioning node") {
+        echo("Provisioning node...")
+        podTemplate(podParameters) {
+            node(label) {
+                echo("Node provisioned")
+                container(containerName) {
+                    body()
+                }
+            }
+        }
+    }
+}
+
+
 def withNode(Map parameters = [:], Closure body) {
     /*
     Spins up a pod with 2 containers: jnlp, and specified 'image'
@@ -95,13 +110,7 @@ def withNode(Map parameters = [:], Closure body) {
         podParameters['containers'].addAll(extraContainers)
     }
 
-    podTemplate(podParameters) {
-        node(label) {
-            container(buildingContainer) {
-                body()
-            }
-        }
-    }
+    runBody(podParameters, label, buildingContainer, body)
 }
 
 
@@ -181,13 +190,7 @@ def withUINode(Map parameters = [:], Closure body) {
     // if yaml is used, the containers key will not be present
     if (podParameters.get('containers')) podParameters['containers'].addAll(extraContainers)
 
-    podTemplate(podParameters) {
-        node(label) {
-            container('iqe') {
-                body()
-            }
-        }
-    }
+    runBody(podParameters, label, 'iqe', body)
 }
 
 
@@ -257,13 +260,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
         podParameters['containers'].addAll(extraContainers)
     }
 
-    podTemplate(podParameters) {
-        node(label) {
-            container('jnlp') {
-                body()
-            }
-        }
-    }
+    runBody(podParameters, label, 'jnlp', body)
 }
 
 

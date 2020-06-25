@@ -50,6 +50,9 @@ private def parseOptions(Map options) {
     // the container image that the tests will run with in OpenShift
     options['image'] = options.get('image', pipelineVars.iqeCoreImage)
 
+    // the namespace that the test pods run in
+    options['namespace'] = options.get('namespace')
+
     // the name of the 'cloud' under the Jenkins kubernetes plugin settings
     options['cloud'] = options.get('cloud', pipelineVars.defaultCloud)
 
@@ -434,6 +437,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
             if (appOptions['allocateNode']) {
                 def withNodeParams = [
                     image: appOptions['image'],
+                    namespace: appOptions['namespace'],
                     cloud: appOptions['cloud'],
                 ]
                 openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
