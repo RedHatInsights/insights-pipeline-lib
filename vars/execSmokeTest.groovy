@@ -263,6 +263,17 @@ def call(p = [:]) {
         defaultFilter ? defaultFilter : pytestFilter
     )
 
+    if (!params.GIT_REF) {
+        echo "No git ref specified, is this the first time the job has run?"
+        currentBuild.description = "reload"
+        return
+    }
+    else if (params.RELOAD) {
+        echo "Reloading"
+        currentBuild.description = "reload"
+        return
+    }
+
     // Re-read the values from params incase they were changed by the user when clicking "build"
     refSpec = params.GIT_REF
     // set the iqeUtils options based on the args passed into the job
