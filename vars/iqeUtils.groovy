@@ -124,6 +124,9 @@ private def parseOptions(Map options) {
     // if using vault, the vault mount point for the kv engine
     options['vaultMountPoint'] = options.get('vaultMountPoint', pipelineVars.defaultVaultMountPoint)
 
+    // list of custom packages to 'pip install' before tests run
+    options['customPackages'] = options.get('customPackages', [])
+
     return options
 }
 
@@ -370,6 +373,7 @@ private def createTestStages(Map appConfig) {
     def pluginResults = [:]
 
     for (plugin in appConfig["plugins"]) {
+        // Loop to install our iqe plugins before our custom_packages
         // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
         // strip unnecessary whitespace first
         plugin = plugin.replaceAll("\\s", "")
@@ -379,6 +383,21 @@ private def createTestStages(Map appConfig) {
         stage("Install iqe-${plugin}-plugin") {
             sh "iqe plugin install ${plugin}"
         }
+    }
+
+    if (appOptions['customPackages']) {
+        stage("Install custom packages") {
+            sh "pip install ${appOptions['customPackages'].join(" ")}"
+        }
+    }
+
+    for (plugin in appConfig["plugins"]) {
+        // Final plugin loop to run our tests after the custom_packages install
+        // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
+        // strip unnecessary whitespace first
+        plugin = plugin.replaceAll("\\s", "")
+
+        if (plugin ==~ /iqe-\S+-plugin.*/) plugin = plugin.replaceAll(/iqe-(\S+)-plugin/, '$1')
 
         stage("Run ${plugin} integration tests") {
             def result = runIQE(plugin, appOptions)
