@@ -167,7 +167,7 @@ private def runDeployStages(
 }
 
 
-private def run(
+private def runPipeline(
     refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
     buildScaleFactor, parallelBuild, options, appConfigs
 ) {
@@ -301,14 +301,14 @@ def call(p = [:]) {
 
         // Run the job using github status notifications so the test status is reported to the PR
         gitUtils.withStatusContext("e2e-smoke") {
-            run(
+            runPipeline(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
                 buildScaleFactor, parallelBuild, options, appConfigs
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
     } else {
-        run(
+        runPipeline(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
             buildScaleFactor, parallelBuild, options, appConfigs
         )
