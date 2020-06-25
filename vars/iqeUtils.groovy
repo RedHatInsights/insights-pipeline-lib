@@ -440,12 +440,8 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
                     namespace: appOptions['namespace'],
                     cloud: appOptions['cloud'],
                 ]
-                stage("Allocating node") {
-                    echo("Requesting node")
-                    openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
-                        echo("Node provisioned")
-                        createTestStages(appConfig)
-                    }
+                openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
+                    createTestStages(appConfig)
                 }
             }
             else {

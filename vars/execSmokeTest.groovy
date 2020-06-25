@@ -131,10 +131,7 @@ private def runDeployStages(
         resourceLimitMemory: '2Gi',
         cloud: cloud,
     ]
-    stage("Allocating deploy node")
-    echo("Requesting node")
     openShiftUtils.withNode(parameters) {
-        echo("Node provisioned")
         // check out e2e-deploy
         stage("Check out e2e-deploy") {
             gitUtils.checkOutRepo(
