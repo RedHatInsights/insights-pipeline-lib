@@ -92,10 +92,11 @@ def call(args = [:]) {
     options['filter'] = params.filter
     options['ibutsu'] = options.get('ibutsu', true)
     options['cloud'] = options.get('cloud', pipelineVars.upshiftCloud)
+    options['timeout'] = options.get('timeout', 150)
 
     // Run the tests
     lock("${params.env}-test") {
-        timeout(time: 150, unit: "MINUTES") {
+        timeout(time: options['timeout'], unit: "MINUTES") {
             results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
         }
     }
