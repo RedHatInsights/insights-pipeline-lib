@@ -26,14 +26,12 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 
 
 private def runBody(Map podParameters, String label, String containerName, Closure body) {
-    stage("Provisioning node") {
-        echo("Provisioning node...")
-        podTemplate(podParameters) {
-            node(label) {
-                echo("Node provisioned")
-                container(containerName) {
-                    body()
-                }
+    echo("Provisioning node...")
+    podTemplate(podParameters) {
+        node(label) {
+            echo("Node provisioned")
+            container(containerName) {
+                body()
             }
         }
     }
