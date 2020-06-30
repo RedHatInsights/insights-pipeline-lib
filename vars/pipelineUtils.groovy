@@ -217,7 +217,7 @@ def cancelPriorBuilds() {
 def checkForReload() {
     // Exit the job if the "reload" box was checked
     if (params.RELOAD) {
-        echo "Job is reloading, will exit now"
+        echo "Job is reloading, will exit now. Throwing FlowInterruptedException"
         currentBuild.description = "reload"
         throw new FlowInterruptedException(Result.SUCCESS)
     }
