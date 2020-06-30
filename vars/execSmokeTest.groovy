@@ -258,7 +258,7 @@ def call(p = [:]) {
     * @param ocdeployerServiceSets -- the ocdeployer service sets to deploy into the ephemeral env
     *
     * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
-    * @throws FlowInterruptedException if the 'RELOAD' parameter is true -- this should be re-thrown by caller
+    * @throws AbortException if the 'RELOAD' parameter is true
     */
 
     // these args are the "new preferred" args to use with this job

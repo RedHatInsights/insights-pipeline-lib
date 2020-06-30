@@ -12,7 +12,7 @@
  * @param defaultFilter String for default pytest filter expression (optional)
  *
  * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
- * @throws FlowInterruptedException if the 'RELOAD' parameter is true -- this should be re-thrown by caller
+ * @throws AbortException if the 'RELOAD' parameter is true
  */
 def call(args = [:]) {
     def appConfigs = args['appConfigs']

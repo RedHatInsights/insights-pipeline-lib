@@ -3,7 +3,7 @@
  */
 import com.cloudbees.groovy.cps.NonCPS
 import hudson.model.Result
-import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
+import hudson.AbortException
 
 def checkIfMasterOrPullReq() {
     // Check SCM to ensure this is a master branch/untested PR
@@ -219,6 +219,6 @@ def checkForReload() {
     if (params.RELOAD) {
         echo "Job is reloading, will exit now. Throwing FlowInterruptedException"
         currentBuild.description = "reload"
-        throw new FlowInterruptedException(Result.ABORTED)
+        throw new AbortException("Job is reloading")
     }
 }
