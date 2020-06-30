@@ -25,7 +25,7 @@ def call(args = [:]) {
     p.add(
         [
             $class: 'BooleanParameterDefinition',
-            name: "reload", defaultValue: false, description: "Reload the job's config and quit"
+            name: "RELOAD", defaultValue: false, description: "Reload the job's config and quit"
         ]
     )
 
@@ -69,12 +69,7 @@ def call(args = [:]) {
 
     properties([parameters(p)])
 
-    // Exit the job if the "reload" box was checked
-    if (params.reload) {
-        echo "Job is only reloading"
-        currentBuild.description = "reload"
-        return
-    }
+    pipelineUtils.checkForReload()
 
     // For build #1, only load the pipeline and exit
     // This is so the next time the job is built, "Build with parameters" will be available

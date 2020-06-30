@@ -274,11 +274,8 @@ def call(p = [:]) {
         currentBuild.description = "reload"
         return
     }
-    else if (params.RELOAD) {
-        echo "Reloading"
-        currentBuild.description = "reload"
-        return
-    }
+
+    pipelineUtils.checkForReload()
 
     // Re-read the values from params incase they were changed by the user when clicking "build"
     refSpec = params.GIT_REF

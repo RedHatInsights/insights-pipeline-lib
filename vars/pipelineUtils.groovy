@@ -2,7 +2,8 @@
  * Various utils that help with writing more efficient pipeline code/pipeline flow control
  */
 import com.cloudbees.groovy.cps.NonCPS
-
+import hudson.model.Result
+import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
 def checkIfMasterOrPullReq() {
     // Check SCM to ensure this is a master branch/untested PR
@@ -209,5 +210,15 @@ def cancelPriorBuilds() {
         milestone(buildNumber)
 
         env.priorBuildsCancelled = true
+    }
+}
+
+
+def checkForReload() {
+    // Exit the job if the "reload" box was checked
+    if (params.RELOAD) {
+        echo "Job is reloading, will exit now"
+        currentBuild.description = "reload"
+        throw new FlowInterruptedException(Result.SUCCESS)
     }
 }
