@@ -240,6 +240,27 @@ private def setParamDefaults(refSpec, pytestMarker, pytestFilter) {
 
 
 def call(p = [:]) {
+    /*
+    * This function will do the following:
+    * - Create a Jenkins job, with parameters for GIT_REF, MARKER, FILTER, and RELOAD
+    * - Reserve a smoke test namespace and run ocdeployer to set up the ephemeral test env
+    * - Run IQE
+    * - Return the parallel stage run results to the caller
+    *
+    * @param appConfigs Map -- see iqeUtils
+    * @param options Map -- see iqeUtils
+    * @param defaultMarker String with default marker expression (optional, if blank "envName" is used)
+    * @param defaultFilter String for default pytest filter expression (optional)
+    * @param buildScaleFactor float -- scales the build config cpu/mem reservations by this amount
+    * @param parallelBuild -- if true, deploys build config at same time as the apps (default: false)
+    * @param ocdeployerBuilderPath -- the ocdeployer "path" to the buildconfig template (e.g. buildfactory/myapp)
+    * @param ocdeployerComponentPath -- the ocdeployer "path" to the app template (e.g. templates/myapp)
+    * @param ocdeployerServiceSets -- the ocdeployer service sets to deploy into the ephemeral env
+    *
+    * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
+    * @throws FlowInterruptedException if the 'RELOAD' parameter is true -- this should be re-thrown by caller
+    */
+
     // these args are the "new preferred" args to use with this job
     def ocDeployerBuilderPath = p['ocDeployerBuilderPath']
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
@@ -251,7 +272,7 @@ def call(p = [:]) {
     def appConfigs = p.get('appConfigs', [:])
     def options = p.get('options', [:])
 
-    // these args are provided for backward compatibility
+    // these args are deprecated and provided for backward compatibility
     def pytestMarker = p.get('pytestMarker')
     def pytestFilter = p.get('pytestFilter')
     def iqePlugins = p.get('iqePlugins')
