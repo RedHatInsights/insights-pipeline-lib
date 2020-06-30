@@ -293,13 +293,13 @@ def call(p = [:]) {
         defaultFilter ? defaultFilter : pytestFilter
     )
 
+    pipelineUtils.checkForReload()
+
     if (!params.GIT_REF) {
         echo "No git ref specified, is this the first time the job has run?"
         currentBuild.description = "reload"
         return
     }
-
-    pipelineUtils.checkForReload()
 
     // Re-read the values from params incase they were changed by the user when clicking "build"
     refSpec = params.GIT_REF
