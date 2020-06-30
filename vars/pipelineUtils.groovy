@@ -219,6 +219,6 @@ def checkForReload() {
     if (params.RELOAD) {
         echo "Job is reloading, will exit now. Throwing FlowInterruptedException"
         currentBuild.description = "reload"
-        throw new FlowInterruptedException(Result.SUCCESS)
+        throw new FlowInterruptedException(Result.ABORTED)
     }
 }
