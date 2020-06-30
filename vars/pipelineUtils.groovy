@@ -222,3 +222,8 @@ def checkForReload() {
         error("Job is configured to reload pipeline script and exit. Aborting.")
     }
 }
+
+
+def throwIfAborted(Exception err) {
+    if (currentBuild.result == "ABORTED") throw err
+}
