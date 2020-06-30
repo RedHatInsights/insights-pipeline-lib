@@ -170,6 +170,7 @@ private def runPipeline(
     refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
     buildScaleFactor, parallelBuild, options, appConfigs
 ) {
+    def results
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
     lock(label: pipelineVars.smokeTestResourceLabel, quantity: 1, variable: "PROJECT") {
         pipelineUtils.cancelPriorBuilds()
@@ -185,7 +186,7 @@ private def runPipeline(
             ocDeployerServiceSets, buildScaleFactor, parallelBuild, options['cloud']
         )
 
-        def results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+        results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
 
         stage("Collecting logs") {
             openShiftUtils.collectLogs(project: project)
@@ -197,6 +198,8 @@ private def runPipeline(
             }
         }
     }
+
+    return results
 }
 
 
