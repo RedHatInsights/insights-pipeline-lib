@@ -25,6 +25,7 @@ class pipelineVars implements Serializable {
     String defaultVaultSecretIdCredential = "vaultSecretId"
     String defaultVaultMountPoint = "insights"
     String defaultIbutsuUrl = "https://ibutsu-api.cloud.paas.psi.redhat.com"
+    String defaultIbutsuFrontendUrl = "https://ibutsu.cloud.paas.psi.redhat.com"
 
     String jenkinsSlaveImage = (
         'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'
