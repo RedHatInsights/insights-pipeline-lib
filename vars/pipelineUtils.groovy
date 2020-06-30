@@ -2,7 +2,6 @@
  * Various utils that help with writing more efficient pipeline code/pipeline flow control
  */
 import com.cloudbees.groovy.cps.NonCPS
-import hudson.model.Result
 import hudson.AbortException
 
 def checkIfMasterOrPullReq() {
@@ -217,8 +216,9 @@ def cancelPriorBuilds() {
 def checkForReload() {
     // Exit the job if the "reload" box was checked
     if (params.RELOAD) {
-        echo "Job is reloading, will exit now. Throwing FlowInterruptedException"
+        echo "Job is configured to reload pipeline script and exit. Aborting."
         currentBuild.description = "reload"
-        throw new AbortException("Job is reloading")
+        currentBuild.result = "ABORTED"
+        error("Job is configured to reload pipeline script and exit. Aborting.")
     }
 }
