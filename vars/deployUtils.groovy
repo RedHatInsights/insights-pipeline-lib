@@ -17,10 +17,10 @@ import groovy.transform.Field
 @Field def deployJobs = [
     advisor: "/ops/deployAdvisor",
     approval: "/ops/deployApproval",
-    //"automation-analytics": "/ops/deployAutomationAnalytics",
+    "automation-analytics": "/ops/deployAutomationAnalytics",
     buildfactory: "/ops/deployBuildfactory",
     catalog: "/ops/deployCatalog",
-    //"ccx-data-pipeline": "/ops/deployCCX",
+    "ccx-data-pipeline": "/ops/deployCCX",
     cloudigrade: "/ops/deployCloudigrade",
     compliance: "/ops/deployCompliance",
     policies: "/ops/deployPolicies",
