@@ -113,10 +113,6 @@ def call(args = [:]) {
         }
     }
 
-
-    // stash generated junit reports so they can be read later from other nodes in the same build
-    stash name: "iqeJunitFiles", allowEmpty: true, includes: "junit-*.xml"
-
     return results
 }
 

@@ -416,6 +416,9 @@ private def createTestStages(Map appConfig) {
         else if (!pluginsPassed) {
             error "No plugins failed nor passed. Were the test runs aborted early?"
         }
+
+        // stash junit files so that other nodes can read them later
+        stash name: "${app}-junit-stash", allowEmpty: true, includes: "junit-*.xml"
     }
 }
 
