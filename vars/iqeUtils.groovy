@@ -359,7 +359,7 @@ private def configIQE(Map options) {
 }
 
 
-private def createTestStages(Map appConfig) {
+private def createTestStages(String appName, Map appConfig) {
     def appOptions = appConfig['options']
 
     stage("Configure IQE") {
@@ -418,7 +418,7 @@ private def createTestStages(Map appConfig) {
         }
 
         // stash junit files so that other nodes can read them later
-        stash name: "${app}-junit-stash", allowEmpty: true, includes: "junit-*.xml"
+        stash name: "${appName}-junit-stash", allowEmpty: true, includes: "junit-*.xml"
     }
 }
 
@@ -444,7 +444,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
 
     appConfigs.each{ k, v ->
         // re-define vars, see https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
-        def app = k
+        def appName = k
         def appConfig = v
 
         if (!appConfig instanceof Map) {
@@ -455,7 +455,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
         appConfig['options'] = appOptions
         echo "appOptions: ${appOptions}"
 
-        stages[app] = {
+        stages[appName] = {
             if (appOptions['allocateNode']) {
                 def withNodeParams = [
                     image: appOptions['image'],
@@ -463,11 +463,11 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
                     cloud: appOptions['cloud'],
                 ]
                 openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
-                    createTestStages(appConfig)
+                    createTestStages(appName, appConfig)
                 }
             }
             else {
-                createTestStages(appConfig)
+                createTestStages(appName, appConfig)
             }
         }
     }
