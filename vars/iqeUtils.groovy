@@ -245,6 +245,7 @@ def runIQE(String plugin, Map appOptions) {
 
     catchError {
         archiveArtifacts "iqe-${plugin}-*.log"
+        archiveArtifacts "junit-${plugin}-*.xml"
         junit "junit-${plugin}-*.xml"
     }
 
