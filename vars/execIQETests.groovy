@@ -10,6 +10,8 @@
  * @param options Map -- see iqeUtils
  * @param defaultMarker String with default marker expression (optional, if blank "envName" is used)
  * @param defaultFilter String for default pytest filter expression (optional)
+ * @param extraJobProperties Array of job properties to append to the properties that this function
+ *      creates (optional)
  *
  * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  * @throws AbortException if the 'RELOAD' parameter is true
@@ -20,6 +22,7 @@ def call(args = [:]) {
     def options = args.get('options', [:])
     def defaultMarker = args.get('defaultMarker')
     def defaultFilter = args.get('defaultFilter')
+    def extraJobProperties = args.get('extraJobProperties', [])
 
     p = []
     // Add a param option for simply reloading this job
@@ -67,6 +70,8 @@ def call(args = [:]) {
             description: "Enter pytest filter expression, leave blank for none"
         ]
     )
+
+    p.addAll(extraJobProperties)
 
     properties([parameters(p)])
 

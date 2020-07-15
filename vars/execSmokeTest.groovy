@@ -203,39 +203,40 @@ private def runPipeline(
 }
 
 
-private def setParamDefaults(refSpec, pytestMarker, pytestFilter) {
+private def setParamDefaults(refSpec, pytestMarker, pytestFilter, extraJobProperties) {
     if (pytestMarker instanceof java.util.ArrayList) {
         pytestMarker = pytestMarker.join(" or ")
     }
 
-    properties(
-        [
-            parameters(
-                [
-                    string(
-                        name: 'GIT_REF',
-                        defaultValue: refSpec,
-                        description: 'The git ref to deploy for this app during the smoke test'
-                    ),
-                    string(
-                        name: "MARKER",
-                        defaultValue: pytestMarker ? pytestMarker : "",
-                        description: "Enter pytest marker expression (-m), leave blank for none"
-                    ),
-                    string(
-                        name: "FILTER",
-                        defaultValue: pytestFilter ? pytestFilter : "",
-                        description: "Enter pytest filter expression (-k), leave blank for none"
-                    ),
-                    booleanParam(
-                        name: "RELOAD",
-                        defaultValue: false,
-                        description: "Reload this job's pipeline file and quit"
-                    )
-                ]
-            )
-        ]
-    )
+    def jobProperties = [
+        parameters(
+            [
+                string(
+                    name: 'GIT_REF',
+                    defaultValue: refSpec,
+                    description: 'The git ref to deploy for this app during the smoke test'
+                ),
+                string(
+                    name: "MARKER",
+                    defaultValue: pytestMarker ? pytestMarker : "",
+                    description: "Enter pytest marker expression (-m), leave blank for none"
+                ),
+                string(
+                    name: "FILTER",
+                    defaultValue: pytestFilter ? pytestFilter : "",
+                    description: "Enter pytest filter expression (-k), leave blank for none"
+                ),
+                booleanParam(
+                    name: "RELOAD",
+                    defaultValue: false,
+                    description: "Reload this job's pipeline file and quit"
+                )
+            ]
+        )
+    ]
+
+    jobProperties.addAll(extraJobProperties)
+    properties(jobProperties)
 }
 
 
@@ -256,6 +257,8 @@ def call(p = [:]) {
     * @param ocdeployerBuilderPath -- the ocdeployer "path" to the buildconfig template (e.g. buildfactory/myapp)
     * @param ocdeployerComponentPath -- the ocdeployer "path" to the app template (e.g. templates/myapp)
     * @param ocdeployerServiceSets -- the ocdeployer service sets to deploy into the ephemeral env
+    * @param extraJobProperties Array of job properties to append to the properties that this function
+    *      creates (optional)
     *
     * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
     * @throws AbortException if the 'RELOAD' parameter is true
@@ -271,6 +274,7 @@ def call(p = [:]) {
     def defaultFilter = p.get('defaultFilter')
     def appConfigs = p.get('appConfigs', [:])
     def options = p.get('options', [:])
+    def extraJobProperties = p.get('extraJobProperties', [])
 
     // these args are deprecated and provided for backward compatibility
     def pytestMarker = p.get('pytestMarker')
@@ -290,7 +294,8 @@ def call(p = [:]) {
     setParamDefaults(
         refSpec,
         defaultMarker ? defaultMarker : pytestMarker,
-        defaultFilter ? defaultFilter : pytestFilter
+        defaultFilter ? defaultFilter : pytestFilter,
+        extraJobProperties
     )
 
     pipelineUtils.checkForReload()
