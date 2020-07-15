@@ -71,9 +71,10 @@ def call(args = [:]) {
         ]
     )
 
-    p.addAll(extraJobProperties)
+    def jobProperties = [parameters(p)]
+    jobProperties.addAll(extraJobProperties)
 
-    properties([parameters(p)])
+    properties(jobProperties)
 
     pipelineUtils.checkForReload()
 
