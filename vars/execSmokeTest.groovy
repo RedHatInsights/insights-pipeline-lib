@@ -193,6 +193,10 @@ private def runPipeline(
         }
 
         stage("Final result") {
+            if (!results) error("Found no test results")
+            def totalResults = results['success'].size() + results['failed'].size()
+            if (totalResults != appConfigs.keySet().size()) error("Did not find test results for expected number of apps")
+
             if (currentBuild.result != "SUCCESS" || results['failed'].size() > 0) {
                 error("Smoke test failed");
             }
