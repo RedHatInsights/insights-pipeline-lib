@@ -72,6 +72,8 @@ def sendMsg(parameters = [:]) {
             color: color ? color : colorMap[result],
             message: txt
         )
+
+        echo "threading id is: ${slackResponse.threadId}"
         archiveArtifacts "slackResponse.threadId"
     }
 
