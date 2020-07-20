@@ -65,12 +65,14 @@ def sendMsg(parameters = [:]) {
     if (slackChannel instanceof String) slackChannel = [slackChannel]
 
     slackChannel.each { channel ->
-        slackSend(
+        def slackResponse = slackSend(
             baseUrl: slackUrl,
             botUser: true,
             channel: channel,
             color: color ? color : colorMap[result],
             message: txt
         )
+        archiveArtifacts "slackResponse.threadId"
     }
+
 }
