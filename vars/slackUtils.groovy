@@ -64,14 +64,32 @@ def sendMsg(parameters = [:]) {
 
     if (slackChannel instanceof String) slackChannel = [slackChannel]
 
+
+//     def slackResponse = slackSend(channel: "cool-threads", message: "Here is the primary message")
+//     slackSend(channel: slackResponse.threadId, message: "Thread reply #1")
+//     slackSend(channel: slackResponse.threadId, message: "Thread reply #2")
+
+
+
     slackChannel.each { channel ->
-        slackSend(
+        def slackResponse = slackSend(
             baseUrl: slackUrl,
             botUser: true,
             channel: channel,
             color: color ? color : colorMap[result],
             message: txt
         )
+//
+//
+//         slackSend(
+//             baseUrl: slackUrl,
+//             botUser: true,
+//             channel: channel,
+//             color: color ? color : colorMap[result],
+//             message: txt
+//         )
+//
+//         return slackResponse.threadId
         echo "I am here in slack message"
     }
 }
