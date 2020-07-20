@@ -74,6 +74,7 @@ def sendMsg(parameters = [:]) {
         )
 
 //         echo "threading id is: ${slackResponse.threadId}"
+        slackResponse
         echo "inside slack thread"
         archiveArtifacts "slackResponse.threadId"
     }
