@@ -72,5 +72,6 @@ def sendMsg(parameters = [:]) {
             color: color ? color : colorMap[result],
             message: txt
         )
+        echo "I am here in slack message"
     }
 }
