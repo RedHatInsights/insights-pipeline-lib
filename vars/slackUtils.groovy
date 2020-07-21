@@ -93,5 +93,8 @@ def sendMsg(parameters = [:]) {
 
         echo "I am here in slack message"
         echo "thread id is going to be ${slackResponse.threadId}"
+
+        slackSend(channel: slackResponse.threadId, message: "Thread reply #1")
+        slackSend(channel: slackResponse.threadId, message: "Thread reply #2")
     }
 }
