@@ -90,6 +90,8 @@ def sendMsg(parameters = [:]) {
 //         )
 //
 //         return slackResponse.threadId
+
         echo "I am here in slack message"
+        echo "thread id is going to be ${slackResponse.threadId}"
     }
 }
