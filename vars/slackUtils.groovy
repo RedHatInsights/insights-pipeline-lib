@@ -111,8 +111,15 @@ def sendMsg(parameters = [:]) {
         )
     }
 
-     archiveArtifacts "${slackResponse.threadId}"
-     
-     echo "Printing threadId.... ${slackResponse.threadId}"
+    slackSend(channel: slackResponse.threadId, message: "Testing Threads #1")
+//     slackSend(channel: slackResponse.threadId, message: "Testing Threads #2")
+
+    echo "Printing threadId.... ${slackResponse.threadId}"
+
+    echo "${slackResponse.threadId}"
+
+    archiveArtifacts "${slackResponse.threadId}"
+
+
 
 }
