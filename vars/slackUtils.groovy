@@ -71,20 +71,20 @@ def sendMsg(parameters = [:]) {
 
 
 
-    slackChannel.each { channel ->
-        def slackResponse = slackSend(
-            baseUrl: slackUrl,
-            botUser: true,
-            channel: channel,
-            color: color ? color : colorMap[result],
-            message: txt
-        )
+//     slackChannel.each { channel ->
+//         def slackResponse = slackSend(
+//             baseUrl: slackUrl,
+//             botUser: true,
+//             channel: channel,
+//             color: color ? color : colorMap[result],
+//             message: txt
+//         )
 //
 //         slackSend(channel: slackResponse.threadId, message: "Thread reply #1")
 //         slackSend(channel: slackResponse.threadId, message: "Thread reply #2")
 
-        return slackResponse.threadId
-    }
+//         return slackResponse.threadId
+//     }
 //
 //
 //         slackSend(
@@ -99,4 +99,15 @@ def sendMsg(parameters = [:]) {
 
 
 
+// }
+
+    slackChannel.each { channel ->
+        slackSend(
+            baseUrl: slackUrl,
+            botUser: true,
+            channel: channel,
+            color: color ? color : colorMap[result],
+            message: txt
+        )
+    }
 }
