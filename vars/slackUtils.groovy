@@ -80,6 +80,12 @@ def sendMsg(parameters = [:]) {
             message: txt
         )
 //
+//         slackSend(channel: slackResponse.threadId, message: "Thread reply #1")
+//         slackSend(channel: slackResponse.threadId, message: "Thread reply #2")
+
+        return slackResponse.threadId
+    }
+//
 //
 //         slackSend(
 //             baseUrl: slackUrl,
@@ -91,10 +97,6 @@ def sendMsg(parameters = [:]) {
 //
 //         return slackResponse.threadId
 
-        echo "I am here in slack message"
-        echo "thread id is going to be ${slackResponse.threadId}"
 
-        slackSend(channel: slackResponse.threadId, message: "Thread reply #1")
-        slackSend(channel: slackResponse.threadId, message: "Thread reply #2")
-    }
+
 }
