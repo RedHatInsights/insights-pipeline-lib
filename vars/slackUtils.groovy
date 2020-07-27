@@ -112,5 +112,7 @@ def sendMsg(parameters = [:]) {
     }
 
      archiveArtifacts "${slackResponse.threadId}"
+     
+     echo "Printing threadId.... ${slackResponse.threadId}"
 
 }
