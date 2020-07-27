@@ -102,7 +102,7 @@ def sendMsg(parameters = [:]) {
 // }
 
     slackChannel.each { channel ->
-        slackSend(
+        def slackResponse = slackSend(
             baseUrl: slackUrl,
             botUser: true,
             channel: channel,
@@ -110,4 +110,7 @@ def sendMsg(parameters = [:]) {
             message: txt
         )
     }
+
+     archiveArtifacts "${slackResponse.threadId}"
+
 }
