@@ -80,6 +80,7 @@ def sendMsg(parameters = [:]) {
                 color: color ? color : colorMap[result],
                 message: txt
             )
+         }
          def slackResponse = response_func()
 
 //         def slackResponse = slackSend(
