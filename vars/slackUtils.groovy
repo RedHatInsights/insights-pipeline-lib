@@ -114,6 +114,8 @@ def sendMsg(parameters = [:]) {
 //         slackSend(channel: slackResponse.threadId, message: "Testing Threads #1")
         echo "Printing threadId.... ${slackResponse.threadId}"
         echo "${slackResponse.threadId}"
+        echo slackResponse.threadId
+        archiveArtifacts slackResponse.threadId
         archiveArtifacts "${slackResponse.threadId}"
     }
 
