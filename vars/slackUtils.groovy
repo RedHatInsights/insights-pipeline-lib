@@ -71,36 +71,6 @@ def sendMsg(parameters = [:]) {
 
 
 
-//     slackChannel.each { channel ->
-//         def slackResponse = slackSend(
-//             baseUrl: slackUrl,
-//             botUser: true,
-//             channel: channel,
-//             color: color ? color : colorMap[result],
-//             message: txt
-//         )
-//
-//         slackSend(channel: slackResponse.threadId, message: "Thread reply #1")
-//         slackSend(channel: slackResponse.threadId, message: "Thread reply #2")
-
-//         return slackResponse.threadId
-//     }
-//
-//
-//         slackSend(
-//             baseUrl: slackUrl,
-//             botUser: true,
-//             channel: channel,
-//             color: color ? color : colorMap[result],
-//             message: txt
-//         )
-//
-//         return slackResponse.threadId
-
-
-
-// }
-
     slackChannel.each { channel ->
         def slackResponse = slackSend(
             baseUrl: slackUrl,
@@ -112,11 +82,11 @@ def sendMsg(parameters = [:]) {
 //
 //         return slackResponse
 //         slackSend(channel: slackResponse.threadId, message: "Testing Threads #1")
-        echo "Printing threadId.... ${slackResponse.threadId}"
-        echo "${slackResponse.threadId}"
-        echo slackResponse.threadId
+//         echo "Printing threadId.... ${slackResponse.threadId}"
+//         echo "${slackResponse.threadId}"
+//         echo slackResponse.threadId
         archiveArtifacts slackResponse.threadId
-        archiveArtifacts "${slackResponse.threadId}"
+//         archiveArtifacts "${slackResponse.threadId}"
     }
 
 }
