@@ -72,13 +72,23 @@ def sendMsg(parameters = [:]) {
 
 
     slackChannel.each { channel ->
-        def slackResponse = slackSend(
-            baseUrl: slackUrl,
-            botUser: true,
-            channel: channel,
-            color: color ? color : colorMap[result],
-            message: txt
-        )
+        def response_func() {
+            return slackSend(
+                baseUrl: slackUrl,
+                botUser: true,
+                channel: channel,
+                color: color ? color : colorMap[result],
+                message: txt
+            )
+         def slackResponse = response_func()
+
+//         def slackResponse = slackSend(
+//             baseUrl: slackUrl,
+//             botUser: true,
+//             channel: channel,
+//             color: color ? color : colorMap[result],
+//             message: txt
+//         )
 //
 //         return slackResponse
 //         slackSend(channel: slackResponse.threadId, message: "Testing Threads #1")
