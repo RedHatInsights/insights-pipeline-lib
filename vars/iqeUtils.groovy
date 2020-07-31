@@ -356,6 +356,9 @@ private def configIQE(Map options) {
     options['extraEnvVars'].each { key, value ->
         writeEnv(key, value)
     }
+
+    // get certificates
+    sh "vault kv get insights/secrets/qe/stage/bop/"
 }
 
 
