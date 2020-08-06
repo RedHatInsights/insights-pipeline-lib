@@ -12,6 +12,8 @@
  * @param defaultFilter String for default pytest filter expression (optional)
  * @param extraJobProperties Array of job properties to append to the properties that this function
  *      creates (optional)
+ * @param lockName String the name of the resource to lock (using lockable resources plugin) when
+ *      job runs. By default it will be "${envName}-test"
  *
  * @returns Map with format ["success": String[] successStages, "failed": String[] failedStages]
  * @throws AbortException if the 'RELOAD' parameter is true
@@ -23,6 +25,7 @@ def call(args = [:]) {
     def defaultMarker = args.get('defaultMarker')
     def defaultFilter = args.get('defaultFilter')
     def extraJobProperties = args.get('extraJobProperties', [])
+    def lockName = args.get('lockName')
 
     p = []
     // Add a param option for simply reloading this job
@@ -97,7 +100,8 @@ def call(args = [:]) {
     options['timeout'] = options.get('timeout', 150)
 
     // Run the tests
-    lock("${params.env}-test") {
+    if (!lockName) lockName = "${params.env}-test"
+    lock(lockName) {
         timeout(time: options['timeout'], unit: "MINUTES") {
             results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
         }
