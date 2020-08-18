@@ -9,11 +9,9 @@
  */
 
 
-def defaultSlackMsgCallback = {
-    return "test failed"
-}
-
 def call(args = [:]) {
+    def defaultSlackMsgCallback = { return "test failed" }
+
     // arguments to pass to execIQETests
     def appConfigs = args['appConfigs']
     def envs = args['envs']
