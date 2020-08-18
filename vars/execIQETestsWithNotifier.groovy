@@ -32,7 +32,9 @@ def call(args = [:]) {
     def slackMsgCallback = args.get('slackMsgCallback', defaultSlackMsgCallback)
 
     def previousBuild = pipelineUtils.getLastRealBuild(currentBuild.getPreviousBuild())
-    echo "Found previous non-RELOAD/non-ERROR build: ${previousBuild.getDisplayName()}"
+    if (previousBuild) {
+        echo "Found previous non-RELOAD/non-ERROR build: ${previousBuild.getDisplayName()}"
+    }
 
     def results
     try {
