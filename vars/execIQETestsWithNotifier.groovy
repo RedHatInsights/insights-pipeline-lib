@@ -31,12 +31,16 @@ def call(args = [:]) {
     // OPTIONAL: closure to call that generates detailed slack msg text when tests fail
     def slackMsgCallback = args.get('slackMsgCallback', defaultSlackMsgCallback)
 
-    def previousBuild = pipelineUtils.getLastRealBuild(currentBuild.getPreviousBuild())
-    if (previousBuild) {
-        echo "Found previous non-RELOAD/non-ERROR build: ${previousBuild.getDisplayName()}"
+    def currentMinusOne = pipelineUtils.getLastRealBuild(currentBuild.getPreviousBuild())
+    if (currentMinusOne) {
+        echo "Found currentMinusOne non-RELOAD/non-ERROR build: ${currentMinusOne.getDisplayName()}"
     }
-    def previousPreviousBuild = pipelineUtils.getLastRealBuild(previousBuild)
-
+        
+    def currentMinusTwo = pipelineUtils.getLastRealBuild(currentMinusOne)
+    if (currentMinusTwo) {
+        echo "Found currentMinusTwo non-RELOAD/non-ERROR build: ${currentMinusTwo.getDisplayName()}"
+    }
+        
     def results
     try {
         results = execIQETests(
@@ -53,7 +57,7 @@ def call(args = [:]) {
         if (!results) error("Found no test results, unexpected error must have occurred")
 
         if (results['failed']) {
-            if (!previousBuild || previousBuild.getResult().toString() == "SUCCESS") {
+            if (!currentMinusOne || currentMinusOne.getResult().toString() == "SUCCESS") {
                 // result went from success -> failed
                 // run script to collect request ID info and send the failure slack msg
                 def slackMsg = slackMsgCallback()
@@ -65,7 +69,7 @@ def call(args = [:]) {
                 )
             }
         }
-        else if (previousBuild && previousPreviousBuild && previousBuild.getResult().toString() == "SUCCESS" && previousPreviousBuild.getResult().toString() != "SUCCESS") {
+        else if (currentMinusOne && currentMinusTwo && currentMinusOne.getResult().toString() == "SUCCESS" && currentMinusTwo.getResult().toString() != "SUCCESS") {
             // result went from failed -> success
             slackUtils.sendMsg(
                 slackChannel: slackChannel,
