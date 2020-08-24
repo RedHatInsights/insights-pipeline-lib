@@ -159,7 +159,7 @@ def withUINode(Map parameters = [:], Closure body) {
                 image: seleniumImage,
                 resourceRequestCpu: '500m',
                 resourceLimitCpu: '1',
-                resourceRequestMemory: '256Mi',
+                resourceRequestMemory: '512Mi',
                 resourceLimitMemory: '3Gi',
                 envVars: [
                     envVar(key: 'HOME', value: '/home/selenium'),
