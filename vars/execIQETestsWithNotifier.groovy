@@ -64,7 +64,7 @@ def call(args = [:]) {
                 )
             }
         }
-        else if (previousBuild && previousBuild.getResult().toString() != "SUCCESS") {
+        else if (previousBuild && previousBuild.previousBuild && previousBuild.getResult().toString() == "SUCCESS" && previousBuild.previousBuild.getResult().toString() != "SUCCESS") {
             // result went from failed -> success
             slackUtils.sendMsg(
                 slackChannel: slackChannel,
