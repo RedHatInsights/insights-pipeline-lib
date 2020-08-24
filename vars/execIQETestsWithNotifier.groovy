@@ -35,6 +35,7 @@ def call(args = [:]) {
     if (previousBuild) {
         echo "Found previous non-RELOAD/non-ERROR build: ${previousBuild.getDisplayName()}"
     }
+    def previousPreviousBuild = pipelineUtils.getLastRealBuild(previousBuild)
 
     def results
     try {
@@ -64,7 +65,7 @@ def call(args = [:]) {
                 )
             }
         }
-        else if (previousBuild && previousBuild.previousBuild && previousBuild.getResult().toString() == "SUCCESS" && previousBuild.previousBuild.getResult().toString() != "SUCCESS") {
+        else if (previousBuild && previousPreviousBuild && previousBuild.getResult().toString() == "SUCCESS" && previousPreviousBuild.getResult().toString() != "SUCCESS") {
             // result went from failed -> success
             slackUtils.sendMsg(
                 slackChannel: slackChannel,
