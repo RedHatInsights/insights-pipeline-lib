@@ -31,7 +31,7 @@ def call(args = [:]) {
     // OPTIONAL: closure to call that generates detailed slack msg text when tests fail
     def slackMsgCallback = args.get('slackMsgCallback', defaultSlackMsgCallback)
 
-    def currentMinusOne = pipelineUtils.getLastRealBuild(currentBuild.getPreviousBuild())
+    def currentMinusOne = pipelineUtils.getLastRealBuild(currentBuild)
     if (currentMinusOne) {
         echo "Found currentMinusOne non-RELOAD/non-ERROR build: ${currentMinusOne.getDisplayName()}"
     }
