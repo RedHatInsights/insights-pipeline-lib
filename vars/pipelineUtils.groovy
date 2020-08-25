@@ -231,8 +231,9 @@ def throwIfAborted(Exception err) {
 
 def getLastRealBuild(build) {
     // find the first previous build that is not a 'reload' or 'error' build
-    if (previousBuild == null) return null
+    if (build == null) return null
     def previousBuild = build.getPreviousBuild()
+    if (previousBuild == null) return null
     if (previousBuild.description != "reload" && previousBuild.description != "error") return previousBuild
     else return getLastRealBuild(previousBuild)
 }
