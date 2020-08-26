@@ -69,7 +69,7 @@ def call(args = [:]) {
                 )
             }
         }
-        else if (currentMinusOne && currentMinusTwo && currentMinusOne.getResult().toString() == "SUCCESS" && currentMinusTwo.getResult().toString() != "SUCCESS") {
+        else if (currentMinusOne && currentMinusTwo && currentMinusOne.getResult().toString() == "SUCCESS") {
             // result went from failed -> success -> success
             slackUtils.sendMsg(
                 slackChannel: slackChannel,
