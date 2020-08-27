@@ -42,7 +42,8 @@ private def getContainerLogs(containerNames) {
 
 
 private def runBody(Map podParameters, String label, String containerName, Closure body) {
-    def containerNames = podParameters['containers'].collect { container -> container.name }
+    // each item in 'containers' is a org.jenkinsci.plugins.structs.describable.UninstantiatedDescribable
+    def containerNames = podParameters['containers'].collect { containerDescribable -> containerDescribable.getArguments()['name'] }
     echo("[${getNow}] Provisioning node...")
     podTemplate(podParameters) {
         node(label) {
