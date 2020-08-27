@@ -27,11 +27,11 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 
 private def getNow() {
     def now = new Date()
-    return now.format("yyMMdd.HHmm", TimeZone.getTimeZone('UTC'))
+    return now.format("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))
 }
 
 
-private def getContainerLogs(containerNames) {
+private def getContainerLogs(label, containerNames) {
     containerNames.each { containerName ->
         def fileName = "${label}-${containerName}.log"
         def logData = containerLog(name: containerName, tailingLines: 100, returnLog: true, limitBytes: 100000)
@@ -42,11 +42,16 @@ private def getContainerLogs(containerNames) {
 
 
 private def runBody(Map podParameters, String label, String containerName, Closure body) {
-    def containerNames = podParameters['containers'].collect { container -> container.name }
-    echo("[${getNow}] Provisioning node...")
+    // each containerTemplate item in 'containers' is type:
+    // org.jenkinsci.plugins.structs.describable.UninstantiatedDescribable
+    def containerNames = podParameters['containers'].collect { containerDescribable ->
+        containerDescribable.getArguments()['name']
+    }
+
+    echo("[${getNow()}] Provisioning node...")
     podTemplate(podParameters) {
         node(label) {
-            echo("[${getNow}] Node provisioned")
+            echo("[${getNow()}] Node provisioned")
 
             try {
                 container(containerName) {
@@ -56,10 +61,10 @@ private def runBody(Map podParameters, String label, String containerName, Closu
             finally {
                 // collect the tail of logs from each container to troubleshoot container crashes
                 try {
-                    getContainerLogs(containerNames)
+                    getContainerLogs(label, containerNames)
                 }
                 catch(err) {
-                    echo "Error collecting logs: ${err.toString()}
+                    echo "Error collecting logs: ${err.toString()}"
                 }
             }
         }
