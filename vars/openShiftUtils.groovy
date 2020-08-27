@@ -27,7 +27,7 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 
 private def getNow() {
     def now = new Date()
-    return now.format("yyyy-MM-ddTHH:mm:ss.SSS", TimeZone.getTimeZone('UTC'))
+    return now.format("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", TimeZone.getTimeZone('UTC'))
 }
 
 
