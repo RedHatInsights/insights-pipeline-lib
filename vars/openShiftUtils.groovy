@@ -59,7 +59,7 @@ private def runBody(Map podParameters, String label, String containerName, Closu
                     getContainerLogs(containerNames)
                 }
                 catch(err) {
-                    echo "Error collecting logs: ${err.toString()}
+                    echo "Error collecting logs: ${err.toString()}"
                 }
             }
         }
