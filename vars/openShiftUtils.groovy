@@ -25,13 +25,42 @@ private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
 }
 
 
+private def getNow() {
+    def now = new Date()
+    return now.format("yyMMdd.HHmm", TimeZone.getTimeZone('UTC'))
+}
+
+
+private def getContainerLogs(containerNames) {
+    containerNames.each { containerName ->
+        def fileName = "${label}-${containerName}.log"
+        def logData = containerLog(name: containerName, tailingLines: 100, returnLog: true, limitBytes: 100000)
+        writeFile(file: fileName, text: logData)
+        archiveArtifacts(artifacts: fileName)
+    }
+}
+
+
 private def runBody(Map podParameters, String label, String containerName, Closure body) {
-    echo("Provisioning node...")
+    def containerNames = podParameters['containers'].collect { container -> container.name }
+    echo("[${getNow}] Provisioning node...")
     podTemplate(podParameters) {
         node(label) {
-            echo("Node provisioned")
-            container(containerName) {
-                body()
+            echo("[${getNow}] Node provisioned")
+
+            try {
+                container(containerName) {
+                    body()
+                }
+            }
+            finally {
+                // collect the tail of logs from each container to troubleshoot container crashes
+                try {
+                    getContainerLogs(containerNames)
+                }
+                catch(err) {
+                    echo "Error collecting logs: ${err.toString()}
+                }
             }
         }
     }
