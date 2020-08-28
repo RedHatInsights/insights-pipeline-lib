@@ -45,7 +45,7 @@ private def runBody(Map podParameters, String label, String containerName, Closu
     // each containerTemplate item in 'containers' is type:
     // org.jenkinsci.plugins.structs.describable.UninstantiatedDescribable
     def containerNames = podParameters['containers'].collect { containerDescribable ->
-        containerDescribable.toMap()['name']
+        containerDescribable.getArguments()['name']  // this requires white-listing
     }
 
     echo("[${getNow()}] Provisioning node...")
