@@ -41,7 +41,7 @@ private def getRefSpec() {
 
 private def deployEnvironment(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-    buildScaleFactor, parallelBuild
+    buildScaleFactor, deployScaleFactor, parallelBuild
 ) {
     /**
      * Pipeline stages for running ocdeployer.
@@ -105,12 +105,16 @@ private def deployEnvironment(
     }
 
     // Deploy the other service sets
-    for (serviceSet in ocDeployerServiceSets.split(',')) {
+    ocDeployerServiceSets.split(',').eachWithIndex { serviceSet, i ->
         def set = serviceSet // https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
+        // Deploy the tested service with scaled resources and other services with default resources
+        // NOTE: tested service set MUST be the first in the list of service sets
+        def factor = i == 0 ? deployScaleFactor : 1
         deployTasks["Deploy ${serviceSet}"] = {
             sh(
                 "ocdeployer deploy -w -f -l e2esmoke=true -s ${set} " +
-                "-e custom-env -e smoke ${project} --secrets-src-project secrets"
+                "-e custom-env -e smoke ${project} " +
+                "--scale-resources ${factor} --secrets-src-project secrets"
             )
         }
     }
@@ -122,7 +126,8 @@ private def deployEnvironment(
 
 private def runDeployStages(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
-    ocDeployerServiceSets, buildScaleFactor, parallelBuild, cloud
+    ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
+    parallelBuild, cloud
 ) {
     def parameters = [
         image: pipelineVars.iqeCoreImage,
@@ -153,7 +158,7 @@ private def runDeployStages(
             dir(pipelineVars.e2eDeployDir) {
                 deployEnvironment(
                     refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
-                    ocDeployerServiceSets, buildScaleFactor, parallelBuild
+                    ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, parallelBuild
                 )
             }
         } catch (err) {
@@ -168,7 +173,7 @@ private def runDeployStages(
 
 private def runPipeline(
     refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-    buildScaleFactor, parallelBuild, options, appConfigs
+    buildScaleFactor, deployScaleFactor, parallelBuild, options, appConfigs
 ) {
     def results
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
@@ -183,7 +188,8 @@ private def runPipeline(
 
         runDeployStages(
             refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
-            ocDeployerServiceSets, buildScaleFactor, parallelBuild, options['cloud']
+            ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
+            parallelBuild, options['cloud']
         )
 
         results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
@@ -257,6 +263,7 @@ def call(p = [:]) {
     * @param defaultMarker String with default marker expression (optional, if blank "envName" is used)
     * @param defaultFilter String for default pytest filter expression (optional)
     * @param buildScaleFactor float -- scales the build config cpu/mem reservations by this amount
+    * @param deployScaleFactor float -- scales the deploy config cpu/mem reservations by this amount
     * @param parallelBuild -- if true, deploys build config at same time as the apps (default: false)
     * @param ocdeployerBuilderPath -- the ocdeployer "path" to the buildconfig template (e.g. buildfactory/myapp)
     * @param ocdeployerComponentPath -- the ocdeployer "path" to the app template (e.g. templates/myapp)
@@ -273,6 +280,7 @@ def call(p = [:]) {
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
     def ocDeployerServiceSets = p['ocDeployerServiceSets']
     def buildScaleFactor = p.get('buildScaleFactor', 1)
+    def deployScaleFactor = p.get('deployScaleFactor', 1)
     def parallelBuild = p.get('parallelBuild', false)
     def defaultMarker = p.get('defaultMarker')
     def defaultFilter = p.get('defaultFilter')
@@ -345,14 +353,14 @@ def call(p = [:]) {
         gitUtils.withStatusContext("e2e-smoke") {
             runPipeline(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                buildScaleFactor, parallelBuild, options, appConfigs
+                buildScaleFactor, deployScaleFactor, parallelBuild, options, appConfigs
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
     } else {
         runPipeline(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            buildScaleFactor, parallelBuild, options, appConfigs
+            buildScaleFactor, deployScaleFactor, parallelBuild, options, appConfigs
         )
     }
 }
