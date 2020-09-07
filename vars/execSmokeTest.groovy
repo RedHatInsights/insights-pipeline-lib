@@ -41,7 +41,7 @@ private def getRefSpec() {
 
 private def deployEnvironment(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-    buildScaleFactor, deployScaleFactor, parallelBuild
+    buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild
 ) {
     /**
      * Pipeline stages for running ocdeployer.
@@ -105,11 +105,12 @@ private def deployEnvironment(
     }
 
     // Deploy the other service sets
+    def factor = deployScaleFactor
     ocDeployerServiceSets.split(',').eachWithIndex { serviceSet, i ->
         def set = serviceSet // https://jenkins.io/doc/pipeline/examples/#parallel-multiple-nodes
-        // Deploy the tested service with scaled resources and other services with default resources
-        // NOTE: tested service set MUST be the first in the list of service sets
-        def factor = i == 0 ? deployScaleFactor : 1
+        if (scaleFirstSetOnly) {
+            factor = i == 0 ? deployScaleFactor : 1
+        }
         deployTasks["Deploy ${serviceSet}"] = {
             sh(
                 "ocdeployer deploy -w -f -l e2esmoke=true -s ${set} " +
@@ -127,7 +128,7 @@ private def deployEnvironment(
 private def runDeployStages(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
     ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
-    parallelBuild, parameters
+    scaleFirstSetOnly, parallelBuild, parameters
 ) {
     openShiftUtils.withNode(parameters) {
         // check out e2e-deploy
@@ -151,7 +152,8 @@ private def runDeployStages(
             dir(pipelineVars.e2eDeployDir) {
                 deployEnvironment(
                     refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
-                    ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, parallelBuild
+                    ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly,
+                    parallelBuild
                 )
             }
         } catch (err) {
@@ -166,7 +168,7 @@ private def runDeployStages(
 
 private def runPipeline(
     refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-    buildScaleFactor, deployScaleFactor, parallelBuild, options, appConfigs
+    buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild, options, appConfigs
 ) {
     def results
     // Reserve a smoke test project, spin up a slave pod, and run the test pipeline
@@ -190,14 +192,16 @@ private def runPipeline(
         runDeployStages(
             refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
             ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
-            parallelBuild, parameters
+            scaleFirstSetOnly, parallelBuild, parameters
         )
 
         results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
 
-        openShiftUtils.withNode(parameters) {
-            stage("Collecting logs") {
-                openShiftUtils.collectLogs(project: project)
+        if (results['failed']) {
+            openShiftUtils.withNode(parameters) {
+                stage("Collecting logs") {
+                    openShiftUtils.collectLogs(project: project)
+                }
             }
         }
 
@@ -267,6 +271,7 @@ def call(p = [:]) {
     * @param defaultFilter String for default pytest filter expression (optional)
     * @param buildScaleFactor float -- scales the build config cpu/mem reservations by this amount
     * @param deployScaleFactor float -- scales the deploy config cpu/mem reservations by this amount
+    * @param scaleFirstSetOnly bool -- scale only first content set by deployScaleFactor amount
     * @param parallelBuild -- if true, deploys build config at same time as the apps (default: false)
     * @param ocdeployerBuilderPath -- the ocdeployer "path" to the buildconfig template (e.g. buildfactory/myapp)
     * @param ocdeployerComponentPath -- the ocdeployer "path" to the app template (e.g. templates/myapp)
@@ -284,6 +289,7 @@ def call(p = [:]) {
     def ocDeployerServiceSets = p['ocDeployerServiceSets']
     def buildScaleFactor = p.get('buildScaleFactor', 1)
     def deployScaleFactor = p.get('deployScaleFactor', 1)
+    def scaleFirstSetOnly = p.get('scaleFirstSetOnly', false)
     def parallelBuild = p.get('parallelBuild', false)
     def defaultMarker = p.get('defaultMarker')
     def defaultFilter = p.get('defaultFilter')
@@ -356,14 +362,14 @@ def call(p = [:]) {
         gitUtils.withStatusContext("e2e-smoke") {
             runPipeline(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                buildScaleFactor, deployScaleFactor, parallelBuild, options, appConfigs
+                buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild, options, appConfigs
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
     } else {
         runPipeline(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            buildScaleFactor, deployScaleFactor, parallelBuild, options, appConfigs
+            buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild, options, appConfigs
         )
     }
 }
