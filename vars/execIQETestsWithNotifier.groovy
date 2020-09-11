@@ -68,8 +68,8 @@ def call(args = [:]) {
                 slackUtils.sendMsg(
                     slackChannel: slackChannel,
                     slackUrl: slackUrl,
-                    slackTeamDomain: slackTeamDomain,
-                    slackTokenCredentialId: slackTokenCredentialId,
+                    //slackTeamDomain: slackTeamDomain,
+                    //slackTokenCredentialId: slackTokenCredentialId,
                     msg: slackMsg.toString(),
                     result: "failure"
                 )
