@@ -31,9 +31,9 @@ def call(args = [:]) {
     // OPTIONAL: closure to call that generates detailed slack msg text when tests fail
     def slackMsgCallback = args.get('slackMsgCallback', defaultSlackMsgCallback)
     // OPTIONAL: slack team subdomain, for ansible slack leave it as null
-    def slackTeamDomain = args.get('slackTeamDomain', null)
+    def slackTeamDomain = args.get('slackTeamDomain')
     // OPTIONAL: slack integration token, for ansible slack leave it as null
-    def slackTokenCredentialId = args.get('slackTokenCredentialId', null)
+    def slackTokenCredentialId = args.get('slackTokenCredentialId')
 
     def currentMinusOne = pipelineUtils.getLastRealBuild(currentBuild)
     if (currentMinusOne) {
