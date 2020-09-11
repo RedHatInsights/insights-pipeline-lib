@@ -93,8 +93,8 @@ def call(args = [:]) {
             slackUtils.sendMsg(
                 slackChannel: errorSlackChannel,
                 slackUrl: slackUrl,
-                slackTeamDomain: slackTeamDomain,
-                slackTokenCredentialId: slackTokenCredentialId,
+                //slackTeamDomain: slackTeamDomain,
+                //slackTokenCredentialId: slackTokenCredentialId,
                 msg: "hit unhandled error",
                 result: "failure"
             )
