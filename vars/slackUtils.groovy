@@ -53,6 +53,9 @@ def sendMsg(parameters = [:]) {
     if (!slackChannel) slackChannel = pipelineVars.slackDefaultChannel
     if (!slackUrl) slackUrl = pipelineVars.slackDefaultUrl
 
+    def slackTeamDomain = parameters.get('slackTeamDomain')
+    def slackTokenCredentialId = parameters.get('slackTokenCredentialId')
+
     def msg = parameters.get('msg')
     def color = parameters.get('color')
     def stage = parameters.get('stage')
@@ -66,6 +69,8 @@ def sendMsg(parameters = [:]) {
 
     slackChannel.each { channel ->
         slackSend(
+            teamDomain: slackTeamDomain,
+            tokenCredentialId: slackTokenCredentialId,
             baseUrl: slackUrl,
             botUser: true,
             channel: channel,
