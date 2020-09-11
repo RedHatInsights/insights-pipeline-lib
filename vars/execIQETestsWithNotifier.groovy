@@ -30,10 +30,10 @@ def call(args = [:]) {
     def errorSlackChannel = args['errorSlackChannel']
     // OPTIONAL: closure to call that generates detailed slack msg text when tests fail
     def slackMsgCallback = args.get('slackMsgCallback', defaultSlackMsgCallback)
-    // OPTIONAL: slack team subdomain, for ansible slack leave it as null
-    def slackTeamDomain = args.get('slackTeamDomain', null)
-    // OPTIONAL: slack integration token, for ansible slack leave it as null
-    def slackTokenCredentialId = args.get('slackTokenCredentialId', null)
+    // OPTIONAL: slack team subdomain
+    def slackTeamDomain = args.get('slackTeamDomain', pipelineVars.slackDefaultTeamDomain)
+    // OPTIONAL: slack integration token
+    def slackTokenCredentialId = args.get('slackTokenCredentialId', pipelineVars.slackDefaultTokenCredentialId)
 
     def currentMinusOne = pipelineUtils.getLastRealBuild(currentBuild)
     if (currentMinusOne) {
@@ -68,8 +68,8 @@ def call(args = [:]) {
                 slackUtils.sendMsg(
                     slackChannel: slackChannel,
                     slackUrl: slackUrl,
-                    //slackTeamDomain: slackTeamDomain,
-                    //slackTokenCredentialId: slackTokenCredentialId,
+                    slackTeamDomain: slackTeamDomain,
+                    slackTokenCredentialId: slackTokenCredentialId,
                     msg: slackMsg.toString(),
                     result: "failure"
                 )
@@ -93,8 +93,8 @@ def call(args = [:]) {
             slackUtils.sendMsg(
                 slackChannel: errorSlackChannel,
                 slackUrl: slackUrl,
-                //slackTeamDomain: slackTeamDomain,
-                //slackTokenCredentialId: slackTokenCredentialId,
+                slackTeamDomain: slackTeamDomain,
+                slackTokenCredentialId: slackTokenCredentialId,
                 msg: "hit unhandled error",
                 result: "failure"
             )
