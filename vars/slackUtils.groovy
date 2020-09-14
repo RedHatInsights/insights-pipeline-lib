@@ -54,8 +54,6 @@ def sendMsg(parameters = [:]) {
     // check if the value passed in for the parameter was 'null'
     if (!slackChannel) slackChannel = pipelineVars.slackDefaultChannel
     if (!slackUrl) slackUrl = pipelineVars.slackDefaultUrl
-    if (!slackTeamDomain) slackTeamDomain = pipelineVars.slackDefaultTeamDomain
-    if (!slackTokenCredentialId) slackTokenCredentialId = pipelineVars.slackDefaultTokenCredentialId
 
     def msg = parameters.get('msg')
     def color = parameters.get('color')
