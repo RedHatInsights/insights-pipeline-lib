@@ -33,7 +33,7 @@ def call(args = [:]) {
     // OPTIONAL: slack team subdomain
     def slackTeamDomain = args.get('slackTeamDomain', pipelineVars.slackDefaultTeamDomain)
     // OPTIONAL: slack integration token
-    def slackTokenCredentialId = args.get('slackTokenCredentialId', pipelineVars.slackDefaultTokenCredentialId)
+    def slackTokenCredentialId = args.get('slackTokenCredentialId', null)
 
     def currentMinusOne = pipelineUtils.getLastRealBuild(currentBuild)
     if (currentMinusOne) {
