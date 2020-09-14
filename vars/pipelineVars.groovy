@@ -46,7 +46,6 @@ class pipelineVars implements Serializable {
     String slackDefaultChannel = '#insights-qe-feed'
     String slackDeployAlertsChannel = "#deploy-alerts"
     String slackDefaultTeamDomain = "ansible"
-    String slackDefaultTokenCredentialId = "slackToken"
 
     String quayBaseUri = 'quay.io/cloudservices'
     String quayUser = "cloudservices+push"
