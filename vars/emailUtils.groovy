@@ -10,7 +10,7 @@ def sendEmail(parameters = [:]) {
     def subject = parameters.get('subject', pipelineVars.emailDefaultSubject)
     def content = parameters.get('content', pipelineVars.emailDefaultContent)
 
-    println "\sending to: $sentTo"
+    println "sending to: $sentTo"
 
 
 
