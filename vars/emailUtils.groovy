@@ -17,7 +17,7 @@ def sendEmail(parameters = [:]) {
     if(sentTo != null && !sentTo.isEmpty()) {
       emailext(body: content, mimeType: 'text/html',
          replyTo: '$DEFAULT_REPLYTO', subject: subject,
-         sentTo: sentTo, attachLog: true )
+         to: sentTo, attachLog: true )
     }
 }
 
