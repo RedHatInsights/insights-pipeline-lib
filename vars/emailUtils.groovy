@@ -2,6 +2,8 @@
  * Requires "Email Notifications Plugin"
  */
 
+import groovy.transform.Field
+import hudson.AbortException
 
 private def sendEmail(sentTo, replyTo, subject, content) {
         if(sentTo != null && !sentTo.isEmpty()) {
