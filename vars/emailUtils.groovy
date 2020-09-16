@@ -1,9 +1,9 @@
 /**
  * Requires "Email Notifications Plugin"
  */
-
-import groovy.transform.Field
-import hudson.AbortException
+//
+// import groovy.transform.Field
+// import hudson.AbortException
 
 private def sendEmail(sentTo, replyTo, subject, content) {
         if(sentTo != null && !sentTo.isEmpty()) {
@@ -26,9 +26,9 @@ def call(parameters = [:]) {
         def content = parameters.get('content', pipelineVars.emailDefaultContent)
         def extraJobProperties = parameters.get('extraJobProperties', [])
 
-        def jobProperties = []
-        jobProperties.addAll(extraJobProperties)
-        properties(jobProperties)
+//         def jobProperties = []
+//         jobProperties.addAll(extraJobProperties)
+//         properties(jobProperties)
 
         sendEmail(sentTo, replyTo, subject, content, replyTo)
 }
