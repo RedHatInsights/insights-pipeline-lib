@@ -6,10 +6,10 @@ def sendEmail(args = [:]) {
     def to = args.get('to')
     def replyTo = args.get('replyTo')
     def subject = args.get('subject')
-    def content = args.get('content')
+    def body = args.get('body')
 
     if(to != null && !to.isEmpty()) {
-      emailext(body: content, mimeType: 'text/html',
+      emailext(body: body, mimeType: 'text/html',
          replyTo: replyTo, subject: subject,
          to: to, attachLog: true )
     }
