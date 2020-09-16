@@ -2,7 +2,7 @@
  * Requires "Email Notifications Plugin"
  */
 //
-// import groovy.transform.Field
+import groovy.transform.Field
 // import hudson.AbortException
 
 private def sendEmail(sentTo, replyTo, subject, content) {
@@ -24,8 +24,8 @@ def call(parameters = [:]) {
         def replyTo = parameters.get('replyTo', pipelineVars.emailDefaultReplyTo)
         def subject = parameters.get('subject', pipelineVars.emailDefaultSubject)
         def content = parameters.get('content', pipelineVars.emailDefaultContent)
-        def extraJobProperties = parameters.get('extraJobProperties', [])
-
+//         def extraJobProperties = parameters.get('extraJobProperties', [])
+//
 //         def jobProperties = []
 //         jobProperties.addAll(extraJobProperties)
 //         properties(jobProperties)
