@@ -50,4 +50,9 @@ class pipelineVars implements Serializable {
     String quayBaseUri = 'quay.io/cloudservices'
     String quayUser = "cloudservices+push"
     String quayPushCredentialsId = "quay-cloudservices-push-token"
+
+    String emailDefaultSentTo = 'mseri@redhat.com'
+    String emailDefaultReplyTo = 'mseri@redhat.com'
+    String emailDefaultSubject = "default-test-subject"
+    String emailDefaultContent = "default-test-content"
 }
