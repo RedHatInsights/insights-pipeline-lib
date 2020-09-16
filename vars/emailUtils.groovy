@@ -2,7 +2,7 @@
  * Requires "Email Notifications Plugin"
  */
 
-def sendEmail(parameters = [:])) {
+def sendEmail(parameters = [:]) {
         def to = parameters.get('to', pipelineVars.emailDefaultSentTo)
         def replyTo = parameters.get('replyTo', pipelineVars.emailDefaultReplyTo)
         def subject = parameters.get('subject', pipelineVars.emailDefaultSubject)
