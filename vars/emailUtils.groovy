@@ -37,6 +37,7 @@ def call(parameters = [:]) {
         def replyTo = parameters.get('replyTo', pipelineVars.emailDefaultReplyTo)
         def subject = parameters.get('subject', pipelineVars.emailDefaultSubject)
         def content = parameters.get('content', pipelineVars.emailDefaultContent)
+        def extraJobProperties = parameters.get('extraJobProperties', [])
 
         sendEmail(sentTo, replyTo, subject, content)
 }
