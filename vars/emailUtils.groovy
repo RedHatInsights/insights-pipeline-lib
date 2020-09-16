@@ -4,8 +4,6 @@
 
 private def sendEmail(sentTo, replyTo, subject, content) {
 
-        println "sending to: $sentTo"
-
         if(sentTo != null && !sentTo.isEmpty()) {
           emailext(body: content, mimeType: 'text/html',
              replyTo: '$DEFAULT_REPLYTO', subject: subject,
