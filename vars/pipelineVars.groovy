@@ -51,3 +51,4 @@ class pipelineVars implements Serializable {
     String quayUser = "cloudservices+push"
     String quayPushCredentialsId = "quay-cloudservices-push-token"
 }
+
