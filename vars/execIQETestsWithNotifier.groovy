@@ -22,6 +22,9 @@ def call(args = [:]) {
     def lockName = args.get('lockName')
 
     // arguments specific to slack notifier
+
+    // OPTIONAL: if true, always send a failure notification
+    def alwaysSendFailureNotification = args.get('alwaysSendFailureNotification', false)
     // OPTIONAL: slack integration URL
     def slackUrl = args.get('slackUrl', pipelineVars.slackDefaultUrl)
     // REQUIRED: where to report test failures
@@ -61,7 +64,7 @@ def call(args = [:]) {
         if (!results) error("Found no test results, unexpected error must have occurred")
 
         if (results['failed']) {
-            if (!currentMinusOne || currentMinusOne.getResult().toString() == "SUCCESS") {
+            if (alwaysSendFailureNotification || (!currentMinusOne || currentMinusOne.getResult().toString() == "SUCCESS")) {
                 // result went from success -> failed
                 // run script to collect request ID info and send the failure slack msg
                 def slackMsg = slackMsgCallback()
