@@ -31,6 +31,7 @@ import groovy.transform.Field
     inventory: "/ops/deployInventory",
     marketplace: "/ops/deployMarketplace",
     mnm: "/ops/deployMnm",
+    notifications: "/ops/deployNotifications",
     patchman: "/ops/deployPatchman",
     "payload-tracker": "/ops/deployPayloadTracker",
     rbac: "/ops/deployRbac",
