@@ -5,7 +5,7 @@
  */
 
 import groovy.transform.Field
-
+import hudson.util.Secret
 
 // The env files that are processed whenever a template change is detected
 @Field def defaultEnvs = ["ci", "qa", "prod"]
@@ -201,7 +201,7 @@ private def getRemoteTask(buildJob, jobParameters, remoteCredentials, remoteHost
             triggerRemoteJob(
                 job: "https://${REMOTE_HOSTNAME}${fullUrlPath}",
                 parameters: paramsString,
-                auth: BearerTokenAuth(token: TOKEN)
+                auth: BearerTokenAuth(token: Secret.fromString(TOKEN))
             )
         }
     }
