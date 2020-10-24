@@ -6,19 +6,19 @@
 */
 def register(String url, String credentialId, String poolId=null){
     withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
-        sh '''
+        sh """
             subscription-manager register --serverurl=${url} --username=${username} --password=${password}
-        '''
+        """
     }
     if(poolId){
-        sh '''
+        sh """
             subscription-manager attach --pool=${poolId}
-        '''
+        """
     }
     else {
-        sh '''
+        sh """
             subscription-manager --auto-attach --force
-        '''
+        """
     }
 }
 
@@ -29,8 +29,4 @@ def unregister(){
         subscription-manager unregister
         subscription-manager clean
     '''
-}
-
-def testFunc(){
-    echo 'testing'
 }
