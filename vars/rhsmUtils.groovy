@@ -30,3 +30,7 @@ def unregister(){
         subscription-manager clean
     '''
 }
+
+def testFunc(){
+    echo 'testing'
+}
