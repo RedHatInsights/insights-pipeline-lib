@@ -125,6 +125,14 @@ private def deployEnvironment(
 }
 
 
+private def wipeNamespace(project) {
+    // wipe all resources that have label 'e2esmoke=true'
+    stage("Wipe test environment") {
+        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+    }
+}
+
+
 private def runDeployStages(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
     ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
@@ -143,10 +151,7 @@ private def runDeployStages(
             }
         }
 
-        // wipe all resources that have label 'e2esmoke=true'
-        stage("Wipe test environment") {
-            sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-        }
+        wipeNamespace(project)
 
         try {
             dir(pipelineVars.e2eDeployDir) {
@@ -160,6 +165,7 @@ private def runDeployStages(
             echo("Hit error during deploy!")
             echo(err.toString())
             openShiftUtils.collectLogs(project: project)
+            wipeNamespace(project)
             error("Deployment failed")
         }
     }
@@ -204,6 +210,8 @@ private def runPipeline(
                 }
             }
         }
+
+        wipeNamespace(project)
 
         stage("Final result") {
             if (!results) error("Found no test results")
