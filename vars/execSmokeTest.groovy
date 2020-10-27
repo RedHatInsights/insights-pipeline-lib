@@ -161,12 +161,11 @@ private def runDeployStages(
                     parallelBuild
                 )
             }
+            return true
         } catch (err) {
             echo("Hit error during deploy!")
             echo(err.toString())
-            openShiftUtils.collectLogs(project: project)
-            wipeNamespace(project)
-            error("Deployment failed")
+            return false
         }
     }
 }
@@ -195,23 +194,25 @@ private def runPipeline(
             cloud: options['cloud'],
         ]
 
-        runDeployStages(
-            refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
-            ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
-            scaleFirstSetOnly, parallelBuild, parameters
-        )
+        openShiftUtils.withNode(parameters) {
+            def deployed = runDeployStages(
+                refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
+                ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
+                scaleFirstSetOnly, parallelBuild
+            )
 
-        results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+            if (deployed) {
+                results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+            }
 
-        if (results['failed']) {
-            openShiftUtils.withNode(parameters) {
+            if (!deployed || results['failed']) {
                 stage("Collecting logs") {
                     openShiftUtils.collectLogs(project: project)
                 }
             }
-        }
 
-        wipeNamespace(project)
+            wipeNamespace(project)
+        }
 
         stage("Final result") {
             if (!results) error("Found no test results")
