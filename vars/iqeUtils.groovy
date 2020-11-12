@@ -127,6 +127,15 @@ private def parseOptions(Map options) {
     // list of custom packages to 'pip install' before tests run
     options['customPackages'] = options.get('customPackages', [])
 
+    // extra arguments for plugin tests, i.e. --long-running
+    options['extraArgs'] = options.get('extraArgs', '')
+
+    // a Map of extra stages which should run in the same node as iqe tests
+    // e.g.
+    //  def stage = { sh "echo 'whoami'" }
+    //  extraStages = [stageName: stage]
+    options['extraStages'] = options.get('extraStages', [:])
+
     return options
 }
 
@@ -176,6 +185,7 @@ def runIQE(String plugin, Map appOptions) {
     }
 
     def marker = appOptions['marker']
+    def extraArgs = appOptions['extraArgs']
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
@@ -190,6 +200,7 @@ def runIQE(String plugin, Map appOptions) {
                 --junitxml=junit-${plugin}-parallel.xml \
                 ${markerArgs} \
                 ${filterArgs} \
+                ${extraArgs} \
                 -n ${appOptions['parallelWorkerCount']} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-parallel.log 2>&1 \
@@ -219,6 +230,7 @@ def runIQE(String plugin, Map appOptions) {
                 --junitxml=junit-${plugin}-sequential.xml \
                 ${markerArgs} \
                 ${filterArgs} \
+                ${extraArgs} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-sequential.log 2>&1 \
                 """.stripIndent()
@@ -388,6 +400,12 @@ private def createTestStages(String appName, Map appConfig) {
     if (appOptions['customPackages']) {
         stage("Install custom packages") {
             sh "pip install ${appOptions['customPackages'].join(" ")}"
+        }
+    }
+
+    appOptions['extraStages'].each { name, closure ->
+        stage("${name} stage") {
+            closure.call()
         }
     }
 
