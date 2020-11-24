@@ -153,7 +153,7 @@ def runTests(String pytestParam=null){
         venvDir = setupVenvDir()
         sh """
             echo 'ENV_FOR_DYNACONF=${ENV_AUTH_TYPE}'
-            source ${venv_dir}/bin/activate
+            source ${venvDir}/bin/activate
             iqe tests plugin insights_client --junitxml=junit.xml --disable-pytest-warnings -rxv ${pytestParam}
         """
 }
