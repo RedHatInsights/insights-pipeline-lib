@@ -2,7 +2,7 @@
  * Various utils for insights-client pipelines
  */
 
-def rhsm_register(
+def rhsmRegister(
         String url=null,
         String credentialId,
         String poolId=null,
@@ -36,9 +36,8 @@ def rhsm_register(
 }
 
 
-def rhsm_unregister(){
+def rhsmUnregister(){
     def registered = sh ( script: "subscription-manager identity", returnStatus: true)
-    println registered
     if(registered == 0){
         sh '''
             subscription-manager remove --all
@@ -49,20 +48,20 @@ def rhsm_unregister(){
 }
 
 
-def rhsm_list(){
+def rhsmList(){
     sh "subscription-manager list --available"
 }
 
 
-def rhsm_status(){
+def rhsmStatus(){
     sh "subscription-manager status"
 }
 
 
-def install_client(String url=null){
-    def check_installed = sh ( script: 'rpm -qa | grep insights-client', returnStatus: true)
+def installClient(String url=null){
+    def checkInstalled = sh ( script: 'rpm -qa | grep insights-client', returnStatus: true)
 
-    if(check_installed == 0){
+    if(checkInstalled == 0){
         sh """
         yum remove -y insights-client
         rm -rf /etc/insights-client
@@ -82,9 +81,9 @@ def install_client(String url=null){
 }
 
 
-def collect_system_artifacts(){
-    def sysinfo_file_exists = sh ( script: 'test -f \$(hostname).txt', returnStatus: true)
-    if(sysinfo_file_exists == 0){
+def collectSystemArtifacts(){
+    def sysinfoFileExists = sh ( script: 'test -f \$(hostname).txt', returnStatus: true)
+    if(sysinfoFileExists == 0){
         sh """
             rm -rf \$(hostname).txt
         """
@@ -104,9 +103,9 @@ def collect_system_artifacts(){
 }
 
 
-def setup_venv_dir(){
-    def check_venv_installed = sh ( script: 'test -d /iqe_venv', returnStatus: true)
-    if(check_venv_installed == 0){
+def setupVenvDir(){
+    def checkVenvInstalled = sh ( script: 'test -d /iqe_venv', returnStatus: true)
+    if(checkVenvInstalled == 0){
         return '/iqe_venv'
     }
     else {
@@ -115,18 +114,18 @@ def setup_venv_dir(){
 }
 
 
-def setup_iqe_insights_client_plugin(String egg_branch=3.0){
-    venv_dir = setup_venv_dir()
+def setupIqeInsightsClientPlugin(String eggBranch=3.0){
+    venvDir = setupVenvDir()
     git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: "${IQE_BRANCH}"
 
-    if("${venv_dir}" == '/iqe_venv'){
+    if("${venvDir}" == '/iqe_venv'){
         sh """
-            echo "PK: /iqe_venv exists"
-            source ${venv_dir}/bin/activate
+            echo "/iqe_venv exists"
+            source ${venvDir}/bin/activate
             devpi use https://devpi-iqe.cloud.paas.psi.redhat.com/iqe/packages --set-cfg
             pip install -U pip setuptools setuptools_scm wheel iqe-integration-tests
             iqe plugin install --editable .
-            pip install git+https://github.com/RedHatInsights/insights-core.git@${egg_branch}
+            pip install git+https://github.com/RedHatInsights/insights-core.git@${eggBranch}
         """
     }
     else {
@@ -139,7 +138,7 @@ def setup_iqe_insights_client_plugin(String egg_branch=3.0){
             pip install -U pip setuptools setuptools_scm wheel
             pip install iqe-integration-tests
             iqe plugin install --editable .
-            pip install git+https://github.com/RedHatInsights/insights-core.git@${egg_branch}
+            pip install git+https://github.com/RedHatInsights/insights-core.git@${eggBranch}
         """
     }
 
@@ -150,11 +149,11 @@ def setup_iqe_insights_client_plugin(String egg_branch=3.0){
 }
 
 
-def run_tests(String pytest_param=null){
-        venv_dir = setup_venv_dir()
+def runTests(String pytestParam=null){
+        venvDir = setupVenvDir()
         sh """
             echo 'ENV_FOR_DYNACONF=${ENV_AUTH_TYPE}'
             source ${venv_dir}/bin/activate
-            iqe tests plugin insights_client --junitxml=junit.xml --disable-pytest-warnings -rxv ${pytest_param}
+            iqe tests plugin insights_client --junitxml=junit.xml --disable-pytest-warnings -rxv ${pytestParam}
         """
 }
