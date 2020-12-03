@@ -26,11 +26,10 @@ def rhsmRegister(
         }
     }
     else if (activationKey){
-            sh """
-                subscription-manager register --org=${org} --activationkey=${activationKey}
-                subscription-manager refresh
-            """
-        }
+        sh """
+            subscription-manager register --org=${org} --activationkey=${activationKey}
+            subscription-manager refresh
+        """
     }
     else {
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
