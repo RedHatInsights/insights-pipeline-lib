@@ -189,6 +189,8 @@ def runIQE(String plugin, Map appOptions) {
 
     catchError(stageResult: "FAILURE") {
         // run parallel tests
+        def errorMsgParallel = ""
+        def errorMsgSequential = ""
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
         // export the .env file to load env vars that should be present even before dynaconf is
         // invoked such as IQE_TESTS_LOCAL_CONF_PATH
@@ -215,7 +217,7 @@ def runIQE(String plugin, Map appOptions) {
         }
         else if (status > 0) {
             result = "FAILURE"
-            error("Parallel test run failed with exit code ${status}")
+            errorMsgParallel = "Parallel test run failed with exit code ${status}."
         }
 
         // run sequential tests
@@ -248,10 +250,14 @@ def runIQE(String plugin, Map appOptions) {
         }
         else if (status > 0) {
             result = "FAILURE"
-            error("Sequential test run hit an error with exit code ${status}")
+            errorMsgSequential = "Sequential test run hit an error with exit code ${status}."
         }
         else {
-            result = "SUCCESS"
+            result = result ? result : "SUCCESS"
+        }
+
+        if (errorMsgSequential || errorMsgParallel) {
+            error("${errorMsgSequential} ${errorMsgParallel}")
         }
     }
 
