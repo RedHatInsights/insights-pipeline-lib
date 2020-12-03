@@ -125,43 +125,46 @@ private def deployEnvironment(
 }
 
 
+private def wipeNamespace(project) {
+    // wipe all resources that have label 'e2esmoke=true'
+    stage("Wipe test environment") {
+        sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
+    }
+}
+
+
 private def runDeployStages(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
     ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
-    scaleFirstSetOnly, parallelBuild, parameters
+    scaleFirstSetOnly, parallelBuild
 ) {
-    openShiftUtils.withNode(parameters) {
-        // check out e2e-deploy
-        stage("Check out e2e-deploy") {
-            gitUtils.checkOutRepo(
-                targetDir: pipelineVars.e2eDeployDir,
-                repoUrl: pipelineVars.e2eDeployRepo,
-                credentialsId: "InsightsDroidGitHubHTTP"
+    // check out e2e-deploy
+    stage("Check out e2e-deploy") {
+        gitUtils.checkOutRepo(
+            targetDir: pipelineVars.e2eDeployDir,
+            repoUrl: pipelineVars.e2eDeployRepo,
+            credentialsId: "InsightsDroidGitHubHTTP"
+        )
+        dir(pipelineVars.e2eDeployDir) {
+            sh "pip install -r requirements.txt"
+        }
+    }
+
+    wipeNamespace(project)
+
+    try {
+        dir(pipelineVars.e2eDeployDir) {
+            deployEnvironment(
+                refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
+                ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly,
+                parallelBuild
             )
-            dir(pipelineVars.e2eDeployDir) {
-                sh "pip install -r requirements.txt"
-            }
         }
-
-        // wipe all resources that have label 'e2esmoke=true'
-        stage("Wipe test environment") {
-            sh "ocdeployer wipe -l e2esmoke=true --no-confirm ${project}"
-        }
-
-        try {
-            dir(pipelineVars.e2eDeployDir) {
-                deployEnvironment(
-                    refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
-                    ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly,
-                    parallelBuild
-                )
-            }
-        } catch (err) {
-            echo("Hit error during deploy!")
-            echo(err.toString())
-            openShiftUtils.collectLogs(project: project)
-            error("Deployment failed")
-        }
+        return true
+    } catch (err) {
+        echo("Hit error during deploy!")
+        echo(err.toString())
+        return false
     }
 }
 
@@ -189,20 +192,24 @@ private def runPipeline(
             cloud: options['cloud'],
         ]
 
-        runDeployStages(
-            refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
-            ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
-            scaleFirstSetOnly, parallelBuild, parameters
-        )
+        openShiftUtils.withNode(parameters) {
+            def deployed = runDeployStages(
+                refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
+                ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
+                scaleFirstSetOnly, parallelBuild
+            )
 
-        results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+            if (deployed) {
+                results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
+            }
 
-        if (results['failed']) {
-            openShiftUtils.withNode(parameters) {
+            if (!deployed || results['failed']) {
                 stage("Collecting logs") {
                     openShiftUtils.collectLogs(project: project)
                 }
             }
+
+            wipeNamespace(project)
         }
 
         stage("Final result") {
