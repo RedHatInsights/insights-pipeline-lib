@@ -2,11 +2,19 @@
  * Various utils for insights-client pipelines
  */
 
+/*
+* RHSM register
+* @param (optional) url = RHSM url
+* @param credentialId = Jenkins credential id to authenticate using username and password
+* @param (optional) poolId = RHSM pool id
+* @param (optional) activationKey = RHSM activation key, usually used for Satellite hosts
+* @param (optional) org = Satellite Organization name
+*/
 def rhsmRegister(
         String url=null,
         String credentialId,
         String poolId=null,
-        String activiationKey=null,
+        String activationKey=null,
         String org=null){
     if(poolId){
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
@@ -17,10 +25,9 @@ def rhsmRegister(
             """
         }
     }
-    else if (activiationKey){
-        withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
+    else if (activationKey){
             sh """
-                subscription-manager register --org=${org} --activationkey=${activiationKey}
+                subscription-manager register --org=${org} --activationkey=${activationKey}
                 subscription-manager refresh
             """
         }
