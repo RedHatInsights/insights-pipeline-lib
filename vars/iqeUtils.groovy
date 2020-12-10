@@ -252,9 +252,9 @@ def runIQE(String plugin, Map appOptions) {
             result = "FAILURE"
             errorMsgSequential = "Sequential test run hit an error with exit code ${status}."
         }
-        else {
-            result = result ? result : "SUCCESS"
-        }
+
+        // if there were no failures recorded, it's a success
+        result = result ? result : "SUCCESS"
 
         if (errorMsgSequential || errorMsgParallel) {
             error("${errorMsgSequential} ${errorMsgParallel}")
