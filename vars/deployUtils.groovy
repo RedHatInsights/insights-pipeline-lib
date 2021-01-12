@@ -25,6 +25,7 @@ import hudson.util.Secret
     compliance: "/ops/deployCompliance",
     policies: "/ops/deployPolicies",
     drift: "/ops/deployDrift",
+    ros: "/ops/deployRos",
     hccm: "/ops/deployHccm",
     "historical-system-profiles": "/ops/deployHistoricalSystemProfiles",
     ingress: "/ops/deployIngress",
