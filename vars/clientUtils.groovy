@@ -154,6 +154,32 @@ def setupIqeInsightsClientPlugin(String eggBranch=3.0){
     }
 }
 
+def setupIqeAnsible(String iqeAnsibleBranch='master'){
+    venvDir = setupVenvDir()
+    git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-ansible.git', branch: "${iqeAnsibleBranch}"
+
+    if("${venvDir}" != '/iqe_venv'){
+        sh """
+            git config --global http.sslVerify false
+            python3 -m venv venv
+            source venv/bin/activate
+            pip install --upgrade pip
+            pip install -r requirements.txt
+        """
+    }
+    sh """
+        echo ${venvDir}
+        source ${venvDir}/bin/activate
+        pip install -r insights-client/requirements.txt
+    """
+
+    withCredentials([file(credentialsId: 'settings_iqe_insights_client', variable: 'settings')]) {
+        sh "pwd"
+        sh "ls -ltr"
+        sh "cp \$settings insights-client/vars/settings.local.yaml"
+    }
+}
+
 
 def runTests(String pytestParam=null){
         venvDir = setupVenvDir()
@@ -162,4 +188,28 @@ def runTests(String pytestParam=null){
             source ${venvDir}/bin/activate
             iqe tests plugin insights_client --junitxml=junit.xml --disable-pytest-warnings -rxv ${pytestParam}
         """
+}
+
+def runAnsible(String playbookFile, String playbookTags=null){
+        echo "Running ansible..."
+        venvDir = setupVenvDir()
+        sh """
+            cd insights-client/
+            cp -pr hosts_localhost hosts
+        """
+
+        if(playbookTags){
+            sh """
+                source ${venvDir}/bin/activate
+                cd insights-client/
+                ansible-playbook ${playbookFile} --tags ${playbookTags}
+            """
+        }
+        else {
+            sh """
+                source ${venvDir}/bin/activate
+                cd insights-client/
+                ansible-playbook ${playbookFile}
+            """
+        }
 }
