@@ -9,6 +9,40 @@
  */
 
 
+def getCurrentMinusBuilds(number) {
+    int count = 0
+    currentList = []
+    
+    while(count != number) {
+        if (currentList) {
+            currentMinusX = pipelineUtils.getLastRealBuild(currentList.last())
+            if (currentMinusX) {
+                echo "Found currentMinus${count + 1} non-RELOAD/non-ERROR build: ${currentMinusX.getDisplayName()}"
+            }
+        } else {
+            currentMinusX = pipelineUtils.getLastRealBuild(currentBuild)
+        }
+
+        // Avoid adding nulls to our list
+        if (currentMinusX) {
+            currentList.add(currentMinusX);
+        }
+        count++;
+    }
+    return currentList
+}
+
+def checkCurrentBuilds(buildList) {
+    for(build in buildList) { 
+        if (build.getResult().toString() != "SUCCESS") {
+            echo "build ${build.getDisplayName()}'s result was a ${build.getResult().toString()}"
+            return false
+        }
+    }
+
+    return true
+}
+
 def call(args = [:]) {
     def defaultSlackMsgCallback = { return "test failed" }
 
@@ -37,16 +71,11 @@ def call(args = [:]) {
     def slackTeamDomain = args.get('slackTeamDomain', pipelineVars.slackDefaultTeamDomain)
     // OPTIONAL: slack integration token
     def slackTokenCredentialId = args.get('slackTokenCredentialId', null)
+    // OPTIONAL: how many past builds to use before we mark the run as a success
+    def currentMinusBuilds = args.get('currentMinusBuilds', 2)
 
-    def currentMinusOne = pipelineUtils.getLastRealBuild(currentBuild)
-    if (currentMinusOne) {
-        echo "Found currentMinusOne non-RELOAD/non-ERROR build: ${currentMinusOne.getDisplayName()}"
-    }
-
-    def currentMinusTwo = pipelineUtils.getLastRealBuild(currentMinusOne)
-    if (currentMinusTwo) {
-        echo "Found currentMinusTwo non-RELOAD/non-ERROR build: ${currentMinusTwo.getDisplayName()}"
-    }
+    builds = getCurrentMinusBuilds(currentMinusBuilds)
+    allPass = checkCurrentBuilds(builds)
 
     def results
     try {
@@ -64,7 +93,7 @@ def call(args = [:]) {
         if (!results) error("Found no test results, unexpected error must have occurred")
 
         if (results['failed']) {
-            if (alwaysSendFailureNotification || (!currentMinusOne || currentMinusOne.getResult().toString() == "SUCCESS")) {
+            if (alwaysSendFailureNotification || (!builds.first() || builds.first().getResult().toString() == "SUCCESS")) {
                 // result went from success -> failed
                 // run script to collect request ID info and send the failure slack msg
                 def slackMsg = slackMsgCallback()
@@ -78,8 +107,8 @@ def call(args = [:]) {
                 )
             }
         }
-        else if (currentMinusOne && currentMinusTwo && currentMinusOne.getResult().toString() == "SUCCESS" && currentMinusTwo.getResult().toString() != "SUCCESS") {
-            // result went from failed -> success -> success
+        else if (allPass) {
+            // result went from failed -> success *currentMinusBuilds
             slackUtils.sendMsg(
                 slackChannel: slackChannel,
                 slackUrl: slackUrl,
