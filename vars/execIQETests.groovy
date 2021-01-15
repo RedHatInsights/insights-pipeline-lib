@@ -24,6 +24,7 @@ def call(args = [:]) {
     def options = args.get('options', [:])
     def defaultMarker = args.get('defaultMarker')
     def defaultFilter = args.get('defaultFilter')
+    def defaultImage = args.get('defaultImage')
     def extraJobProperties = args.get('extraJobProperties', [])
     def lockName = args.get('lockName')
 
@@ -74,6 +75,15 @@ def call(args = [:]) {
         ]
     )
 
+    // Add text field for test image
+    p.add(
+        [
+            $class: 'StringParameterDefinition',
+            name: "image", defaultValue: defaultImage ? defaultImage : "",
+            description: "Enter the name of the core image, leave blank for iqe-core"
+        ]
+    )
+
     def jobProperties = [parameters(p)]
     jobProperties.addAll(extraJobProperties)
 
@@ -95,6 +105,7 @@ def call(args = [:]) {
     options['envName'] = params.env
     options['marker'] = params.marker
     options['filter'] = params.filter
+    options['image'] = params.image
     options['ibutsu'] = options.get('ibutsu', true)
     options['cloud'] = options.get('cloud', pipelineVars.upshiftCloud)
     options['timeout'] = options.get('timeout', 150)
