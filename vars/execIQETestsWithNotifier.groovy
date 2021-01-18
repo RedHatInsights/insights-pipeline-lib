@@ -42,7 +42,7 @@ def checkResolved(buildList) {
         }
     }
 
-    if buildList.first().getResult().toString() != "SUCCESS" && failures == 1 {
+    if (buildList.first().getResult().toString() != "SUCCESS" && failures == 1) {
         // We went from a failure and have had a consistent run of successes since
         return true
     } else {
