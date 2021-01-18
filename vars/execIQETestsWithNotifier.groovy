@@ -135,7 +135,7 @@ def call(args = [:]) {
                 slackUrl: slackUrl,
                 slackTeamDomain: slackTeamDomain,
                 slackTokenCredentialId: slackTokenCredentialId,
-                msg: "hit unhandled error",
+                msg: "\nHit unhandled error:\n${err.getMessage()}",
                 result: "failure"
             )
             throw err
