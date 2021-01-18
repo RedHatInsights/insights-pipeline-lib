@@ -32,15 +32,23 @@ def getCurrentMinusBuilds(number) {
     return currentList
 }
 
-def checkCurrentBuilds(buildList) {
+def checkResolved(buildList) {
+    int failures = 0
+
     for(build in buildList) { 
         if (build.getResult().toString() != "SUCCESS") {
             echo "build ${build.getDisplayName()}'s result was a ${build.getResult().toString()}"
-            return false
+            failures++;
         }
     }
 
-    return true
+    if buildList.first().getResult().toString() != "SUCCESS" && failures == 1 {
+        // We went from a failure and have had a consistent run of successes since
+        return true
+    } else {
+        // We have had more than just the initial failure we were hoping to resolve
+        return false
+    }
 }
 
 def call(args = [:]) {
@@ -75,7 +83,7 @@ def call(args = [:]) {
     def currentMinusBuilds = args.get('currentMinusBuilds', 2)
 
     builds = getCurrentMinusBuilds(currentMinusBuilds)
-    allPass = checkCurrentBuilds(builds)
+    runResolved = checkResolved(builds)
 
     def results
     try {
@@ -107,7 +115,7 @@ def call(args = [:]) {
                 )
             }
         }
-        else if (allPass) {
+        else if (runResolved) {
             // result went from failed -> success *currentMinusBuilds
             slackUtils.sendMsg(
                 slackChannel: slackChannel,
