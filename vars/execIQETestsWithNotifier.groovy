@@ -13,18 +13,17 @@ def getCurrentMinusBuilds(number) {
     int count = 0
     currentList = []
     
+    // otherwise our list will include currentMinusBuilds - 1
     while(count != number) {
         if (currentList) {
             currentMinusX = pipelineUtils.getLastRealBuild(currentList.last())
-            if (currentMinusX) {
-                echo "Found currentMinus${count + 1} non-RELOAD/non-ERROR build: ${currentMinusX.getDisplayName()}"
-            }
         } else {
             currentMinusX = pipelineUtils.getLastRealBuild(currentBuild)
         }
 
         // Avoid adding nulls to our list
         if (currentMinusX) {
+            echo "Found currentMinus${count + 1} non-RELOAD/non-ERROR build: ${currentMinusX.getDisplayName()}"
             currentList.add(currentMinusX);
         }
         count++;
@@ -32,7 +31,7 @@ def getCurrentMinusBuilds(number) {
     return currentList
 }
 
-def checkResolved(buildList) {
+def checkResolved(buildList, currentMinusBuilds) {
     int failures = 0
 
     for(build in buildList) { 
@@ -42,7 +41,7 @@ def checkResolved(buildList) {
         }
     }
 
-    if (buildList.first().getResult().toString() != "SUCCESS" && failures == 1) {
+    if (buildList.last().getResult().toString() != "SUCCESS" && failures == 1 && buildList.size() == currentMinusBuilds) {
         // We went from a failure and have had a consistent run of successes since
         return true
     } else {
@@ -83,7 +82,7 @@ def call(args = [:]) {
     def currentMinusBuilds = args.get('currentMinusBuilds', 2)
 
     builds = getCurrentMinusBuilds(currentMinusBuilds)
-    runResolved = checkResolved(builds)
+    runResolved = checkResolved(builds, currentMinusBuilds)
 
     def results
     try {
@@ -101,7 +100,7 @@ def call(args = [:]) {
         if (!results) error("Found no test results, unexpected error must have occurred")
 
         if (results['failed']) {
-            if (alwaysSendFailureNotification || (!builds.first() || builds.first().getResult().toString() == "SUCCESS")) {
+            if (alwaysSendFailureNotification || (!builds.last() || builds.last().getResult().toString() == "SUCCESS")) {
                 // result went from success -> failed
                 // run script to collect request ID info and send the failure slack msg
                 def slackMsg = slackMsgCallback()
