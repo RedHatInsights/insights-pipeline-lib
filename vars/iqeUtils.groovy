@@ -48,7 +48,8 @@ private def parseOptions(Map options) {
     def envName = options['envName']
 
     // the container image that the tests will run with in OpenShift
-    options['image'] = options.get('image', pipelineVars.iqeCoreImage)
+    // we use a ternary here to deal with the empty string
+    options['image'] = options.get('image') ? options.get("image") : pipelineVars.iqeCoreImage
 
     // the namespace that the test pods run in
     options['namespace'] = options.get('namespace')
