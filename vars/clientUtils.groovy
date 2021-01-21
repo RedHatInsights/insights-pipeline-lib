@@ -173,7 +173,7 @@ def setupIqeAnsible(String iqeAnsibleBranch='master'){
         pip install -r insights-client/requirements.txt
     """
 
-    withCredentials([file(credentialsId: 'settings_iqe_insights_client', variable: 'settings')]) {
+    withCredentials([file(credentialsId: 'settings_iqe_ansible', variable: 'settings')]) {
         sh "pwd"
         sh "ls -ltr"
         sh "cp \$settings insights-client/vars/settings.local.yaml"
