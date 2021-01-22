@@ -207,6 +207,8 @@ def runIQE(String plugin, Map appOptions) {
                 -n ${appOptions['parallelWorkerCount']} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-parallel.log 2>&1 \
+                --browserlog \
+                --netlog \
                 """.stripIndent()
             ),
             returnStatus: true
@@ -236,6 +238,8 @@ def runIQE(String plugin, Map appOptions) {
                 ${extraArgs} \
                 ${ibutsuArgs} \
                 --log-file=iqe-${plugin}-sequential.log 2>&1 \
+                --browserlog \
+                --netlog \
                 """.stripIndent()
             ),
             returnStatus: true
