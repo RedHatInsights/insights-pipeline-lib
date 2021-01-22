@@ -35,7 +35,7 @@ class pipelineVars implements Serializable {
     )
     String iqeCoreImage = 'quay.io/cloudservices/iqe-core:latest'
     String iqeTestsImage = 'quay.io/cloudservices/iqe-tests:latest'
-    String seleniumImage = 'quay.io/redhatqe/selenium-standalone:ff_78.0.2esr_gecko_v0.26.0_chrome_84.0.4147.89'
+    String seleniumImage = 'quay.io/redhatqe/selenium-standalone:ff_78.6.1esr_gecko_v0.29.0_chrome_88.0.4324.96'
 
     String defaultCloud = 'openshift'
     String defaultNamespace = 'jenkins'
