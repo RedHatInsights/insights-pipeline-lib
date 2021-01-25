@@ -18,6 +18,7 @@ def rhsmRegister(
         String org=null){
     if(poolId){
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
+            echo "Subscribing machine with poolId..."
             sh """
                 subscription-manager register --serverurl=${url} --username=${username} --password=${password}
                 subscription-manager attach --pool=${poolId}
@@ -26,6 +27,7 @@ def rhsmRegister(
         }
     }
     else if (activationKey){
+        echo "Subscribing machine to Satellite ..."
         sh """
             subscription-manager register --org=${org} --activationkey=${activationKey}
             subscription-manager refresh
@@ -33,6 +35,7 @@ def rhsmRegister(
     }
     else {
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
+            echo "Subscribing machine to Cloud..."
             sh """
                 subscription-manager register --serverurl=${url} --username=${username} --password=${password} --auto-attach --force
                 subscription-manager refresh
@@ -45,6 +48,7 @@ def rhsmRegister(
 def rhsmUnregister(){
     def registered = sh ( script: "subscription-manager identity", returnStatus: true)
     if(registered == 0){
+        echo "Machine is registered, unregistering..."
         sh '''
             subscription-manager remove --all
             subscription-manager unregister
@@ -120,9 +124,18 @@ def setupVenvDir(){
 }
 
 
-def setupIqeInsightsClientPlugin(String eggBranch=3.0){
+def setupIqePlugin(String plugin,String eggBranch=3.0){
     venvDir = setupVenvDir()
-    git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: "${IQE_BRANCH}"
+    if(plugin == 'iqe-insights-client') {
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: "${IQE_BRANCH}"
+        plugin_dir = 'iqe_insights_client'
+        jenkins_credentials = 'settings_iqe_insights_client'
+    }
+    else if(plugin == 'iqe-rhc'){
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: "${IQE_BRANCH}"
+        plugin_dir = 'iqe_rhc'
+        jenkins_credentials = 'settings_iqe_rhc'
+    }
 
     if("${venvDir}" == '/iqe_venv'){
         sh """
@@ -148,8 +161,8 @@ def setupIqeInsightsClientPlugin(String eggBranch=3.0){
     }
 
 
-    withCredentials([file(credentialsId: 'settings_iqe_insights_client', variable: 'settings')]) {
-        sh "cp \$settings iqe_insights_client/conf/settings.local.yaml"
+    withCredentials([file(credentialsId: jenkins_credentials, variable: 'settings')]) {
+        sh "cp \$settings ${plugin_dir}/conf/settings.local.yaml"
     }
 }
 
@@ -180,11 +193,18 @@ def setupIqeAnsible(String iqeAnsibleBranch='master'){
 }
 
 
-def runTests(String pytestParam=null){
+def runTests(String plugin=null, String pytestParam=null){
         venvDir = setupVenvDir()
+        if (plugin == 'iqe-insights-client') {
+            plugin_test = 'insights_client'
+        }
+        else if (plugin == 'iqe-rhc') {
+            plugin_test = 'rhc'
+            pytestParam = "${pytestParam} -k test_client"
+        }
         sh """
             source ${venvDir}/bin/activate
-            iqe tests plugin insights_client --junitxml=junit.xml --disable-pytest-warnings -rxv ${pytestParam}
+            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -rxv ${pytestParam}
         """
 }
 
