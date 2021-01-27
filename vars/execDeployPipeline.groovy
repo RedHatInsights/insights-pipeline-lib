@@ -163,7 +163,7 @@ def runDeploy(parsed) {
                 skip: servicesToSkip,
                 env: envConfig['env'],
                 project: envConfig['project'],
-                secretsSrcProject: envConfig['secretsSrcProject'],
+                secretsSrcProject: envConfig.get('secretsSrcProject'),
             )
         }
     }
