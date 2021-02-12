@@ -68,24 +68,34 @@ def rhsmStatus(){
 }
 
 
-def installClient(String url=null){
-    def checkInstalled = sh ( script: 'rpm -qa | grep insights-client', returnStatus: true)
+def installRpm(String rpmName=null, String url=null){
+    def checkInstalled = sh ( script: "rpm -qa | grep ${rpmName}", returnStatus: true)
 
     if(checkInstalled == 0){
         sh """
-        yum remove -y insights-client
-        rm -rf /etc/insights-client
+        yum remove -y ${rpmName}
         """
+        if ("${rpmName}" == "insights-client"){
+            sh """
+            rm -rf /etc/insights-client
+            """
+        }
     }
 
     if(url){
         sh """
-            yum install ${url}
+            yum install -y ${url}
         """
     }
     else {
+        if("${rpmName}" == "yggdrasil"){
         sh """
-            yum install -y insights-client
+            yum copr enable -y linkdupont/yggdrasil
+            yum install -y yggdrasil
+        """
+        }
+        sh """
+            yum install -y ${rpmName}
         """
     }
 }
@@ -127,27 +137,27 @@ def setupVenvDir(){
 def setupIqePlugin(String plugin,String eggBranch=3.0){
     venvDir = setupVenvDir()
     if(plugin == 'iqe-insights-client') {
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: "${IQE_BRANCH}"
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: "master"
         plugin_dir = 'iqe_insights_client'
         jenkins_credentials = 'settings_iqe_insights_client'
     }
     else if(plugin == 'iqe-rhc'){
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: "${IQE_BRANCH}"
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: 'master'
         plugin_dir = 'iqe_rhc'
         jenkins_credentials = 'settings_iqe_rhc'
     }
 
     if("${venvDir}" == '/iqe_venv'){
         sh """
-            echo "/iqe_venv exists"
+            echo "/iqe_venv exists, reusing it"
             source ${venvDir}/bin/activate
             pip install -U pip setuptools setuptools_scm wheel iqe-integration-tests
             iqe plugin install --editable .
-            pip install git+https://github.com/RedHatInsights/insights-core.git@${eggBranch}
         """
     }
     else {
         sh """
+            echo "/iqe_venv does not exist, creating new venv..."
             git config --global http.sslVerify false
             python3 -m venv venv
             source venv/bin/activate
@@ -156,6 +166,11 @@ def setupIqePlugin(String plugin,String eggBranch=3.0){
             pip install -U pip setuptools setuptools_scm wheel
             pip install iqe-integration-tests
             iqe plugin install --editable .
+        """
+    }
+    if(plugin == 'iqe-insights-client') {
+        sh """
+            source ${venvDir}/bin/activate
             pip install git+https://github.com/RedHatInsights/insights-core.git@${eggBranch}
         """
     }
