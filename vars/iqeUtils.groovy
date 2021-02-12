@@ -170,6 +170,7 @@ def runIQE(String plugin, Map appOptions) {
      *
      * Returns result of "SUCCESS" or "FAILURE"
      */
+    def collectionStatus
     def result
     def status
     def noTests
@@ -195,69 +196,106 @@ def runIQE(String plugin, Map appOptions) {
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
         // export the .env file to load env vars that should be present even before dynaconf is
         // invoked such as IQE_TESTS_LOCAL_CONF_PATH
-        status = sh(
+
+        // check that there are actually tests to run
+        collectionStatus = sh(
             script: (
                 """
                 set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
-                iqe tests plugin ${plugin} -s -v \
-                --junitxml=junit-${plugin}-parallel.xml \
+                iqe tests plugin ${plugin} -s -v --collect-only \
                 ${markerArgs} \
                 ${filterArgs} \
                 ${extraArgs} \
-                -n ${appOptions['parallelWorkerCount']} \
-                ${ibutsuArgs} \
-                --log-file=iqe-${plugin}-parallel.log 2>&1 \
-                --browserlog \
-                --netlog \
                 """.stripIndent()
             ),
             returnStatus: true
         )
-
         // status code 5 means no tests collected
-        if (status == 5) {
+        if (collectionStatus == 5) {
             noTests = true
         }
-        else if (status > 0) {
+        else if (collectionStatus > 0) {
             result = "FAILURE"
-            errorMsgParallel = "Parallel test run failed with exit code ${status}."
+            errorMsgParallel = "Parallel test run collection failed with exit code ${status}"
+        }
+        // only run tests when the collection status is 0
+        else {
+            status = sh(
+                script: (
+                    """
+                    set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
+                    iqe tests plugin ${plugin} -s -v \
+                    --junitxml=junit-${plugin}-parallel.xml \
+                    ${markerArgs} \
+                    ${filterArgs} \
+                    ${extraArgs} \
+                    -n ${appOptions['parallelWorkerCount']} \
+                    ${ibutsuArgs} \
+                    --log-file=iqe-${plugin}-parallel.log 2>&1 \
+                    --browserlog \
+                    --netlog \
+                    """.stripIndent()
+                ),
+                returnStatus: true
+            )
+            if (status > 0) {
+                result = "FAILURE"
+                errorMsgParallel = "Parallel test run failed with exit code ${status}."
+            }
         }
 
         // run sequential tests
         markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
         // export the .env file to load env vars that should be present even before dynaconf is
         // invoked such as IQE_TESTS_LOCAL_CONF_PATH
-        status = sh(
+
+
+        // check that there are actually tests to run
+        collectionStatus = sh(
             script: (
                 """
                 set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
-                iqe tests plugin ${plugin} -s -v \
-                --junitxml=junit-${plugin}-sequential.xml \
+                iqe tests plugin ${plugin} -s -v --collect-only \
                 ${markerArgs} \
                 ${filterArgs} \
                 ${extraArgs} \
-                ${ibutsuArgs} \
-                --log-file=iqe-${plugin}-sequential.log 2>&1 \
-                --browserlog \
-                --netlog \
                 """.stripIndent()
             ),
             returnStatus: true
         )
-
         // status code 5 means no tests collected
-        if (status == 5) {
-            if (noTests) {
-                // the parallel run had no results, and so did the sequential run. Fail this plugin.
+        if (collectionStatus == 5) {
+            noTests = true
+            error("Tests produced no results")
+        }
+        else if (collectionStatus > 0) {
+            result = "FAILURE"
+            errorMsgSequential = "Sequential test run collection failed with exit code ${status}"
+        }
+        // only run tests when the collection status is 0
+        else {
+            status = sh(
+                script: (
+                    """
+                    set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
+                    iqe tests plugin ${plugin} -s -v \
+                    --junitxml=junit-${plugin}-sequential.xml \
+                    ${markerArgs} \
+                    ${filterArgs} \
+                    ${extraArgs} \
+                    ${ibutsuArgs} \
+                    --log-file=iqe-${plugin}-sequential.log 2>&1 \
+                    --browserlog \
+                    --netlog \
+                    """.stripIndent()
+                ),
+                returnStatus: true
+            )
+            if (status > 0) {
                 result = "FAILURE"
-                error("Tests produced no results")
+                errorMsgSequential = "Sequential test run failed with exit code ${status}."
             }
         }
-        else if (status > 0) {
-            result = "FAILURE"
-            errorMsgSequential = "Sequential test run hit an error with exit code ${status}."
-        }
-
         // if there were no failures recorded, it's a success
         result = result ? result : "SUCCESS"
 
