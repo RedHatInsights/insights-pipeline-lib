@@ -10,6 +10,16 @@
 * @param (optional) activationKey = RHSM activation key, usually used for Satellite hosts
 * @param (optional) org = Satellite Organization name
 */
+def getBeta(){
+    def beta = sh ( script: 'cat /etc/redhat-release | grep Beta > /dev/null', returnStatus: true)
+    if ( beta == 0){
+        return true
+    }
+    else {
+        return false
+    }
+}
+
 def rhsmRegister(
         String url=null,
         String credentialId,
@@ -36,10 +46,19 @@ def rhsmRegister(
     else {
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
             echo "Subscribing machine to Cloud..."
-            sh """
-                subscription-manager register --serverurl=${url} --username=${username} --password=${password} --auto-attach --force
-                subscription-manager refresh
-            """
+            if(getBeta().toBoolean()){
+                echo "We are on beta, do not auto attach subscription..."
+                sh """
+                    subscription-manager register --serverurl=${url} --username=${username} --password=${password} --force
+                    subscription-manager refresh
+                """
+            }
+            else {
+                sh """
+                    subscription-manager register --serverurl=${url} --username=${username} --password=${password} --auto-attach --force
+                    subscription-manager refresh
+                """
+            }
         }
     }
 }
@@ -68,7 +87,12 @@ def rhsmStatus(){
 }
 
 
-def installRpm(String rpmName=null, String url=null){
+def installRpm(Map parameters = [:]){
+    def rpmName = parameters.get("rpmName", null)
+    def url = parameters.get("url", null)
+    def brewBuildId = parameters.get("brewBuildId",null)
+    def brewNVR = parameters.get("brewNVR", null)
+
     def checkInstalled = sh ( script: "rpm -qa | grep ${rpmName}", returnStatus: true)
 
     if(checkInstalled == 0){
@@ -85,6 +109,13 @@ def installRpm(String rpmName=null, String url=null){
     if(url){
         sh """
             yum install -y ${url}
+        """
+    }
+    if(brewBuildId){
+        sh """
+        cd /tmp
+        brew download-build --noprogress --arch=x86_64 --debuginfo ${brewBuildId}
+        yum localinstall -y /tmp/${brewNVR}.x86_64.rpm
         """
     }
     else {
@@ -136,12 +167,12 @@ def setupVenvDir(){
 
 def setupIqePlugin(String plugin,String eggBranch=3.0){
     venvDir = setupVenvDir()
-    if(plugin == 'iqe-insights-client') {
+    if(plugin == 'insights-client') {
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: "master"
         plugin_dir = 'iqe_insights_client'
         jenkins_credentials = 'settings_iqe_insights_client'
     }
-    else if(plugin == 'iqe-rhc'){
+    else if(plugin == 'rhc'){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: 'master'
         plugin_dir = 'iqe_rhc'
         jenkins_credentials = 'settings_iqe_rhc'
@@ -168,7 +199,7 @@ def setupIqePlugin(String plugin,String eggBranch=3.0){
             iqe plugin install --editable .
         """
     }
-    if(plugin == 'iqe-insights-client') {
+    if(plugin == 'insights-client') {
         sh """
             source ${venvDir}/bin/activate
             pip install git+https://github.com/RedHatInsights/insights-core.git@${eggBranch}
@@ -210,10 +241,10 @@ def setupIqeAnsible(String iqeAnsibleBranch='master'){
 
 def runTests(String plugin=null, String pytestParam=null){
         venvDir = setupVenvDir()
-        if (plugin == 'iqe-insights-client') {
+        if (plugin == 'insights-client') {
             plugin_test = 'insights_client'
         }
-        else if (plugin == 'iqe-rhc') {
+        else if (plugin == 'rhc') {
             plugin_test = 'rhc'
             pytestParam = "${pytestParam} -k test_client"
         }
