@@ -246,11 +246,11 @@ def runTests(String plugin=null, String pytestParam=null){
         }
         else if (plugin == 'rhc') {
             plugin_test = 'rhc'
-            pytestParam = "${pytestParam} -k test_client"
+            pytestParam = "${pytestParam} -m client"
         }
         sh """
             source ${venvDir}/bin/activate
-            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -rxv ${pytestParam}
+            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
         """
 }
 
