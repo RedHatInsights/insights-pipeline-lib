@@ -172,10 +172,14 @@ def setupIqePlugin(String plugin,String eggBranch=3.0){
         plugin_dir = 'iqe_insights_client'
         jenkins_credentials = 'settings_iqe_insights_client'
     }
-    else if(plugin == 'rhc'){
+    else if(plugin.contains('rhc')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: 'master'
         plugin_dir = 'iqe_rhc'
         jenkins_credentials = 'settings_iqe_rhc'
+    }
+    else {
+        println("Unknown plugin string passed...")
+        currentBuild.result = 'FAILURE'
     }
 
     if("${venvDir}" == '/iqe_venv'){
@@ -247,6 +251,16 @@ def runTests(String plugin=null, String pytestParam=null){
         else if (plugin == 'rhc') {
             plugin_test = 'rhc'
             pytestParam = "${pytestParam} -m client"
+        }
+        else if (plugin == 'rhc-worker-playbook') {
+            plugin_test = 'rhc'
+            pytestParam = "${pytestParam} -m worker_playbook"
+            // start python web server with playbook
+            sh """
+                ls -ltr ./
+                cd iqe_rhc/resources/playbooks
+                nohup python -m http.server 8000 > /dev/null 2>&1 &
+            """
         }
         sh """
             source ${venvDir}/bin/activate
