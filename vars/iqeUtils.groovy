@@ -137,6 +137,10 @@ private def parseOptions(Map options) {
     //  extraStages = [stageName: stage]
     options['extraStages'] = options.get('extraStages', [:])
 
+    // browser/netlog options
+    options['browserlog'] = options.get('browserlog', true)
+    options['netlog'] = options.get('netlog', true)
+
     return options
 }
 
@@ -177,6 +181,8 @@ def runIQE(String plugin, Map appOptions) {
 
     def filterArgs = ""
     def ibutsuArgs = ""
+    def browserlog = ""
+    def netlog = ""
 
     if (appOptions['filter']) {
         filterArgs = "-k \"${appOptions['filter']}\""
@@ -184,6 +190,14 @@ def runIQE(String plugin, Map appOptions) {
 
     if (appOptions['ibutsu']) {
         ibutsuArgs = "-o ibutsu_server=${appOptions['ibutsuUrl']} -o ibutsu_source=${env.BUILD_TAG}"
+    }
+
+    if (appOptions["browserlog"]) {
+      browserlog = "--browserlog"
+    }
+
+    if (appOptions["netlog"]) {
+      netlog = "--netlog"
     }
 
     def marker = appOptions['marker']
@@ -232,8 +246,8 @@ def runIQE(String plugin, Map appOptions) {
                     -n ${appOptions['parallelWorkerCount']} \
                     ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-parallel.log 2>&1 \
-                    --browserlog \
-                    --netlog \
+                    ${browserlog} \
+                    ${netlog} \
                     """.stripIndent()
                 ),
                 returnStatus: true
@@ -285,8 +299,8 @@ def runIQE(String plugin, Map appOptions) {
                     ${extraArgs} \
                     ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-sequential.log 2>&1 \
-                    --browserlog \
-                    --netlog \
+                    ${browserlog} \
+                    ${netlog} \
                     """.stripIndent()
                 ),
                 returnStatus: true
