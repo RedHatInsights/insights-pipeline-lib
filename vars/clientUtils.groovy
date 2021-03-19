@@ -166,7 +166,6 @@ def setupVenvDir(){
 
 
 def setupIqePlugin(Map parameters = [:]){
-// def setupIqePlugin(String plugin,String branch='master'){
     def plugin = parameters.get("plugin")
     def iqeCoreBranch = parameters.get("iqeCoreBranch")
     def iqePluginBranch = parameters.get("iqePluginBranch")
