@@ -165,15 +165,19 @@ def setupVenvDir(){
 }
 
 
-def setupIqePlugin(String plugin,String eggBranch=3.0){
+def setupIqePlugin(Map parameters = [:]){
+    def plugin = parameters.get("plugin")
+    def iqeCoreBranch = parameters.get("iqeCoreBranch" , "3.0")
+    def iqePluginBranch = parameters.get("iqePluginBranch", "master")
+
     venvDir = setupVenvDir()
     if(plugin == 'insights-client') {
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: "master"
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: iqePluginBranch
         plugin_dir = 'iqe_insights_client'
         jenkins_credentials = 'settings_iqe_insights_client'
     }
     else if(plugin.contains('rhc')){
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: 'master'
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: iqePluginBranch
         plugin_dir = 'iqe_rhc'
         jenkins_credentials = 'settings_iqe_rhc'
     }
@@ -206,7 +210,7 @@ def setupIqePlugin(String plugin,String eggBranch=3.0){
     if(plugin == 'insights-client') {
         sh """
             source ${venvDir}/bin/activate
-            pip install git+https://github.com/RedHatInsights/insights-core.git@${eggBranch}
+            pip install git+https://github.com/RedHatInsights/insights-core.git@${iqeCoreBranch}
         """
     }
 
