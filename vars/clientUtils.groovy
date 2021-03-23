@@ -167,8 +167,8 @@ def setupVenvDir(){
 
 def setupIqePlugin(Map parameters = [:]){
     def plugin = parameters.get("plugin")
-    def iqeCoreBranch = parameters.get("iqeCoreBranch")
-    def iqePluginBranch = parameters.get("iqePluginBranch")
+    def iqeCoreBranch = parameters.get("iqeCoreBranch" , "3.0")
+    def iqePluginBranch = parameters.get("iqePluginBranch", "master")
 
     venvDir = setupVenvDir()
     if(plugin == 'insights-client') {
