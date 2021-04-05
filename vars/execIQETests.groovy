@@ -135,7 +135,7 @@ def call(args = [:]) {
     }
 
     if (!results) error("Found no test results")
-    def totalResults = results['success'].size() + results['failed'].size()
+    def totalResults = results['success'].size() + results['failed'].size() + results['error'].size()
     if (totalResults != appConfigs.keySet().size()) error("Did not find test results for expected number of apps")
 
     return results
