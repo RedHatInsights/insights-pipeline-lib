@@ -122,7 +122,8 @@ def installRpm(Map parameters = [:]){
         if("${rpmName}" == "yggdrasil"){
         sh """
             yum copr enable -y linkdupont/yggdrasil
-            yum install -y yggdrasil
+            yum copr enable -y jcrafts/rhc-worker-playbook
+            yum install -y yggdrasil rhc-worker-playbook
         """
         }
         sh """
@@ -181,6 +182,12 @@ def setupIqePlugin(Map parameters = [:]){
         plugin_dir = 'iqe_rhc'
         jenkins_credentials = 'settings_iqe_rhc'
     }
+    else if(plugin.contains('iqe-satellite-plugin')){
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git', branch: iqePluginBranch
+        plugin_dir = 'iqe-satellite-plugin'
+        plugin_dir = 'iqe_insights_satellite'
+        jenkins_credentials = 'settings_iqe_satellite'
+    }
     else {
         println("Unknown plugin string passed...")
         currentBuild.result = 'FAILURE'
@@ -212,6 +219,20 @@ def setupIqePlugin(Map parameters = [:]){
             source ${venvDir}/bin/activate
             pip install git+https://github.com/RedHatInsights/insights-core.git@${iqeCoreBranch}
         """
+    }
+    else if(plugin == 'iqe-satellite-plugin') {
+        sh """
+            source ${venvDir}/bin/activate
+            yum -y install docker
+            docker pull quay.io/cloudservices/selenium-standalone-chrome:3.141.59-xenon
+            docker image tag quay.io/cloudservices/selenium-standalone-chrome:3.141.59-xenon selenium/standalone-chrome:latest
+            python -m pip install docker-py
+            python -m pip install -e .
+            python -m pip uninstall -y python-box
+            python -m pip install python-box==3.4.6
+        """
+            // systemctl enable docker.service
+            // systemctl start docker.service
     }
 
 
@@ -247,7 +268,12 @@ def setupIqeAnsible(String iqeAnsibleBranch='master'){
 }
 
 
-def runTests(String plugin=null, String pytestParam=null){
+def runTests(Map parameters = [:]){
+    def plugin = parameters.get("plugin")
+    def pytestParam = parameters.get("pytestParam", null)
+    def satelliteInstance = parameters.get("satelliteInstance", null)
+    def iqeVmRhel = parameters.get("iqeVmRhel", null)
+
         venvDir = setupVenvDir()
         if (plugin == 'insights-client') {
             plugin_test = 'insights_client'
@@ -266,9 +292,22 @@ def runTests(String plugin=null, String pytestParam=null){
                 nohup python -m http.server 8000 > /dev/null 2>&1 &
             """
         }
+        else if (plugin == 'iqe-satellite-plugin') {
+            plugin_test = 'insights_satellite'
+            sh """
+                podman stop iqe_selenium_standalone || true
+                podman rm iqe_selenium_standalone || true
+                docker run -it -d --shm-size=2g -p 4444:4444 -p 5999:5999 --name iqe_selenium_standalone quay.io/redhatqe/selenium-standalone
+                sleep 8
+            """
+        }
+        // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
+        def replaced_rhel_string = iqeVmRhel.replaceAll( /rhel/, 'rhel_' )
         sh """
+            export SATELLITE_INSTANCE=${satelliteInstance}
+            export IQE_VM_RHEL=${replaced_rhel_string}
             source ${venvDir}/bin/activate
-            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
+            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com/ --ibutsu-source insights-qe-jenkins
         """
 }
 
