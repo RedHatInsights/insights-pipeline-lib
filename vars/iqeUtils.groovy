@@ -505,10 +505,10 @@ private def createTestStages(String appName, Map appConfig) {
         // stash junit files so that other nodes can read them later
         stash name: "${appName}-stash-files", allowEmpty: true, includes: "junit-*.xml"
 
-        echo "Plugins passed: ${pluginsPassed.keySet().join(",")}"
+        echo "Plugins passed: ${pluginsPassed.keySet().join(',')}"
         if (pluginsFailed || pluginsError) {
-            error "Plugins failed: ${pluginsFailed.keySet().join(",")}" \
-                  " Plugins error: ${pluginsError}.keySet().join(",")}"
+            error "Plugins failed: ${pluginsFailed.keySet().join(',')} " +
+                  "Plugins error: ${pluginsError}.keySet().join(',')}"
         }
         else if (!pluginsPassed) {
             error "No plugins failed nor passed. Were the test runs aborted early?"
