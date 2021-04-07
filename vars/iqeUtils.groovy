@@ -206,7 +206,7 @@ def runIQE(String plugin, Map appOptions) {
     def marker = appOptions['marker']
     def extraArgs = appOptions['extraArgs']
 
-    catchError(stageResult: "ERROR") {
+    catchError(stageResult: "FAILURE") {
         // run parallel tests
         def errorMsgParallel = ""
         def errorMsgSequential = ""
@@ -255,13 +255,9 @@ def runIQE(String plugin, Map appOptions) {
                 ),
                 returnStatus: true
             )
-            if (status == 1) {
+            if (status > 0) {
                 result = "FAILURE"
                 errorMsgParallel = "Parallel test run failed with pytest exit code ${status}."
-            }
-            else {
-                result = "ERROR"
-                errorMsgParallel = "Parallel test run hit an error with pytest exit code ${status}."
             }
         }
 
