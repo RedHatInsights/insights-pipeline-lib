@@ -7,7 +7,7 @@
  * Example:
  *     results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
  *
- * 'results' will be a Map with three keys: 'success', 'error', and 'failed'. Each key contains a list of which
+ * 'results' will be a Map with two keys: 'success' and 'failed'. Each key contains a list of which
  * parallel stage failed.
  *
  * OPTIONS
@@ -172,10 +172,7 @@ def runIQE(String plugin, Map appOptions) {
      *
      * If an IQE run fails, then fail the stage. Ignore pytest failing for having 0 tests collected
      *
-     * Returns result of "SUCCESS", "ERROR", or "FAILURE"
-     * The "FAILURE" result is only returned if there are actual test failures, cf
-     * https://docs.pytest.org/en/documentation-restructure/how-to/usage.html#possible-exit-codes
-     * for information on pytest exit codes.
+     * Returns result of "SUCCESS" or "FAILURE"
      */
     def collectionStatus
     def result
@@ -206,7 +203,7 @@ def runIQE(String plugin, Map appOptions) {
     def marker = appOptions['marker']
     def extraArgs = appOptions['extraArgs']
 
-    catchError(stageResult: "ERROR") {
+    catchError(stageResult: "FAILURE") {
         // run parallel tests
         def errorMsgParallel = ""
         def errorMsgSequential = ""
@@ -232,7 +229,7 @@ def runIQE(String plugin, Map appOptions) {
             noTests = true
         }
         else if (collectionStatus > 0) {
-            result = "ERROR"
+            result = "FAILURE"
             errorMsgParallel = "Parallel test run collection failed with exit code ${status}"
         }
         // only run tests when the collection status is 0
@@ -255,13 +252,9 @@ def runIQE(String plugin, Map appOptions) {
                 ),
                 returnStatus: true
             )
-            if (status == 1) {
+            if (status > 0) {
                 result = "FAILURE"
-                errorMsgParallel = "Parallel test run failed with pytest exit code ${status}."
-            }
-            else {
-                result = "ERROR"
-                errorMsgParallel = "Parallel test run hit an error with pytest exit code ${status}."
+                errorMsgParallel = "Parallel test run failed with exit code ${status}."
             }
         }
 
@@ -290,7 +283,7 @@ def runIQE(String plugin, Map appOptions) {
             error("Tests produced no results")
         }
         else if (collectionStatus > 0) {
-            result = "ERROR"
+            result = "FAILURE"
             errorMsgSequential = "Sequential test run collection failed with exit code ${status}"
         }
         // only run tests when the collection status is 0
@@ -312,13 +305,9 @@ def runIQE(String plugin, Map appOptions) {
                 ),
                 returnStatus: true
             )
-            if (status == 1) {
+            if (status > 0) {
                 result = "FAILURE"
-                errorMsgSequential = "Sequential test run failed with pytest exit code ${status}."
-            }
-            else {
-                result = "ERROR"
-                errorMsgSequential = "Sequential test run hit an error with pytest exit code ${status}."
+                errorMsgSequential = "Sequential test run failed with exit code ${status}."
             }
         }
         // if there were no failures recorded, it's a success
@@ -499,16 +488,14 @@ private def createTestStages(String appName, Map appConfig) {
 
     stage("Results") {
         def pluginsFailed = pluginResults.findAll { it.value == "FAILURE" }
-        def pluginsError = pluginResults.findAll { it.value == "ERROR" }
         def pluginsPassed = pluginResults.findAll { it.value == "SUCCESS" }
 
         // stash junit files so that other nodes can read them later
         stash name: "${appName}-stash-files", allowEmpty: true, includes: "junit-*.xml"
 
-        echo "Plugins passed: ${pluginsPassed.keySet().join(',')}"
-        if (pluginsFailed || pluginsError) {
-            error "Plugins failed: ${pluginsFailed.keySet().join(',')} " +
-                  "Plugins error: ${pluginsError}.keySet().join(',')}"
+        echo "Plugins passed: ${pluginsPassed.keySet().join(",")}"
+        if (pluginsFailed) {
+            error "Plugins failed: ${pluginsFailed.keySet().join(",")}"
         }
         else if (!pluginsPassed) {
             error "No plugins failed nor passed. Were the test runs aborted early?"
