@@ -317,7 +317,7 @@ def runIQE(String plugin, Map appOptions) {
         }
 
         // if there were no failures recorded, it's a success
-        result = result ? result : "SUCCESS"
+        result = result ?: "SUCCESS"
 
         if (errorMsgSequential || errorMsgParallel) {
             error("${errorMsgSequential} ${errorMsgParallel}")
