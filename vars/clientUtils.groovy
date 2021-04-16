@@ -170,6 +170,7 @@ def setupIqePlugin(Map parameters = [:]){
     def plugin = parameters.get("plugin")
     def iqeCoreBranch = parameters.get("iqeCoreBranch" , "3.0")
     def iqePluginBranch = parameters.get("iqePluginBranch", "master")
+    def satelliteInstance = parameters.get("satelliteInstance" , "satellite_69")
 
     venvDir = setupVenvDir()
     if(plugin == 'insights-client') {
@@ -197,7 +198,7 @@ def setupIqePlugin(Map parameters = [:]){
         sh """
             echo "/iqe_venv exists, reusing it"
             source ${venvDir}/bin/activate
-            pip install -U pip setuptools setuptools_scm wheel iqe-integration-tests
+            pip install -U pip setuptools setuptools_scm wheel iqe-core
             iqe plugin install --editable .
         """
     }
@@ -210,7 +211,7 @@ def setupIqePlugin(Map parameters = [:]){
             pip install devpi-client
             devpi use https://devpi-iqe.cloud.paas.psi.redhat.com/iqe/packages --set-cfg
             pip install -U pip setuptools setuptools_scm wheel
-            pip install iqe-integration-tests
+            pip install iqe-core
             iqe plugin install --editable .
         """
     }
@@ -227,7 +228,7 @@ def setupIqePlugin(Map parameters = [:]){
             docker pull quay.io/cloudservices/selenium-standalone-chrome:3.141.59-xenon
             docker image tag quay.io/cloudservices/selenium-standalone-chrome:3.141.59-xenon selenium/standalone-chrome:latest
             python -m pip install docker-py
-            python -m pip install -e .
+            python -m pip install -e .[${satelliteInstance}]
             python -m pip uninstall -y python-box
             python -m pip install python-box==3.4.6
         """
@@ -236,6 +237,7 @@ def setupIqePlugin(Map parameters = [:]){
     }
     else if(plugin.contains('rhc')) {
         sh """
+            source ${venvDir}/bin/activate
             pip install --editable .[client]
         """
     }
@@ -278,6 +280,12 @@ def runTests(Map parameters = [:]){
     def pytestParam = parameters.get("pytestParam", null)
     def satelliteInstance = parameters.get("satelliteInstance", null)
     def iqeVmRhel = parameters.get("iqeVmRhel", null)
+    if (iqeVmRhel){
+        replaced_rhel_string = iqeVmRhel.replaceAll( /rhel/, 'rhel_' )
+    }
+    else {
+        replaced_rhel_string = null
+    }
 
         venvDir = setupVenvDir()
         if (plugin == 'insights-client') {
@@ -307,12 +315,11 @@ def runTests(Map parameters = [:]){
             """
         }
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
-        def replaced_rhel_string = iqeVmRhel.replaceAll( /rhel/, 'rhel_' )
         sh """
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
             source ${venvDir}/bin/activate
-            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com/ --ibutsu-source insights-qe-jenkins
+            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com/ --ibutsu-source stg-jenkins
         """
 }
 
@@ -335,4 +342,19 @@ def runAnsible(String playbookFile, String playbookTags=null){
             ${play_command}
         """
 
+}
+
+def copySshKey(Map parameters = [:]){
+    def sshKey = parameters.get("sshKey", 'ssh_credentials_remediations_fifi')
+    def sshKeyName = parameters.get("sshKeyName", 'insights-qa.pem')
+    withCredentials([file(credentialsId: sshKey, variable: 'settings')]) {
+        sh "cp \$settings ~/.ssh/${sshKeyName}"
+    }
+}
+
+def downloadChromeDriver(){
+    sh """
+    curl -k https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip -o /tmp/chromedriver_linux64.zip
+    unzip -o /tmp/chromedriver_linux64.zip -d /usr/bin/
+    """
 }
