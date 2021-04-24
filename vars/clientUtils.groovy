@@ -234,6 +234,11 @@ def setupIqePlugin(Map parameters = [:]){
             // systemctl enable docker.service
             // systemctl start docker.service
     }
+    else if(plugin.contains('rhc')) {
+        sh """
+            pip install --editable .[client]
+        """
+    }
 
 
     withCredentials([file(credentialsId: jenkins_credentials, variable: 'settings')]) {
