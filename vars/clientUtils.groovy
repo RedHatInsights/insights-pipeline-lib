@@ -198,7 +198,8 @@ def setupIqePlugin(Map parameters = [:]){
         sh """
             echo "/iqe_venv exists, reusing it"
             source ${venvDir}/bin/activate
-            pip install -U pip setuptools setuptools_scm wheel iqe-core
+            pip install -U pip setuptools wheel
+            pip install setuptools_scm iqe-core
             iqe plugin install --editable .
         """
     }
@@ -210,8 +211,8 @@ def setupIqePlugin(Map parameters = [:]){
             source venv/bin/activate
             pip install devpi-client
             devpi use https://devpi-iqe.cloud.paas.psi.redhat.com/iqe/packages --set-cfg
-            pip install -U pip setuptools setuptools_scm wheel
-            pip install iqe-core
+            pip install -U pip setuptools wheel
+            pip install setuptools_scm iqe-core
             iqe plugin install --editable .
         """
     }
