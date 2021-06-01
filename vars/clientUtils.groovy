@@ -352,10 +352,3 @@ def copySshKey(Map parameters = [:]){
         sh "cp \$settings ~/.ssh/${sshKeyName}"
     }
 }
-
-def downloadChromeDriver(){
-    sh """
-    curl -k https://chromedriver.storage.googleapis.com/2.41/chromedriver_linux64.zip -o /tmp/chromedriver_linux64.zip
-    unzip -o /tmp/chromedriver_linux64.zip -d /usr/bin/
-    """
-}
