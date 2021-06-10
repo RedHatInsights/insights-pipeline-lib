@@ -41,7 +41,7 @@ private def getRefSpec() {
 
 private def deployEnvironment(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-    buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild
+    ocDeployerEnv, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild
 ) {
     /**
      * Pipeline stages for running ocdeployer.
@@ -90,7 +90,8 @@ private def deployEnvironment(
         sh(
             "ocdeployer deploy -w -f -l e2esmoke=true ${pickArg} " +
             "${ocDeployerBuilderPath} -t buildfactory -e builder-env " +
-            "-e smoke ${project} --scale-resources ${buildScaleFactor} --secrets-src-project secrets"
+            "-e ${ocDeployerEnv} ${project} --scale-resources ${buildScaleFactor} " +
+            "--secrets-src-project secrets"
         )
     }
 
@@ -114,7 +115,7 @@ private def deployEnvironment(
         deployTasks["Deploy ${serviceSet}"] = {
             sh(
                 "ocdeployer deploy -w -f -l e2esmoke=true -s ${set} " +
-                "-e custom-env -e smoke ${project} " +
+                "-e custom-env -e ${ocDeployerEnv} ${project} " +
                 "--scale-resources ${factor} --secrets-src-project secrets"
             )
         }
@@ -135,7 +136,7 @@ private def wipeNamespace(project) {
 
 private def runDeployStages(
     refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
-    ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
+    ocDeployerServiceSets, ocDeployerEnv, buildScaleFactor, deployScaleFactor,
     scaleFirstSetOnly, parallelBuild
 ) {
     // check out e2e-deploy
@@ -156,8 +157,8 @@ private def runDeployStages(
         dir(pipelineVars.e2eDeployDir) {
             deployEnvironment(
                 refSpec, env.PROJECT, ocDeployerBuilderPath, ocDeployerComponentPath,
-                ocDeployerServiceSets, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly,
-                parallelBuild
+                ocDeployerServiceSets, ocDeployerEnv, buildScaleFactor, deployScaleFactor,
+                scaleFirstSetOnly, parallelBuild
             )
         }
         return true
@@ -170,7 +171,7 @@ private def runDeployStages(
 
 
 private def runPipeline(
-    refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
+    refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets, ocDeployerEnv,
     buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild, options, appConfigs
 ) {
     def results
@@ -195,7 +196,7 @@ private def runPipeline(
         openShiftUtils.withNode(parameters) {
             def deployed = runDeployStages(
                 refSpec, project, ocDeployerBuilderPath, ocDeployerComponentPath,
-                ocDeployerServiceSets, buildScaleFactor, deployScaleFactor,
+                ocDeployerServiceSets, ocDeployerEnv, buildScaleFactor, deployScaleFactor,
                 scaleFirstSetOnly, parallelBuild
             )
 
@@ -283,6 +284,7 @@ def call(p = [:]) {
     * @param ocdeployerBuilderPath -- the ocdeployer "path" to the buildconfig template (e.g. buildfactory/myapp)
     * @param ocdeployerComponentPath -- the ocdeployer "path" to the app template (e.g. templates/myapp)
     * @param ocdeployerServiceSets -- the ocdeployer service sets to deploy into the ephemeral env
+    * @param ocdeployerEnv -- the value to pass to ocdeployer's "--env" option (default: smoke)
     * @param extraJobProperties Array of job properties to append to the properties that this function
     *      creates (optional)
     *
@@ -294,6 +296,7 @@ def call(p = [:]) {
     def ocDeployerBuilderPath = p['ocDeployerBuilderPath']
     def ocDeployerComponentPath = p['ocDeployerComponentPath']
     def ocDeployerServiceSets = p['ocDeployerServiceSets']
+    def ocDeployerEnv = p.get('ocDeployerEnv', "smoke")
     def buildScaleFactor = p.get('buildScaleFactor', 1)
     def deployScaleFactor = p.get('deployScaleFactor', 1)
     def scaleFirstSetOnly = p.get('scaleFirstSetOnly', false)
@@ -369,14 +372,16 @@ def call(p = [:]) {
         gitUtils.withStatusContext("e2e-smoke") {
             runPipeline(
                 refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-                buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild, options, appConfigs
+                ocDeployerEnv, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild,
+                options, appConfigs
             )
         }
     // If testing via a manual trigger... we have no PR, so don't notify github/try to add PR label
     } else {
         runPipeline(
             refSpec, ocDeployerBuilderPath, ocDeployerComponentPath, ocDeployerServiceSets,
-            buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild, options, appConfigs
+            ocDeployerEnv, buildScaleFactor, deployScaleFactor, scaleFirstSetOnly, parallelBuild,
+            options, appConfigs
         )
     }
 }
