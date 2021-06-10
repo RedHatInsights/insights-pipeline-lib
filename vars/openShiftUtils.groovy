@@ -317,7 +317,7 @@ def collectLogs(parameters = [:]) {
                     done
                 done
             '''
-            sh "oc get --export all -o yaml > oc_export_all.yaml"
+            sh "oc get all -o yaml > oc_export_all.yaml"
             archiveArtifacts "oc_export_all.yaml"
             archiveArtifacts "applogs/*.log"
         } catch (err) {
