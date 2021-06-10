@@ -287,6 +287,7 @@ def runTests(Map parameters = [:]){
     else {
         replaced_rhel_string = null
     }
+    def ibutsuEnv = parameters.get("ibutsuEnv", null)
 
         venvDir = setupVenvDir()
         if (plugin == 'insights-client') {
@@ -315,6 +316,10 @@ def runTests(Map parameters = [:]){
                 sleep 8
             """
         }
+        if (ibutsuEnv) {
+            pytestParam = "${pytestParam} --ibutsu-data env=${ibutsuEnv}"
+        }
+
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
         sh """
             export SATELLITE_INSTANCE=${satelliteInstance}
