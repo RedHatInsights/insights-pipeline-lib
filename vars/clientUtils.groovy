@@ -278,6 +278,7 @@ def setupIqeAnsible(String iqeAnsibleBranch='master'){
 
 def runTests(Map parameters = [:]){
     def plugin = parameters.get("plugin")
+    def env = parameters.get("env")
     def pytestParam = parameters.get("pytestParam", null)
     def satelliteInstance = parameters.get("satelliteInstance", null)
     def iqeVmRhel = parameters.get("iqeVmRhel", null)
@@ -287,7 +288,7 @@ def runTests(Map parameters = [:]){
     else {
         replaced_rhel_string = null
     }
-    def ibutsuEnv = parameters.get("ibutsuEnv", null)
+    def ibutsu = parameters.get("ibutsu", True)
 
         venvDir = setupVenvDir()
         if (plugin == 'insights-client') {
@@ -316,8 +317,8 @@ def runTests(Map parameters = [:]){
                 sleep 8
             """
         }
-        if (ibutsuEnv) {
-            pytestParam = "${pytestParam} --ibutsu-data env=${ibutsuEnv}"
+        if (ibutsu) {
+            pytestParam = "${pytestParam} --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com --ibutsu-source stg-jenkins --ibutsu-data env=${env}"
         }
 
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
@@ -325,7 +326,7 @@ def runTests(Map parameters = [:]){
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
             source ${venvDir}/bin/activate
-            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com/ --ibutsu-source stg-jenkins
+            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys
         """
 }
 
