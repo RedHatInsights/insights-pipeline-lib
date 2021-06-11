@@ -288,7 +288,7 @@ def runTests(Map parameters = [:]){
     else {
         replaced_rhel_string = null
     }
-    def ibutsu = parameters.get("ibutsu", True)
+    def ibutsu = parameters.get("ibutsu", true)
 
         venvDir = setupVenvDir()
         if (plugin == 'insights-client') {
