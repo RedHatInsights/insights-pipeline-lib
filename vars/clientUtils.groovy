@@ -278,7 +278,7 @@ def setupIqeAnsible(String iqeAnsibleBranch='master'){
 
 def runTests(Map parameters = [:]){
     def plugin = parameters.get("plugin")
-    def env = parameters.get("env")
+    def env = parameters.get("env", null)
     def pytestParam = parameters.get("pytestParam", null)
     def satelliteInstance = parameters.get("satelliteInstance", null)
     def iqeVmRhel = parameters.get("iqeVmRhel", null)
@@ -318,7 +318,10 @@ def runTests(Map parameters = [:]){
             """
         }
         if (ibutsu) {
-            pytestParam = "${pytestParam} --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com --ibutsu-source stg-jenkins --ibutsu-data env=${env}"
+            pytestParam = "${pytestParam} --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com --ibutsu-source stg-jenkins"
+            if (env) {
+                pytestParam = "${pytestParam} --ibutsu-data env=${env}"
+            }
         }
 
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
