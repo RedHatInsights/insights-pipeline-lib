@@ -92,6 +92,7 @@ def installRpm(Map parameters = [:]){
     def url = parameters.get("url", null)
     def brewBuildId = parameters.get("brewBuildId",null)
     def brewNVR = parameters.get("brewNVR", null)
+    def architecture = parameters.get("architecture", "x86_64")
 
     def checkInstalled = sh ( script: "rpm -qa | grep ${rpmName}", returnStatus: true)
 
@@ -114,8 +115,8 @@ def installRpm(Map parameters = [:]){
     if(brewBuildId){
         sh """
         cd /tmp
-        brew download-build --noprogress --arch=x86_64 --debuginfo ${brewBuildId}
-        yum localinstall -y /tmp/${brewNVR}.x86_64.rpm
+        brew download-build --noprogress --arch=${architecture} --debuginfo ${brewBuildId}
+        yum localinstall -y /tmp/${brewNVR}.${architecture}.rpm
         """
     }
     else {
