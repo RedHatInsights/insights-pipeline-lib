@@ -191,6 +191,7 @@ def withUINode(Map parameters = [:], Closure body) {
             containerTemplate(
                 name: 'selenium',
                 image: seleniumImage,
+                alwaysPullImage: true,
                 resourceRequestCpu: '500m',
                 resourceLimitCpu: '1',
                 resourceRequestMemory: '512Mi',
