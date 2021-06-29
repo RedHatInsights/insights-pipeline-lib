@@ -119,6 +119,9 @@ private def parseOptions(Map options) {
     // if using vault, and not using approle, the Jenkins credential ID that holds the vault token
     options['vaultTokenCredential'] = options.get('vaultTokenCredential')
 
+    // whether vault Token is github token or not
+    options['vaultGithubTokenCredential'] = options.get('vaultGithubTokenCredential', false)
+
     // if using vault, whether or not to verify SSL connections
     options['vaultVerify'] = options.get('vaultVerify', true)
 
@@ -388,7 +391,11 @@ private def writeVaultEnvVars(Map options) {
 
     // if a token is specified, use it, otherwise use an app role to authenticate
     if (options['vaultTokenCredential']) {
-        writeEnvFromCredential('DYNACONF_IQE_VAULT_TOKEN', options['vaultTokenCredential'])
+        if (options['vaultGithubTokenCredential']) {
+            writeEnvFromCredential('DYNACONF_IQE_VAULT_GITHUB_TOKEN', options['vaultTokenCredential'])
+        } else {
+            writeEnvFromCredential('DYNACONF_IQE_VAULT_TOKEN', options['vaultTokenCredential'])
+        }
     } else {
         if (options['vaultRoleIdCredential']) {
             writeEnvFromCredential(
