@@ -107,6 +107,7 @@ def call(args = [:]) {
     options['filter'] = params.filter
     options['image'] = params.image
     options['ibutsu'] = options.get('ibutsu', true)
+    options['reportportal'] = options.get('reportportal', false)
     options['cloud'] = options.get('cloud', pipelineVars.upshiftCloud)
     options['timeout'] = options.get('timeout', 150)
 

@@ -290,6 +290,7 @@ def runTests(Map parameters = [:]){
         replaced_rhel_string = null
     }
     def ibutsu = parameters.get("ibutsu", true)
+    def reportportal = options.get('reportportal', false)
 
         venvDir = setupVenvDir()
         if (plugin == 'insights-client') {
@@ -323,6 +324,10 @@ def runTests(Map parameters = [:]){
             if (env) {
                 pytestParam = "${pytestParam} --ibutsu-data env=${env}"
             }
+        }
+
+        if (reportportal) {
+            pytestParam = "${pytestParam} --reportportal"
         }
 
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
