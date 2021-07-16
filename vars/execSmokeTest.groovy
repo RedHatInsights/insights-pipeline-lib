@@ -342,6 +342,7 @@ def call(p = [:]) {
     options['envName'] = options.get('envName', "smoke")
     options['extraEnvVars'] = options.get("extraEnvVars", extraEnvVars)
     options['ibutsu'] = options.get('ibutsu')
+    options['reportportal'] = options.get('reportportal', false)
     options['settingsFileCredentialsId'] = options.get(
         "settingsFileCredentialsId", configFileCredentialsId
     )

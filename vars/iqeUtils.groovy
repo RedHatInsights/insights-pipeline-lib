@@ -66,6 +66,9 @@ private def parseOptions(Map options) {
     // whether or not to spin up a jenkins pod for running the tests
     options['allocateNode'] = options.get('allocateNode', true)
 
+    // whether or not to report results to reportportal
+    options['reportportal'] = options.get('reportportal', false)
+
     // whether or not to report results to ibutsu
     options['ibutsu'] = options.get('ibutsu', true)
 
@@ -185,11 +188,16 @@ def runIQE(String plugin, Map appOptions) {
     def filterArgs = ""
     def ibutsuArgs = ""
     def browserlog = ""
+    def reportportalArgs = ""
     def netlog = ""
 
     if (appOptions['filter']) {
         filterArgs = "-k \"${appOptions['filter']}\""
     }
+
+    if (appOptions["reportportal"]) {
+          reportportalArgs = "--reportportal"
+        }
 
     if (appOptions['ibutsu']) {
         ibutsuArgs = "-o ibutsu_server=${appOptions['ibutsuUrl']} -o ibutsu_source=${env.BUILD_TAG}"
@@ -250,6 +258,7 @@ def runIQE(String plugin, Map appOptions) {
                     ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-parallel.log 2>&1 \
                     ${browserlog} \
+                    ${reportportalArgs} \
                     ${netlog} \
                     """.stripIndent()
                 ),
@@ -304,6 +313,7 @@ def runIQE(String plugin, Map appOptions) {
                     ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-sequential.log 2>&1 \
                     ${browserlog} \
+                    ${reportportalArgs} \
                     ${netlog} \
                     """.stripIndent()
                 ),
