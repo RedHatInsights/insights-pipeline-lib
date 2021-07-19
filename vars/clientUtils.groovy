@@ -290,7 +290,7 @@ def runTests(Map parameters = [:]){
         replaced_rhel_string = null
     }
     def ibutsu = parameters.get("ibutsu", true)
-    def reportportal = options.get('reportportal', false)
+    def reportportal = parameters.get('reportportal', false)
 
         venvDir = setupVenvDir()
         if (plugin == 'insights-client') {
