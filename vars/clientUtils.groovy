@@ -298,7 +298,7 @@ def runTests(Map parameters = [:]){
         }
         else if (plugin == 'rhc') {
             plugin_test = 'rhc'
-            pytestParam = "${pytestParam} -m client"
+            pytestParam = "${pytestParam} -k test_client"
         }
         else if (plugin == 'rhc-worker-playbook') {
             plugin_test = 'rhc'
