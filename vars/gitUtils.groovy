@@ -21,23 +21,25 @@ private def getFilesFromChangeSets() {
 private def getFilesFromCommits(oldCommit, newCommit, repoDir) {
     // Return a list of which files/folders changed between
     // oldCommit and newCommit in the given repoDir
+    //
+    // in order for this to work your refspec when you run 'checkout scm' must be
+    // set up similar to this in order to fetch both the heads and PRs from the repo:
+    //   "+refs/heads/*:refs/remotes/origin/heads/* +refs/pull/*:refs/remotes/origin/pull/*"
     dir(repoDir) {
         withEnv([
             "GIT_COMMITTER_NAME=nobody",
             "GIT_COMMITTER_EMAIL=nobody@redhat.com"
         ]) {
-            sh "git config --add remote.origin.fetch +refs/heads/*:refs/remotes/origin/*"
-            sh "git fetch"
             data = sh(
                 script: "git diff --name-only ${oldCommit} ${newCommit}",
                 returnStdout: true
             ).trim().split('\n')
         }
-        echo "git commit files changed: ${data}"
-        dataSet = data as Set  // remove dupes
-        echo "filesChanged: ${dataSet}"
-        return dataSet
     }
+    echo "git commit files changed: ${data}"
+    dataSet = data as Set  // remove dupes
+    echo "filesChanged: ${dataSet}"
+    return dataSet
 }
 
 
