@@ -78,6 +78,9 @@ private def parseOptions(Map options) {
     // whether or not to provision a selenium container in the test pod
     options['ui'] = options.get('ui', true)
 
+    // whether or not to skip installation of packages (use with image)
+    options['skipInstall'] = optios.get('skipInstall', False)
+
     // whether or not to load the IQE settings file from a git repo
     options['settingsFromGit'] = options.get('settingsFromGit', false)
 
@@ -427,28 +430,33 @@ private def createTestStages(String appName, Map appConfig) {
         configIQE(appOptions)
     }
 
-    stage("Install red-hat-internal-envs plugin") {
-        sh "iqe plugin install red-hat-internal-envs"
-    }
-
-    def pluginResults = [:]
-
-    for (plugin in appConfig["plugins"]) {
-        // Loop to install our iqe plugins before our custom_packages
-        // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
-        // strip unnecessary whitespace first
-        plugin = plugin.replaceAll("\\s", "")
-
-        if (plugin ==~ /iqe-\S+-plugin.*/) plugin = plugin.replaceAll(/iqe-(\S+)-plugin/, '$1')
-
-        stage("Install iqe-${plugin}-plugin") {
-            sh "iqe plugin install ${plugin}"
+    stage("Install dependencies") {
+        when {
+            expression { not appOptions['skipInstall'] }
         }
-    }
+        stage("Install red-hat-internal-envs plugin") {
+            sh "iqe plugin install red-hat-internal-envs"
+        }
 
-    if (appOptions['customPackages']) {
-        stage("Install custom packages") {
-            sh "pip install ${appOptions['customPackages'].join(" ")}"
+        def pluginResults = [:]
+
+        for (plugin in appConfig["plugins"]) {
+            // Loop to install our iqe plugins before our custom_packages
+            // Check if the plugin name was given in "iqe-NAME-plugin" format or just "NAME"
+            // strip unnecessary whitespace first
+            plugin = plugin.replaceAll("\\s", "")
+
+            if (plugin ==~ /iqe-\S+-plugin.*/) plugin = plugin.replaceAll(/iqe-(\S+)-plugin/, '$1')
+
+            stage("Install iqe-${plugin}-plugin") {
+                sh "iqe plugin install ${plugin}"
+            }
+        }
+
+        if (appOptions['customPackages']) {
+            stage("Install custom packages") {
+                sh "pip install ${appOptions['customPackages'].join(" ")}"
+            }
         }
     }
 
