@@ -172,6 +172,59 @@ private def mergeAppOptions(Map options, Map appOptions) {
 }
 
 
+
+private def runIQEPytest(String label, String plugin, String[] pytestArgs) {
+   def pytestargs_str = pytestargs.join(" \\n  ")
+   return sh(
+        label: label,
+        // export the .env file to load env vars that should be present even before dynaconf is
+        // invoked such as IQE_TESTS_LOCAL_CONF_PATH
+        script: """
+                set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
+                iqe tests plugin ${plugin} -s -v \
+                  ${pytestargs_str}
+                """.stripIndent(),
+        returnStatus: true
+       )
+}
+private class GatedPytestResult {
+    Integer collectionStatus
+    Integer status
+    def noTests() {
+        return this.collectionStatus == 5
+    }
+
+    String errorMsg() {
+        if (this.collectionStatus >0 && collectionStatus != 5) {
+            return "test run collection failed with exit code ${this.collectionStatus}"
+        } else if (this.status > 0) {
+            return "test run failed with exit code ${this.status}"
+        } else {
+            return ""
+        }
+    }
+}
+
+private def runIQEPytestCollectGated(String prefix, String plugin, String[] collectArgs, String[] runArgs) {
+ // check that there are actually tests to run
+        def status = null
+        def collectionStatus = runIQEPytest(
+            label: "${prefix} collection status",
+            plugin: plugin,
+            pytestargs: collectArgs,
+        )
+        // status code 5 means no tests collected
+        if (collectionStatus == 5 or collectionStatus == 0) {
+            status = runIQEPytest(
+                label: "${prefix} test status",
+                plugin: plugin,
+                pytestargs:  collectArgs + testArgs
+            )
+        }
+        return new GatedPytestResult { collectionStatus = collectionStatus, status=status}
+}
+
+
 def runIQE(String plugin, Map appOptions) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
@@ -180,159 +233,69 @@ def runIQE(String plugin, Map appOptions) {
      *
      * Returns result of "SUCCESS" or "FAILURE"
      */
-    def collectionStatus
-    def result
-    def status
-    def noTests = false
 
-    def filterArgs = ""
-    def ibutsuArgs = ""
-    def browserlog = ""
-    def reportportalArgs = ""
-    def netlog = ""
 
-    if (appOptions['filter']) {
-        filterArgs = "-k \"${appOptions['filter']}\""
-    }
+    String[] collectArgs = []
+    String[] runArgs = []
 
-    if (appOptions["reportportal"]) {
-          reportportalArgs = "--reportportal"
+    def addArg(String[] where, String key, value ) {
+        option_value = appOptions[key]
+        if (!option_value) return
+
+        if value isinstance String {
+            where.append(value)
+        } else if value isinstance Closure {
+            where.append(value(option_value))
         }
 
-    if (appOptions['ibutsu']) {
-        ibutsuArgs = "-o ibutsu_server=${appOptions['ibutsuUrl']} -o ibutsu_source=${env.BUILD_TAG}"
     }
 
-    if (appOptions["browserlog"]) {
-      browserlog = "--browserlog"
+    addArg(collectArgs, 'filter' ) { "-k \"${it}\"" }
+    addArg(collectArgs, 'marker' ) { "-m \${it}\"" }
+    addArg(collectArgs, 'extraArgs' ) { it }
+
+    addArg(testArgs, 'reportportal', "--reportportal")
+
+    addArg(testArgs, 'ibutsu') {
+       "-o ibutsu_server=${appOptions['ibutsuUrl']} -o ibutsu_source=${env.BUILD_TAG}"
     }
 
-    if (appOptions["netlog"]) {
-      netlog = "--netlog"
-    }
+    addArg(testArgs, "browserlog", "--browserlog")
+    addArg(testArgs, "netlog", "--netlog")
 
-    def marker = appOptions['marker']
-    def extraArgs = appOptions['extraArgs']
 
     catchError(stageResult: "FAILURE") {
-        // run parallel tests
-        def errorMsgParallel = ""
-        def errorMsgSequential = ""
-        def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
-        // export the .env file to load env vars that should be present even before dynaconf is
-        // invoked such as IQE_TESTS_LOCAL_CONF_PATH
 
-        // check that there are actually tests to run
-        collectionStatus = sh(
-            script: (
-                """
-                set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
-                iqe tests plugin ${plugin} -s -v --collect-only \
-                ${markerArgs} \
-                ${filterArgs} \
-                ${extraArgs} \
-                """.stripIndent()
-            ),
-            returnStatus: true
+        def resultParallel = runIQEPytestCollectGated(
+            prefix: "parallel",
+            plugin: plugin,
+            collectArgs: [ "-m parallel"] + collectArgs,
+            testArgs: [
+                    "--junitxml=junit-${plugin}-parallel.xml",
+                    "-n ${appOptions['parallelWorkerCount']}",
+                    //todo investigate the origin of the 2>&1
+                    "--log-file=iqe-${plugin}-parallel.log 2>&1",
+            ] + testArgs
+
         )
-        // status code 5 means no tests collected
-        if (collectionStatus == 5) {
-            noTests = true
-        }
-        else if (collectionStatus > 0) {
-            result = "FAILURE"
-            errorMsgParallel = "Parallel test run collection failed with exit code ${status}"
-        }
-        // only run tests when the collection status is 0
-        else {
-            status = sh(
-                script: (
-                    """
-                    set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
-                    iqe tests plugin ${plugin} -s -v \
-                    --junitxml=junit-${plugin}-parallel.xml \
-                    ${markerArgs} \
-                    ${filterArgs} \
-                    ${extraArgs} \
-                    -n ${appOptions['parallelWorkerCount']} \
-                    ${ibutsuArgs} \
-                    --log-file=iqe-${plugin}-parallel.log 2>&1 \
-                    ${browserlog} \
-                    ${reportportalArgs} \
-                    ${netlog} \
-                    """.stripIndent()
-                ),
-                returnStatus: true
-            )
-            if (status > 0) {
-                result = "FAILURE"
-                errorMsgParallel = "Parallel test run failed with exit code ${status}."
-            }
-        }
 
-        // run sequential tests
-        markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
-        // export the .env file to load env vars that should be present even before dynaconf is
-        // invoked such as IQE_TESTS_LOCAL_CONF_PATH
+        def resultSequential = runIQEPytestCollectGated(
+            prefix: "sequential",
+            plugin: plugin,
+            collectArgs: ["-m \"not parallel\""] + collectArgs,
+            testArgs: [
+                    "--junitxml=junit-${plugin}-sequential.xml",
+                    "-n ${appOptions['parallelWorkerCount']}",
+                    //todo investigate the origin of the 2>&1
+                    "--log-file=iqe-${plugin}-sequential.log 2>&1",
+            ] + testArgs
 
-
-        // check that there are actually tests to run
-        collectionStatus = sh(
-            script: (
-                """
-                set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
-                iqe tests plugin ${plugin} -s -v --collect-only \
-                ${markerArgs} \
-                ${filterArgs} \
-                ${extraArgs} \
-                """.stripIndent()
-            ),
-            returnStatus: true
         )
-        // status code 5 means no tests collected
-        if (collectionStatus == 5) {
-            noTests = true
-        }
-        else if (collectionStatus > 0) {
-            result = "FAILURE"
-            errorMsgSequential = "Sequential test run collection failed with exit code ${status}"
-        }
-        // only run tests when the collection status is 0
-        else {
-             // in case there were no parallel tests, reset noTests to false
-            noTests = false
-            status = sh(
-                script: (
-                    """
-                    set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
-                    iqe tests plugin ${plugin} -s -v \
-                    --junitxml=junit-${plugin}-sequential.xml \
-                    ${markerArgs} \
-                    ${filterArgs} \
-                    ${extraArgs} \
-                    ${ibutsuArgs} \
-                    --log-file=iqe-${plugin}-sequential.log 2>&1 \
-                    ${browserlog} \
-                    ${reportportalArgs} \
-                    ${netlog} \
-                    """.stripIndent()
-                ),
-                returnStatus: true
-            )
-            if (status > 0) {
-                result = "FAILURE"
-                errorMsgSequential = "Sequential test run failed with exit code ${status}."
-            }
-        }
 
-        if (noTests) {
-            error("There were no tests collected in the sequential or parallel test runs.")
-        }
-
-        // if there were no failures recorded, it's a success
-        result = result ?: "SUCCESS"
-
+        def errorMsgParallel =     resultParallel.errorMsg()
+        def errorMsgSequential =     resultSequential.errorMsg()
         if (errorMsgSequential || errorMsgParallel) {
+            result = "FAILURE"
             error("${errorMsgSequential} ${errorMsgParallel}")
         }
     }
