@@ -190,7 +190,8 @@ private def runIQEPytest(String label, String plugin, String[] pytestArgs) {
         returnStatus: true
        )
 }
-private class GatedPytestResult {
+
+class GatedPytestResult {
     Integer collectionStatus
     Integer status
     def noTests() {
