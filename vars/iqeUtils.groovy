@@ -426,6 +426,7 @@ private def configIQE(Map options) {
 
 private def createTestStages(String appName, Map appConfig) {
     def appOptions = appConfig['options']
+    def pluginResults = [:]
 
     stage("Configure IQE") {
         configIQE(appOptions)
@@ -436,7 +437,7 @@ private def createTestStages(String appName, Map appConfig) {
             sh "iqe plugin install red-hat-internal-envs"
         }
 
-        def pluginResults = [:]
+
 
         for (plugin in appConfig["plugins"]) {
             // Loop to install our iqe plugins before our custom_packages
