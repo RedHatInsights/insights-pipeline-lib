@@ -238,7 +238,7 @@ def runIQE(String plugin, Map appOptions) {
      * Returns result of "SUCCESS" or "FAILURE"
      */
 
-
+    def result = "SUCCESS"
     def collectArgs = []
     def testArgs = []
 
