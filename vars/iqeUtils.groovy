@@ -176,7 +176,7 @@ private def mergeAppOptions(Map options, Map appOptions) {
 
 
 
-private def runIQEPytest(String label, String plugin, String[] pytestArgs) {
+def runIQEPytest(String label, String plugin, String[] pytestArgs) {
    def pytestargs_str = pytestargs.join(" \\n  ")
    return sh(
         label: label,
@@ -206,7 +206,7 @@ class GatedPytestResult {
     }
 }
 
-private def runIQEPytestCollectGated(String prefix, String plugin, String[] collectArgs, String[] testArgs) {
+def runIQEPytestCollectGated(String prefix, String plugin, String[] collectArgs, String[] testArgs) {
  // check that there are actually tests to run
         Integer status = null
         Integer collectionStatus = runIQEPytest(
