@@ -241,7 +241,7 @@ def runIQE(String plugin, Map appOptions) {
     String[] collectArgs = []
     String[] runArgs = []
 
-    def addArg(String[] where, String key, value ) {
+    def addArg = { String[] where, String key, value ->
         option_value = appOptions[key]
         if (!option_value) return
 
