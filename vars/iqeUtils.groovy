@@ -431,10 +431,7 @@ private def createTestStages(String appName, Map appConfig) {
         configIQE(appOptions)
     }
 
-    stage("Install dependencies") {
-        when {
-            expression { not appOptions['skipInstall'] }
-        }
+    stageIf(not appOptions['skipInstall'], "Install dependencies") {
         stage("Install red-hat-internal-envs plugin") {
             sh "iqe plugin install red-hat-internal-envs"
         }
@@ -454,11 +451,11 @@ private def createTestStages(String appName, Map appConfig) {
             }
         }
 
-        if (appOptions['customPackages']) {
-            stage("Install custom packages") {
-                sh "pip install ${appOptions['customPackages'].join(" ")}"
-            }
+
+        stageIf(appOptions['customPackages'], "Install custom packages") {
+            sh "pip install ${appOptions['customPackages'].join(" ")}"
         }
+
     }
 
     appOptions['extraStages'].each { name, closure ->
