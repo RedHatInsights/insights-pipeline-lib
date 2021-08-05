@@ -217,7 +217,7 @@ private def runIQEPytestCollectGated(String prefix, String plugin, String[] coll
             pytestargs: collectArgs,
         )
         // status code 5 means no tests collected
-        if (collectionStatus == 5 or collectionStatus == 0) {
+        if (collectionStatus == 5 && collectionStatus == 0) {
             status = runIQEPytest(
                 label: "${prefix} test status",
                 plugin: plugin,
