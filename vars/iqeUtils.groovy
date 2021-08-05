@@ -224,7 +224,7 @@ private def runIQEPytestCollectGated(String prefix, String plugin, String[] coll
                 pytestargs:  collectArgs + testArgs
             )
         }
-        return new GatedPytestResult { collectionStatus = collectionStatus, status=status}
+        return new GatedPytestResult( collectionStatus:collectionStatus, status:status)
 }
 
 
