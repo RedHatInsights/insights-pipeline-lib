@@ -249,7 +249,7 @@ def runIQE(String plugin, Map appOptions) {
         if (value instanceof String) {
             where.add(value)
         } else if (value instanceof Closure) {
-            where.add(value(option_value))
+            where.add(value.call(option_value))
         }
 
     }
