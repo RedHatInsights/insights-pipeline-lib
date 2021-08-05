@@ -255,7 +255,7 @@ def runIQE(String plugin, Map appOptions) {
     }
 
     addArg(collectArgs, 'filter' ) { "-k \"${it}\"" }
-    addArg(collectArgs, 'marker' ) { "-m \${it}\"" }
+    addArg(collectArgs, 'marker' ) { "-m \"${it}\"" }
     addArg(collectArgs, 'extraArgs' ) { it }
 
     addArg(testArgs, 'reportportal', "--reportportal")
