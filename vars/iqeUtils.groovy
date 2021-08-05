@@ -175,8 +175,10 @@ private def mergeAppOptions(Map options, Map appOptions) {
 }
 
 
-
-def runIQEPytest(String label, String plugin, String[] pytestArgs) {
+private def runIQEPytest(Map args) {
+    return runIQEPytest(args.label, args.plugin, args.pytestargs)
+}
+private def runIQEPytest(String label, String plugin, String[] pytestArgs) {
    def pytestargs_str = pytestargs.join(" \\n  ")
    return sh(
         label: label,
@@ -206,13 +208,16 @@ class GatedPytestResult {
     }
 }
 
-def runIQEPytestCollectGated(String prefix, String plugin, String[] collectArgs, String[] testArgs) {
+private def runIQEPytestCollectGate(Map args) {
+    return runIQEPytestCollectGated(args.prefix, args.plugin, args.collectArgs, args.testArgs)
+}
+private def runIQEPytestCollectGated(String prefix, String plugin, def collectArgs, def testArgs) {
  // check that there are actually tests to run
         Integer status = null
         Integer collectionStatus = runIQEPytest(
-            label: "${prefix} collection status",
-            plugin: plugin,
-            pytestArgs: collectArgs,
+            "${prefix} collection status",
+           plugin,
+           collectArgs,
         )
         // status code 5 means no tests collected
         if (collectionStatus == 5 || collectionStatus == 0) {
