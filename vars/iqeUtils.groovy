@@ -245,9 +245,9 @@ def runIQE(String plugin, Map appOptions) {
         option_value = appOptions[key]
         if (!option_value) return
 
-        if (value isinstance String) {
+        if (value instanceof String) {
             where.append(value)
-        } else if (value isinstance Closure) {
+        } else if (value instanceof Closure) {
             where.append(value(option_value))
         }
 
