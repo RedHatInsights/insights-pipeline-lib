@@ -211,18 +211,18 @@ class GatedPytestResult {
 
 private def runIQEPytestCollectGated(String prefix, String plugin, String[] collectArgs, String[] testArgs) {
  // check that there are actually tests to run
-        def status = null
-        def collectionStatus = runIQEPytest(
+        Integer status = null
+        Integer collectionStatus = runIQEPytest(
             label: "${prefix} collection status",
             plugin: plugin,
             pytestArgs: collectArgs,
         )
         // status code 5 means no tests collected
-        if (collectionStatus == 5 && collectionStatus == 0) {
+        if (collectionStatus == 5 || collectionStatus == 0) {
             status = runIQEPytest(
                 label: "${prefix} test status",
                 plugin: plugin,
-                pytestArgs:  collectArgs + testArgs
+                pytestArgs:  (collectArgs + testArgs)
             )
         }
         return new GatedPytestResult( collectionStatus:collectionStatus, status:status)
