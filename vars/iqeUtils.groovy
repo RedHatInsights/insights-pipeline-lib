@@ -193,7 +193,7 @@ private def runIQEPytest(String label, String plugin, String[] pytestArgs) {
        )
 }
 
-class GatedPytestResult {
+class GatedPytestResult implements Serializable {
     Integer collectionStatus
     Integer status
 
@@ -208,7 +208,7 @@ class GatedPytestResult {
     }
 }
 
-private def runIQEPytestCollectGate(Map args) {
+private def runIQEPytestCollectGated(Map args) {
     return runIQEPytestCollectGated(args.prefix, args.plugin, args.collectArgs, args.testArgs)
 }
 private def runIQEPytestCollectGated(String prefix, String plugin, def collectArgs, def testArgs) {
