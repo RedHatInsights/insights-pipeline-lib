@@ -37,6 +37,21 @@
 import java.util.ArrayList
 
 
+class GatedPytestResult implements Serializable {
+    Integer collectionStatus
+    Integer status
+
+    def errorMsg() {
+        if (this.collectionStatus >0 && collectionStatus != 5) {
+            return "test run collection failed with exit code ${this.collectionStatus}"
+        } else if (this.status > 0) {
+            return "test run failed with exit code ${this.status}"
+        } else {
+            return ""
+        }
+    }
+}
+
 private def parseOptions(Map options) {
     /*
      * Take the options map provided by the caller in prepareStages and populate it with defaults
@@ -193,20 +208,6 @@ private def runIQEPytest(String label, String plugin, String[] pytestArgs) {
        )
 }
 
-class GatedPytestResult implements Serializable {
-    Integer collectionStatus
-    Integer status
-
-    def errorMsg() {
-        if (this.collectionStatus >0 && collectionStatus != 5) {
-            return "test run collection failed with exit code ${this.collectionStatus}"
-        } else if (this.status > 0) {
-            return "test run failed with exit code ${this.status}"
-        } else {
-            return ""
-        }
-    }
-}
 
 private def runIQEPytestCollectGated(Map args) {
     return runIQEPytestCollectGated(args.prefix, args.plugin, args.collectArgs, args.testArgs)
