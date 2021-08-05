@@ -194,11 +194,8 @@ private def runIQEPytest(String label, String plugin, String[] pytestArgs) {
 class GatedPytestResult {
     Integer collectionStatus
     Integer status
-    def noTests() {
-        return this.collectionStatus == 5
-    }
 
-    String errorMsg() {
+    def errorMsg() {
         if (this.collectionStatus >0 && collectionStatus != 5) {
             return "test run collection failed with exit code ${this.collectionStatus}"
         } else if (this.status > 0) {
