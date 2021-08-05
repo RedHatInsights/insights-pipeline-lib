@@ -431,7 +431,7 @@ private def createTestStages(String appName, Map appConfig) {
         configIQE(appOptions)
     }
 
-    stageIf(not appOptions['skipInstall'], "Install dependencies") {
+    stageIf(!appOptions['skipInstall'], "Install dependencies") {
         stage("Install red-hat-internal-envs plugin") {
             sh "iqe plugin install red-hat-internal-envs"
         }
