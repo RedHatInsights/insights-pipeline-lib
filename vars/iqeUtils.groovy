@@ -79,7 +79,7 @@ private def parseOptions(Map options) {
     options['ui'] = options.get('ui', true)
 
     // whether or not to skip installation of packages (use with image)
-    options['skipInstall'] = options.get('skipInstall', False)
+    options['skipInstall'] = options.get('skipInstall', false)
 
     // whether or not to load the IQE settings file from a git repo
     options['settingsFromGit'] = options.get('settingsFromGit', false)
