@@ -240,7 +240,7 @@ def runIQE(String plugin, Map appOptions) {
 
 
     def collectArgs = []
-    def runArgs = []
+    def testArgs = []
 
     def addArg = { def where, String key, def value ->
         option_value = appOptions[key]
