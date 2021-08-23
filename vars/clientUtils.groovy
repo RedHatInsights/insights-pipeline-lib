@@ -11,7 +11,7 @@
 * @param (optional) org = Satellite Organization name
 */
 def getBeta(){
-    def beta = sh ( script: 'cat /etc/redhat-release | grep Beta > /dev/null', returnStatus: true)
+    def beta = sh ( script: 'cat /etc/redhat-release | egrep -e "Alpha|Beta" > /dev/null', returnStatus: true)
     if ( beta == 0){
         return true
     }
