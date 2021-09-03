@@ -80,7 +80,7 @@ def call(args = [:]) {
         [
             $class: 'StringParameterDefinition',
             name: "image", defaultValue: defaultImage ? defaultImage : "",
-            description: "Enter the name of the core image, leave blank for iqe-core"
+            description: "Enter the name of the iqe plugin image, leave blank for iqe-core"
         ]
     )
 
