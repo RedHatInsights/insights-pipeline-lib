@@ -1,4 +1,6 @@
 class pipelineVars implements Serializable {
+    String defaultMarker = "core"
+
     String jenkinsSvcAccount = "jenkins"
     String defaultNameSpace = "jenkins"
 

@@ -8,7 +8,7 @@
  * @param appConfigs Map -- see iqeUtils
  * @param envs String[] -- list of environments this test job can run against
  * @param options Map -- see iqeUtils
- * @param defaultMarker String with default marker expression (optional, if blank "envName" is used)
+ * @param defaultMarker String with default marker expression (optional, default is pipelineVars.defaultMarker)
  * @param defaultFilter String for default pytest filter expression (optional)
  * @param extraJobProperties Array of job properties to append to the properties that this function
  *      creates (optional)
@@ -22,7 +22,7 @@ def call(args = [:]) {
     def appConfigs = args['appConfigs']
     def envs = args['envs']
     def options = args.get('options', [:])
-    def defaultMarker = args.get('defaultMarker')
+    def defaultMarker = args.get('defaultMarker', pipelineVars.defaultMarker)
     def defaultFilter = args.get('defaultFilter')
     def defaultImage = args.get('defaultImage')
     def extraJobProperties = args.get('extraJobProperties', [])
@@ -61,8 +61,8 @@ def call(args = [:]) {
     p.add(
         [
             $class: 'StringParameterDefinition',
-            name: "marker", defaultValue: defaultMarker ? defaultMarker : "",
-            description: "Enter pytest marker expression, leave blank for none"
+            name: "marker", defaultValue: defaultMarker ? defaultMarker : pipelineVars.defaultMarker,
+            description: "Enter pytest marker expression"
         ]
     )
 

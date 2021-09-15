@@ -274,7 +274,7 @@ def call(p = [:]) {
     *
     * @param appConfigs Map -- see iqeUtils
     * @param options Map -- see iqeUtils
-    * @param defaultMarker String with default marker expression (optional, if blank "envName" is used)
+    * @param defaultMarker String with default marker expression (optional, default is pipelineVars.defaultMarker)
     * @param defaultFilter String for default pytest filter expression (optional)
     * @param buildScaleFactor float -- scales the build config cpu/mem reservations by this amount
     * @param deployScaleFactor float -- scales the deploy config cpu/mem reservations by this amount
@@ -298,7 +298,7 @@ def call(p = [:]) {
     def deployScaleFactor = p.get('deployScaleFactor', 1)
     def scaleFirstSetOnly = p.get('scaleFirstSetOnly', false)
     def parallelBuild = p.get('parallelBuild', false)
-    def defaultMarker = p.get('defaultMarker')
+    def defaultMarker = p.get('defaultMarker', pipelineVars.defaultMarker)
     def defaultFilter = p.get('defaultFilter')
     def appConfigs = p.get('appConfigs', [:])
     def options = p.get('options', [:])
