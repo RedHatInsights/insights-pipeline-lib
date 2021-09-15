@@ -58,7 +58,7 @@ private def parseOptions(Map options) {
     options['cloud'] = options.get('cloud', pipelineVars.defaultCloud)
 
     // the pytest marker expression (-m) used when running tests
-    options['marker'] = options.get('marker', envName)
+    options['marker'] = options.get('marker', pipelineVars.defaultMarker)
 
     // the pytest filter expression (-k) used when running tests
     options['filter'] = options.get('filter', "")
