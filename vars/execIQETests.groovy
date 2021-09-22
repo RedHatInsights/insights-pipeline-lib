@@ -125,7 +125,7 @@ def call(args = [:]) {
             writeFile(
                 file: "ibutsu.html",
                 text: (
-                    "<a href=\"https://ibutsu.cloud.paas.psi.redhat.com/results?" +
+                    "<a href=\"https://ibutsu.apps.ocp4.prod.psi.redhat.com/results?" +
                     "metadata.jenkins.build_number=${env.BUILD_NUMBER}&metadata.jenkins.job_name=" +
                     "${env.JOB_NAME}\">Click here</a>"
                 )
