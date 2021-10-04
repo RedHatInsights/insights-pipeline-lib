@@ -63,6 +63,15 @@ private def parseOptions(Map options) {
     // the pytest filter expression (-k) used when running tests
     options['filter'] = options.get('filter', "")
 
+    // the iqe --requirements expression used when running tests
+    options['requirements'] = options.get('requirements', "")
+
+    // the iqe --requirements-priority expression used when running tests
+    options['requirementsPriority'] = options.get('requirementsPriority', "")
+
+    // the iqe --test-importance filter expression used when running tests
+    options['testImportance'] = options.get('testImportance', "")
+
     // whether or not to spin up a jenkins pod for running the tests
     options['allocateNode'] = options.get('allocateNode', true)
 
@@ -186,6 +195,9 @@ def runIQE(String plugin, Map appOptions) {
     def noTests = false
 
     def filterArgs = ""
+    def requirementsArgs = ""
+    def requirementsPriorityArgs = ""
+    def testImportanceArgs = ""
     def ibutsuArgs = ""
     def browserlog = ""
     def reportportalArgs = ""
@@ -193,6 +205,18 @@ def runIQE(String plugin, Map appOptions) {
 
     if (appOptions['filter']) {
         filterArgs = "-k \"${appOptions['filter']}\""
+    }
+
+    if (appOptions['requirements']) {
+        requirementsArgs = "--requirements=${appOptions['requirements']}"
+    }
+
+    if (appOptions['requirementsPriority']) {
+        requirementsPriorityArgs = "--requirements-priority=${appOptions['requirementsPriority']}"
+    }
+
+    if (appOptions['testImportance']) {
+        testImportanceArgs = "--test-importance=${appOptions['testImportance']}"
     }
 
     if (appOptions["reportportal"]) {
@@ -230,6 +254,9 @@ def runIQE(String plugin, Map appOptions) {
                 iqe tests plugin ${plugin} -s -v --collect-only \
                 ${markerArgs} \
                 ${filterArgs} \
+                ${requirementsArgs} \
+                ${requirementsPriorityArgs} \
+                ${testImportanceArgs} \
                 ${extraArgs} \
                 """.stripIndent()
             ),
@@ -253,6 +280,9 @@ def runIQE(String plugin, Map appOptions) {
                     --junitxml=junit-${plugin}-parallel.xml \
                     ${markerArgs} \
                     ${filterArgs} \
+                    ${requirementsArgs} \
+                    ${requirementsPriorityArgs} \
+                    ${testImportanceArgs} \
                     ${extraArgs} \
                     -n ${appOptions['parallelWorkerCount']} \
                     ${ibutsuArgs} \
@@ -284,6 +314,9 @@ def runIQE(String plugin, Map appOptions) {
                 iqe tests plugin ${plugin} -s -v --collect-only \
                 ${markerArgs} \
                 ${filterArgs} \
+                ${requirementsArgs} \
+                ${requirementsPriorityArgs} \
+                ${testImportanceArgs} \
                 ${extraArgs} \
                 """.stripIndent()
             ),
@@ -309,6 +342,9 @@ def runIQE(String plugin, Map appOptions) {
                     --junitxml=junit-${plugin}-sequential.xml \
                     ${markerArgs} \
                     ${filterArgs} \
+                    ${requirementsArgs} \
+                    ${requirementsPriorityArgs} \
+                    ${testImportanceArgs} \
                     ${extraArgs} \
                     ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-sequential.log 2>&1 \

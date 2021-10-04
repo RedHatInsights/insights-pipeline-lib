@@ -59,6 +59,9 @@ def call(args = [:]) {
     def options = args.get('options', [:])
     def defaultMarker = args.get('defaultMarker', pipelineVars.defaultMarker)
     def defaultFilter = args.get('defaultFilter')
+    def requirements = args.get('requirements')
+    def requirementsPriority = args.get('requirementsPriority')
+    def testImportance = args.get('testImportance')
     def extraJobProperties = args.get('extraJobProperties', [])
     def lockName = args.get('lockName')
 
@@ -92,6 +95,9 @@ def call(args = [:]) {
             options: options,
             defaultMarker: defaultMarker,
             defaultFilter: defaultFilter,
+            requirements: requirements,
+            requirementsPriority: requirementsPriority,
+            testImportance: testImportance,
             extraJobProperties: extraJobProperties,
             lockName: lockName
         )
