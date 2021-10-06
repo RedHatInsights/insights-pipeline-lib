@@ -10,6 +10,9 @@
  * @param options Map -- see iqeUtils
  * @param defaultMarker String with default marker expression (optional, default is pipelineVars.defaultMarker)
  * @param defaultFilter String for default pytest filter expression (optional)
+ * @param requirements String for iqe --requirements expression (optional)
+ * @param requirementsPriority String for iqe --requirementsPriority expression (optional)
+ * @param testImportance String for iqe --test-importance expression (optional)
  * @param extraJobProperties Array of job properties to append to the properties that this function
  *      creates (optional)
  * @param lockName String the name of the resource to lock (using lockable resources plugin) when
@@ -24,6 +27,9 @@ def call(args = [:]) {
     def options = args.get('options', [:])
     def defaultMarker = args.get('defaultMarker', pipelineVars.defaultMarker)
     def defaultFilter = args.get('defaultFilter')
+    def requirements = args.get('requirements')
+    def requirementsPriority = args.get('requirementsPriority')
+    def testImportance = args.get('testImportance')
     def defaultImage = args.get('defaultImage')
     def extraJobProperties = args.get('extraJobProperties', [])
     def lockName = args.get('lockName')
@@ -75,6 +81,33 @@ def call(args = [:]) {
         ]
     )
 
+    // Add text field for test filter
+    p.add(
+        [
+            $class: 'StringParameterDefinition',
+            name: "requirements", defaultValue: requirements ? requirements : "",
+            description: "Enter iqe --requirements expression, leave blank for none"
+        ]
+    )
+
+    // Add text field for test filter
+    p.add(
+        [
+            $class: 'StringParameterDefinition',
+            name: "requirementsPriority", defaultValue: requirementsPriority ? requirementsPriority : "",
+            description: "Enter iqe --requirements-priority expression, leave blank for none"
+        ]
+    )
+
+    // Add text field for test filter
+    p.add(
+        [
+            $class: 'StringParameterDefinition',
+            name: "testImportance", defaultValue: testImportance ? testImportance : "",
+            description: "Enter iqe --test-importance expression, leave blank for none"
+        ]
+    )
+
     // Add text field for test image
     p.add(
         [
@@ -105,6 +138,9 @@ def call(args = [:]) {
     options['envName'] = params.env
     options['marker'] = params.marker
     options['filter'] = params.filter
+    options['requirements'] = params.requirements
+    options['requirementsPriority'] = params.requirementsPriority
+    options['testImportance'] = params.testImportance
     options['image'] = params.image
     options['ibutsu'] = options.get('ibutsu', true)
     options['reportportal'] = options.get('reportportal', false)
