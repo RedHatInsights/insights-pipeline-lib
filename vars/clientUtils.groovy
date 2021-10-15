@@ -78,6 +78,7 @@ def rhsmUnregister(){
             subscription-manager remove --all
             subscription-manager unregister
             subscription-manager clean
+            yum remove -y katello-ca-consumer*
         '''
     }
 }
