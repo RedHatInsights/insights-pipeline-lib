@@ -20,12 +20,17 @@ def getBeta(){
     }
 }
 
-def rhsmRegister(
-        String url=null,
-        String credentialId,
-        String poolId=null,
-        String activationKey=null,
-        String org=null){
+// def rhsmRegister(
+//         String url=null,
+//         String credentialId,
+//         String poolId=null,
+//         String activationKey=null,
+//         String org=null){
+def rhsmRegister(Map parameters = [:])
+    def url = parameters.get("url", null)
+    def credentialId = parameters.get("credentialId", null)
+    def poolId = parameters.get("poolId", null)
+    def satellite = parameters.get("satellite", null)
     if(poolId){
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
             echo "Subscribing machine with poolId..."
@@ -36,10 +41,11 @@ def rhsmRegister(
             """
         }
     }
-    else if (activationKey){
+    else if (satellite){
         echo "Subscribing machine to Satellite ..."
         sh """
-            subscription-manager register --org=${org} --activationkey=${activationKey}
+            rpm -Uvh http://\\$${satellite}/pub/katello-ca-consumer-\\$${satellite}-1.0-1.noarch.rpm
+            subscription-manager register --org='INSIGHTS_QA_6089719' --activationkey='insights-qa-6089719-ak'
             subscription-manager refresh
         """
     }
