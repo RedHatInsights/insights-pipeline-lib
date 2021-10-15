@@ -44,7 +44,7 @@ def rhsmRegister(Map parameters = [:])
     else if (satellite){
         echo "Subscribing machine to Satellite ..."
         sh """
-            rpm -Uvh http://\\$${satellite}/pub/katello-ca-consumer-\\$${satellite}-1.0-1.noarch.rpm
+            rpm -Uvh http://\$${satellite}/pub/katello-ca-consumer-\$${satellite}-1.0-1.noarch.rpm
             subscription-manager register --org='INSIGHTS_QA_6089719' --activationkey='insights-qa-6089719-ak'
             subscription-manager refresh
         """
