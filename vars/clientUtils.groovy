@@ -26,7 +26,7 @@ def getBeta(){
 //         String poolId=null,
 //         String activationKey=null,
 //         String org=null){
-def rhsmRegister(Map parameters = [:])
+def rhsmRegister(Map parameters = [:]){
     def url = parameters.get("url", null)
     def credentialId = parameters.get("credentialId", null)
     def poolId = parameters.get("poolId", null)
