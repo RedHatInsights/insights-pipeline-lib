@@ -31,6 +31,8 @@ def rhsmRegister(Map parameters = [:]){
     def credentialId = parameters.get("credentialId", null)
     def poolId = parameters.get("poolId", null)
     def satellite = parameters.get("satellite", null)
+    def activationKey = parameters.get("activationKey", null)
+    def org = parameters.get("org", null)
     if(poolId){
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
             echo "Subscribing machine with poolId..."
@@ -45,7 +47,7 @@ def rhsmRegister(Map parameters = [:]){
         echo "Subscribing machine to Satellite ..."
         sh """
             rpm -Uvh http://\$${satellite}/pub/katello-ca-consumer-\$${satellite}-1.0-1.noarch.rpm
-            subscription-manager register --org='INSIGHTS_QA_6089719' --activationkey='insights-qa-6089719-ak'
+            subscription-manager register --org=${org} --activationkey=${activationKey}
             subscription-manager refresh
         """
     }
