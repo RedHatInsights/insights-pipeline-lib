@@ -78,6 +78,12 @@ def rhsmUnregister(){
             subscription-manager remove --all
             subscription-manager unregister
             subscription-manager clean
+        '''
+    }
+    def katelloInstalled = sh ( script: "yum list installed katello-ca-consumer-*", returnStatus: true)
+    if(katelloInstalled == 0){
+        echo "Katello RPM is installed - uninstallling it..."
+        sh '''
             yum remove -y katello-ca-consumer*
         '''
     }
