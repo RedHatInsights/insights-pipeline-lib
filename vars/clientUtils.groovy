@@ -11,7 +11,7 @@
 * @param (optional) org = Satellite Organization name
 */
 def getBeta(){
-    def beta = sh ( script: 'cat /etc/redhat-release | grep Beta > /dev/null', returnStatus: true)
+    def beta = sh ( script: 'cat /etc/redhat-release | egrep -e "Alpha|Beta" > /dev/null', returnStatus: true)
     if ( beta == 0){
         return true
     }
@@ -20,12 +20,19 @@ def getBeta(){
     }
 }
 
-def rhsmRegister(
-        String url=null,
-        String credentialId,
-        String poolId=null,
-        String activationKey=null,
-        String org=null){
+// def rhsmRegister(
+//         String url=null,
+//         String credentialId,
+//         String poolId=null,
+//         String activationKey=null,
+//         String org=null){
+def rhsmRegister(Map parameters = [:]){
+    def url = parameters.get("url", null)
+    def credentialId = parameters.get("credentialId", null)
+    def poolId = parameters.get("poolId", null)
+    def satellite = parameters.get("satellite", null)
+    def activationKey = parameters.get("activationKey", null)
+    def org = parameters.get("org", null)
     if(poolId){
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
             echo "Subscribing machine with poolId..."
@@ -36,9 +43,10 @@ def rhsmRegister(
             """
         }
     }
-    else if (activationKey){
+    else if (satellite){
         echo "Subscribing machine to Satellite ..."
         sh """
+            rpm -Uvh http://\$${satellite}/pub/katello-ca-consumer-\$${satellite}-1.0-1.noarch.rpm
             subscription-manager register --org=${org} --activationkey=${activationKey}
             subscription-manager refresh
         """
@@ -72,6 +80,13 @@ def rhsmUnregister(){
             subscription-manager remove --all
             subscription-manager unregister
             subscription-manager clean
+        '''
+    }
+    def katelloInstalled = sh ( script: "yum list installed katello-ca-consumer-*", returnStatus: true)
+    if(katelloInstalled == 0){
+        echo "Katello RPM is installed - uninstallling it..."
+        sh '''
+            yum remove -y katello-ca-consumer*
         '''
     }
 }
@@ -298,7 +313,7 @@ def runTests(Map parameters = [:]){
         }
         else if (plugin == 'rhc') {
             plugin_test = 'rhc'
-            pytestParam = "${pytestParam} -m client"
+            pytestParam = "${pytestParam} -k test_client"
         }
         else if (plugin == 'rhc-worker-playbook') {
             plugin_test = 'rhc'
