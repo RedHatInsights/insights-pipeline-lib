@@ -15,7 +15,6 @@ import hudson.util.Secret
 
 // Map of service set name -> Jenkins location of deploy job for that service set
 @Field def deployJobs = [
-    advisor: "/ops/deployAdvisor",
     approval: "/ops/deployApproval",
     "automation-analytics": "/ops/deployAutomationAnalytics",
     buildfactory: "/ops/deployBuildfactory",
