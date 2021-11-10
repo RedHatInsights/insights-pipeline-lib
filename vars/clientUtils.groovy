@@ -20,12 +20,11 @@ def getBeta(){
     }
 }
 
-// def rhsmRegister(
-//         String url=null,
-//         String credentialId,
-//         String poolId=null,
-//         String activationKey=null,
-//         String org=null){
+def getRhelMajor(){
+    def major = sh ( script: 'cat /etc/redhat-release | sed "s/.*release //" | sed "s/ .*//" | awk -F. "{ print \\$1 }" | tr -d "\n"', returnStdout: true)
+    return major
+}
+
 def rhsmRegister(Map parameters = [:]){
     def url = parameters.get("url", null)
     def credentialId = parameters.get("credentialId", null)
@@ -33,6 +32,7 @@ def rhsmRegister(Map parameters = [:]){
     def satellite = parameters.get("satellite", null)
     def activationKey = parameters.get("activationKey", null)
     def org = parameters.get("org", null)
+
     if(poolId){
         withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
             echo "Subscribing machine with poolId..."
@@ -56,6 +56,15 @@ def rhsmRegister(Map parameters = [:]){
             echo "Subscribing machine to Cloud..."
             if(getBeta().toBoolean()){
                 echo "We are on beta, do not auto attach subscription..."
+                sh """
+                    subscription-manager register --serverurl=${url} --username=${username} --password=${password} --force
+                    subscription-manager refresh
+                """
+            }
+            ver = getRhelMajor()
+            echo "RHEL version is: _${ver}_"
+            if(getRhelMajor() == "6"){
+                echo "Do not auto attach on RHEL6"
                 sh """
                     subscription-manager register --serverurl=${url} --username=${username} --password=${password} --force
                     subscription-manager refresh
