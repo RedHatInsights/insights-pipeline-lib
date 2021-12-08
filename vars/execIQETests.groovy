@@ -67,7 +67,7 @@ def call(args = [:]) {
     p.add(
         [
             $class: 'StringParameterDefinition',
-            name: "marker", defaultValue: defaultMarker ? defaultMarker : pipelineVars.defaultMarker,
+            name: "marker", defaultValue: defaultMarker != null ? defaultMarker : pipelineVars.defaultMarker,
             description: "Enter pytest marker expression"
         ]
     )
