@@ -69,6 +69,8 @@ def call(args = [:]) {
 
     // OPTIONAL: if true, always send a failure notification
     def alwaysSendFailureNotification = args.get('alwaysSendFailureNotification', false)
+    // OPTIONAL: if true, always send a success notification
+    def alwaysSendSuccessNotification = args.get('alwaysSendSuccessNotification', false)
     // OPTIONAL: slack integration URL
     def slackUrl = args.get('slackUrl', pipelineVars.slackDefaultUrl)
     // REQUIRED: where to report test failures
@@ -128,6 +130,18 @@ def call(args = [:]) {
                 slackTeamDomain: slackTeamDomain,
                 slackTokenCredentialId: slackTokenCredentialId,
                 msg: "test resolved",
+                result: "success"
+            )
+        }
+        else if (results['success'] && alwaysSendSuccessNotification) {
+            // result is pass and alwaysSendSuccessNotification is true
+            def slackMsg = slackMsgCallback()
+            slackUtils.sendMsg(
+                slackChannel: slackChannel,
+                slackUrl: slackUrl,
+                slackTeamDomain: slackTeamDomain,
+                slackTokenCredentialId: slackTokenCredentialId,
+                msg: slackMsg.toString(),
                 result: "success"
             )
         }
