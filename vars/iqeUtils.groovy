@@ -581,3 +581,18 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
     }
     return stages
 }
+
+/**
+ * Write an ibutsu.html file containing a link to the Ibutsu page with test results.
+ */
+def writeIbutsuHtml() {
+    writeFile(
+        file: "ibutsu.html",
+        text: (
+            "<a href=\"https://ibutsu.apps.ocp4.prod.psi.redhat.com/results" +
+            "?metadata.jenkins.build_number=${env.BUILD_NUMBER}" +
+            "&metadata.jenkins.job_name=${env.JOB_NAME}\">Click here</a>"
+        )
+    )
+    archiveArtifacts "ibutsu.html"
+}
