@@ -220,19 +220,19 @@ def runIQE(String plugin, Map appOptions) {
     }
 
     if (appOptions["reportportal"]) {
-          reportportalArgs = "--reportportal"
-        }
+        reportportalArgs = "--reportportal"
+    }
 
     if (appOptions['ibutsu']) {
         ibutsuArgs = "-o ibutsu_server=${appOptions['ibutsuUrl']} -o ibutsu_source=${env.BUILD_TAG}"
     }
 
     if (appOptions["browserlog"]) {
-      browserlog = "--browserlog"
+        browserlog = "--browserlog"
     }
 
     if (appOptions["netlog"]) {
-      netlog = "--netlog"
+        netlog = "--netlog"
     }
 
     def marker = appOptions['marker']
@@ -286,10 +286,11 @@ def runIQE(String plugin, Map appOptions) {
                     ${extraArgs} \
                     -n ${appOptions['parallelWorkerCount']} \
                     ${ibutsuArgs} \
-                    --log-file=iqe-${plugin}-parallel.log 2>&1 \
+                    --log-file=iqe-${plugin}-parallel.log \
                     ${browserlog} \
                     ${reportportalArgs} \
                     ${netlog} \
+                    2>&1
                     """.stripIndent()
                 ),
                 returnStatus: true
@@ -347,10 +348,11 @@ def runIQE(String plugin, Map appOptions) {
                     ${testImportanceArgs} \
                     ${extraArgs} \
                     ${ibutsuArgs} \
-                    --log-file=iqe-${plugin}-sequential.log 2>&1 \
+                    --log-file=iqe-${plugin}-sequential.log \
                     ${browserlog} \
                     ${reportportalArgs} \
                     ${netlog} \
+                    2>&1
                     """.stripIndent()
                 ),
                 returnStatus: true
