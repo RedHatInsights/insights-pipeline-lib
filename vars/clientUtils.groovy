@@ -191,11 +191,27 @@ def setupVenvDir(){
 }
 
 
+def setupVaultEnvVars(){
+    sh "echo \"DYNACONF_IQE_VAULT_URL=https://vault.devshift.net\" >> \"${env.WORKSPACE}/.env\""
+    sh "echo \"DYNACONF_IQE_VAULT_VERIFY=true\" >> \"${env.WORKSPACE}/.env\""
+    sh "echo \"DYNACONF_IQE_VAULT_LOADER_ENABLED=true\" >> \"${env.WORKSPACE}/.env\""
+    sh "echo \"DYNACONF_IQE_VAULT_MOUNT_POINT=insights\" >> \"${env.WORKSPACE}/.env\""
+
+    withCredentials([string(credentialsId: pipelineVars.defaultVaultRoleIdCredential, variable: "vault_role_id")]) {
+        sh "echo \"DYNACONF_IQE_VAULT_ROLE_ID=\$vault_role_id\" >> \"${env.WORKSPACE}/.env\""
+    }
+    withCredentials([string(credentialsId: pipelineVars.defaultVaultSecretIdCredential, variable: "vault_secret_id")]) {
+        sh "echo \"DYNACONF_IQE_VAULT_SECRET_ID=\$vault_secret_id\" >> \"${env.WORKSPACE}/.env\""
+    }
+}
+
+
 def setupIqePlugin(Map parameters = [:]){
     def plugin = parameters.get("plugin")
     def iqeCoreBranch = parameters.get("iqeCoreBranch" , "3.0")
     def iqePluginBranch = parameters.get("iqePluginBranch", "master")
     def satelliteInstance = parameters.get("satelliteInstance" , "satellite_69")
+    def jenkins_credentials = null
 
     venvDir = setupVenvDir()
     if(plugin == 'insights-client') {
@@ -204,9 +220,8 @@ def setupIqePlugin(Map parameters = [:]){
         jenkins_credentials = 'settings_iqe_insights_client'
     }
     else if(plugin.contains('rhc')){
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: iqePluginBranch
-        plugin_dir = 'iqe_rhc'
-        jenkins_credentials = 'settings_iqe_rhc'
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
+        setupVaultEnvVars()
     }
     else if(plugin.contains('iqe-satellite-plugin')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git', branch: iqePluginBranch
@@ -269,8 +284,10 @@ def setupIqePlugin(Map parameters = [:]){
     }
 
 
-    withCredentials([file(credentialsId: jenkins_credentials, variable: 'settings')]) {
-        sh "cp \$settings ${plugin_dir}/conf/settings.local.yaml"
+    if (jenkins_credentials) {
+        withCredentials([file(credentialsId: jenkins_credentials, variable: 'settings')]) {
+            sh "cp \$settings ${plugin_dir}/conf/settings.local.yaml"
+        }
     }
 }
 
