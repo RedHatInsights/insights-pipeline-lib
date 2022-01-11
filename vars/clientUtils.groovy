@@ -207,7 +207,7 @@ def setupIqePlugin(Map parameters = [:]){
     }
     else if(plugin.contains('rhc')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
-        writeVaultEnvVars(vaultParameters)
+        iqeUtils.writeVaultEnvVars(vaultParameters)
     }
     else if(plugin.contains('iqe-satellite-plugin')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git', branch: iqePluginBranch
