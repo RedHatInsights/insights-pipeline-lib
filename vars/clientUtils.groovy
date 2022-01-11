@@ -191,43 +191,29 @@ def setupVenvDir(){
 }
 
 
-def setupVaultEnvVars(){
-    sh "echo \"DYNACONF_IQE_VAULT_URL=https://vault.devshift.net\" >> \"${env.WORKSPACE}/.env\""
-    sh "echo \"DYNACONF_IQE_VAULT_VERIFY=true\" >> \"${env.WORKSPACE}/.env\""
-    sh "echo \"DYNACONF_IQE_VAULT_LOADER_ENABLED=true\" >> \"${env.WORKSPACE}/.env\""
-    sh "echo \"DYNACONF_IQE_VAULT_MOUNT_POINT=insights\" >> \"${env.WORKSPACE}/.env\""
-
-    withCredentials([string(credentialsId: pipelineVars.defaultVaultRoleIdCredential, variable: "vault_role_id")]) {
-        sh "echo \"DYNACONF_IQE_VAULT_ROLE_ID=\$vault_role_id\" >> \"${env.WORKSPACE}/.env\""
-    }
-    withCredentials([string(credentialsId: pipelineVars.defaultVaultSecretIdCredential, variable: "vault_secret_id")]) {
-        sh "echo \"DYNACONF_IQE_VAULT_SECRET_ID=\$vault_secret_id\" >> \"${env.WORKSPACE}/.env\""
-    }
-}
-
-
 def setupIqePlugin(Map parameters = [:]){
     def plugin = parameters.get("plugin")
     def iqeCoreBranch = parameters.get("iqeCoreBranch" , "3.0")
     def iqePluginBranch = parameters.get("iqePluginBranch", "master")
     def satelliteInstance = parameters.get("satelliteInstance" , "satellite_69")
-    def jenkins_credentials = null
+    def jenkinsCredentials = null
+    def vaultParameters = setupVaultParameters()
 
     venvDir = setupVenvDir()
     if(plugin == 'insights-client') {
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: iqePluginBranch
         plugin_dir = 'iqe_insights_client'
-        jenkins_credentials = 'settings_iqe_insights_client'
+        jenkinsCredentials = 'settings_iqe_insights_client'
     }
     else if(plugin.contains('rhc')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
-        setupVaultEnvVars()
+        writeVaultEnvVars(vaultParameters)
     }
     else if(plugin.contains('iqe-satellite-plugin')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git', branch: iqePluginBranch
         plugin_dir = 'iqe-satellite-plugin'
         plugin_dir = 'iqe_insights_satellite'
-        jenkins_credentials = 'settings_iqe_satellite'
+        jenkinsCredentials = 'settings_iqe_satellite'
     }
     else {
         println("Unknown plugin string passed...")
@@ -284,8 +270,8 @@ def setupIqePlugin(Map parameters = [:]){
     }
 
 
-    if (jenkins_credentials) {
-        withCredentials([file(credentialsId: jenkins_credentials, variable: 'settings')]) {
+    if (jenkinsCredentials) {
+        withCredentials([file(credentialsId: jenkinsCredentials, variable: 'settings')]) {
             sh "cp \$settings ${plugin_dir}/conf/settings.local.yaml"
         }
     }
@@ -407,4 +393,17 @@ def copySshKey(Map parameters = [:]){
     withCredentials([file(credentialsId: sshKey, variable: 'settings')]) {
         sh "cp \$settings ~/.ssh/${sshKeyName}"
     }
+}
+
+def setupVaultParameters() {
+    def params = [:]
+    params['vaultEnabled'] = true
+    params['vaultUrl'] = pipelineVars.defaultVaultUrl
+    params['vaultMountPoint'] = pipelineVars.defaultVaultMountPoint
+    params['vaultTokenCredential'] = null
+    params['vaultRoleIdCredential'] = pipelineVars.defaultVaultRoleIdCredential
+    params['vaultSecretIdCredential'] = pipelineVars.defaultVaultSecretIdCredential
+    params['vaultVerify'] = true
+
+    return params
 }
