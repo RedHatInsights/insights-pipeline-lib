@@ -206,6 +206,7 @@ def setupIqePlugin(Map parameters = [:]){
         jenkinsCredentials = 'settings_iqe_insights_client'
     }
     else if(plugin.contains('rhc')){
+        iqePluginBranch = 'rantunes/parse-credentials'
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
         iqeUtils.writeVaultEnvVars(vaultParameters)
     }
