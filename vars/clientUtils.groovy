@@ -324,11 +324,11 @@ def runTests(Map parameters = [:]){
             plugin_test = 'insights_client'
         }
         else if (plugin == 'rhc') {
-            plugin_test = 'rhc'
+            plugin_test = 'rhc-client'
             pytestParam = "${pytestParam} -k test_client"
         }
         else if (plugin == 'rhc-worker-playbook') {
-            plugin_test = 'rhc'
+            plugin_test = 'rhc-client'
             pytestParam = "${pytestParam} -m worker_playbook"
             // start python web server with playbook
             sh """
