@@ -340,7 +340,7 @@ def runTests(Map parameters = [:]){
             // start python web server with playbook
             sh """
                 ls -ltr ./
-                cd iqe_rhc/resources/playbooks
+                cd iqe_rhc_client/resources/playbooks
                 nohup python -m http.server 8000 > /dev/null 2>&1 &
             """
         }
