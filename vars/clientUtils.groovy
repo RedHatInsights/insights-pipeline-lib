@@ -275,7 +275,7 @@ def setupIqePlugin(Map parameters = [:]){
         }
     }
 
-    sh "echo ${env.WORKSPACE}/.env"
+    // Remove workspace .env file
     sh "rm -f \"${env.WORKSPACE}/.env\""
 
     if (vaultEnabled) {
