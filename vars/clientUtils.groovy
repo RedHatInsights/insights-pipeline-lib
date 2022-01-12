@@ -197,7 +197,7 @@ def setupIqePlugin(Map parameters = [:]){
     def iqePluginBranch = parameters.get("iqePluginBranch", "master")
     def satelliteInstance = parameters.get("satelliteInstance" , "satellite_69")
     def jenkinsCredentials = null
-    def vaultParameters = setupVaultParameters()
+    def vaultEnabled = false
 
     venvDir = setupVenvDir()
     if(plugin == 'insights-client') {
@@ -206,9 +206,8 @@ def setupIqePlugin(Map parameters = [:]){
         jenkinsCredentials = 'settings_iqe_insights_client'
     }
     else if(plugin.contains('rhc')){
-        iqePluginBranch = 'rantunes/parse-credentials'
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
-        iqeUtils.writeVaultEnvVars(vaultParameters)
+        vaultEnabled = true
     }
     else if(plugin.contains('iqe-satellite-plugin')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git', branch: iqePluginBranch
@@ -270,11 +269,15 @@ def setupIqePlugin(Map parameters = [:]){
         """
     }
 
-
     if (jenkinsCredentials) {
         withCredentials([file(credentialsId: jenkinsCredentials, variable: 'settings')]) {
             sh "cp \$settings ${plugin_dir}/conf/settings.local.yaml"
         }
+    }
+
+    if (vaultEnabled) {
+        vaultParameters = setupVaultParameters()
+        iqeUtils.writeVaultEnvVars(vaultParameters)
     }
 }
 
@@ -360,6 +363,7 @@ def runTests(Map parameters = [:]){
 
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
         sh """
+            export \$(cat "${env.WORKSPACE}/.env" | xargs)
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
             source ${venvDir}/bin/activate
