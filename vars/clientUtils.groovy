@@ -363,7 +363,7 @@ def runTests(Map parameters = [:]){
 
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
         sh """
-            export \$(cat "${env.WORKSPACE}/.env" | xargs)
+            set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
             source ${venvDir}/bin/activate
