@@ -275,6 +275,9 @@ def setupIqePlugin(Map parameters = [:]){
         }
     }
 
+    sh "echo ${env.WORKSPACE}/.env"
+    sh "rm -f \"${env.WORKSPACE}/.env\""
+
     if (vaultEnabled) {
         vaultParameters = setupVaultParameters()
         iqeUtils.writeVaultEnvVars(vaultParameters)
@@ -363,8 +366,6 @@ def runTests(Map parameters = [:]){
 
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
         sh """
-            echo ${WORKSPACE}
-            echo ${env.WORKSPACE}
             set +x && export \$(cat "${WORKSPACE}/.env" | xargs) && set -x
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
