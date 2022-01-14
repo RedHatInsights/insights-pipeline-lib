@@ -196,23 +196,24 @@ def setupIqePlugin(Map parameters = [:]){
     def iqeCoreBranch = parameters.get("iqeCoreBranch" , "3.0")
     def iqePluginBranch = parameters.get("iqePluginBranch", "master")
     def satelliteInstance = parameters.get("satelliteInstance" , "satellite_69")
+    def jenkinsCredentials = null
+    def vaultEnabled = false
 
     venvDir = setupVenvDir()
     if(plugin == 'insights-client') {
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: iqePluginBranch
         plugin_dir = 'iqe_insights_client'
-        jenkins_credentials = 'settings_iqe_insights_client'
+        jenkinsCredentials = 'settings_iqe_insights_client'
     }
     else if(plugin.contains('rhc')){
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-plugin.git', branch: iqePluginBranch
-        plugin_dir = 'iqe_rhc'
-        jenkins_credentials = 'settings_iqe_rhc'
+        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
+        vaultEnabled = true
     }
     else if(plugin.contains('iqe-satellite-plugin')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git', branch: iqePluginBranch
         plugin_dir = 'iqe-satellite-plugin'
         plugin_dir = 'iqe_insights_satellite'
-        jenkins_credentials = 'settings_iqe_satellite'
+        jenkinsCredentials = 'settings_iqe_satellite'
     }
     else {
         println("Unknown plugin string passed...")
@@ -268,9 +269,18 @@ def setupIqePlugin(Map parameters = [:]){
         """
     }
 
+    if (jenkinsCredentials) {
+        withCredentials([file(credentialsId: jenkinsCredentials, variable: 'settings')]) {
+            sh "cp \$settings ${plugin_dir}/conf/settings.local.yaml"
+        }
+    }
 
-    withCredentials([file(credentialsId: jenkins_credentials, variable: 'settings')]) {
-        sh "cp \$settings ${plugin_dir}/conf/settings.local.yaml"
+    // Remove workspace .env file
+    sh "rm -f \"${env.WORKSPACE}/.env\""
+
+    if (vaultEnabled) {
+        vaultParameters = setupVaultParameters()
+        iqeUtils.writeVaultEnvVars(vaultParameters)
     }
 }
 
@@ -321,16 +331,16 @@ def runTests(Map parameters = [:]){
             plugin_test = 'insights_client'
         }
         else if (plugin == 'rhc') {
-            plugin_test = 'rhc'
+            plugin_test = 'rhc_client'
             pytestParam = "${pytestParam} -k test_client"
         }
         else if (plugin == 'rhc-worker-playbook') {
-            plugin_test = 'rhc'
+            plugin_test = 'rhc_client'
             pytestParam = "${pytestParam} -m worker_playbook"
             // start python web server with playbook
             sh """
                 ls -ltr ./
-                cd iqe_rhc/resources/playbooks
+                cd iqe_rhc_client/resources/playbooks
                 nohup python -m http.server 8000 > /dev/null 2>&1 &
             """
         }
@@ -356,6 +366,7 @@ def runTests(Map parameters = [:]){
 
         // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
         sh """
+            set +x && export \$(cat "${WORKSPACE}/.env" | xargs) && set -x
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
             source ${venvDir}/bin/activate
@@ -390,4 +401,17 @@ def copySshKey(Map parameters = [:]){
     withCredentials([file(credentialsId: sshKey, variable: 'settings')]) {
         sh "cp \$settings ~/.ssh/${sshKeyName}"
     }
+}
+
+def setupVaultParameters() {
+    def params = [:]
+    params['vaultEnabled'] = true
+    params['vaultUrl'] = pipelineVars.defaultVaultUrl
+    params['vaultMountPoint'] = pipelineVars.defaultVaultMountPoint
+    params['vaultTokenCredential'] = null
+    params['vaultRoleIdCredential'] = pipelineVars.defaultVaultRoleIdCredential
+    params['vaultSecretIdCredential'] = pipelineVars.defaultVaultSecretIdCredential
+    params['vaultVerify'] = true
+
+    return params
 }

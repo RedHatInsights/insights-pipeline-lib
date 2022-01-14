@@ -431,7 +431,7 @@ private def writeEnv(String key, String value) {
 }
 
 
-private def writeVaultEnvVars(Map options) {
+def writeVaultEnvVars(Map options) {
     /* Parse options for vault settings and write the vault env vars to the .env file */
     if (!options['vaultEnabled']) return
 
