@@ -224,6 +224,27 @@ def runIQE(String plugin, Map appOptions) {
     def extraArgs = appOptions['extraArgs']
 
     catchError(stageResult: "FAILURE") {
+        def screenshotsDir = sh(
+            script: (
+                """
+                # note: trims trailing newlines and removes spaces
+                cat "${env.WORKSPACE}/.env" | grep "SCREENSHOTS_DIR" | cut -f2 -d"=" | tr -d " \n"
+                """.stripIndent()
+            ),
+            returnStdout: true
+        )
+
+        if (screenshotsDir) {
+            mkdirStatus = sh(
+                script: (
+                """
+                mkdir -p ${screenshotsDir}
+                """.stripIndent()
+                ),
+                returnStatus: true
+            )
+        }
+
         // run parallel tests
         def errorMsgParallel = ""
         def errorMsgSequential = ""
@@ -355,6 +376,26 @@ def runIQE(String plugin, Map appOptions) {
 
         if (errorMsgSequential || errorMsgParallel) {
             error("${errorMsgSequential} ${errorMsgParallel}")
+        }
+
+        if (screenshotsDir) {
+            dir(screenshotsDir) {
+                archiveArtifacts(
+                    artifacts: "*.png",
+                    allowEmptyArchive: true
+                )
+            }
+
+            dir(env.WORKSPACE)
+
+            rmStatus = sh(
+                script: (
+                """
+                rm -rf ${screenshotsDir}
+                """.stripIndent()
+                ),
+                returnStatus: true
+            )
         }
     }
 
