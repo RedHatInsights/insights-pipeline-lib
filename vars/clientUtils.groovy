@@ -204,6 +204,7 @@ def setupIqePlugin(Map parameters = [:]){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: iqePluginBranch
         plugin_dir = 'iqe_insights_client'
         jenkinsCredentials = 'settings_iqe_insights_client'
+        vaultEnabled = true
     }
     else if(plugin.contains('rhc')){
         git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
