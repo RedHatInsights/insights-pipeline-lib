@@ -227,7 +227,6 @@ def setupIqePlugin(Map parameters = [:]){
             source ${venvDir}/bin/activate
             pip install -U pip setuptools wheel
             pip install setuptools_scm iqe-core
-            iqe plugin install --editable .
         """
     }
     else {
@@ -240,12 +239,12 @@ def setupIqePlugin(Map parameters = [:]){
             devpi use https://devpi-iqe.cloud.paas.psi.redhat.com/iqe/packages --set-cfg
             pip install -U pip setuptools wheel
             pip install setuptools_scm iqe-core
-            iqe plugin install --editable .
         """
     }
     if(plugin == 'insights-client') {
         sh """
             source ${venvDir}/bin/activate
+            iqe plugin install ${plugin}
             pip install git+https://github.com/RedHatInsights/insights-core.git@${iqeCoreBranch}
         """
     }
@@ -266,7 +265,7 @@ def setupIqePlugin(Map parameters = [:]){
     else if(plugin.contains('rhc')) {
         sh """
             source ${venvDir}/bin/activate
-            pip install --editable .[client]
+            iqe plugin install rhc-client
         """
     }
 
