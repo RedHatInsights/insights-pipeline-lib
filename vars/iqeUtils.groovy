@@ -192,7 +192,8 @@ def runIQE(String plugin, Map appOptions) {
     def collectionStatus
     def result
     def status
-    def noTests = false
+    def noParallelTests = false
+    def noSequentialTests = false
 
     def filterArgs = ""
     def requirementsArgs = ""
@@ -264,7 +265,7 @@ def runIQE(String plugin, Map appOptions) {
         )
         // status code 5 means no tests collected
         if (collectionStatus == 5) {
-            noTests = true
+            noParallelTests = true
         }
         else if (collectionStatus > 0) {
             result = "FAILURE"
@@ -325,7 +326,7 @@ def runIQE(String plugin, Map appOptions) {
         )
         // status code 5 means no tests collected
         if (collectionStatus == 5) {
-            noTests = true
+            noSequentialTests = true
         }
         else if (collectionStatus > 0) {
             result = "FAILURE"
@@ -333,8 +334,6 @@ def runIQE(String plugin, Map appOptions) {
         }
         // only run tests when the collection status is 0
         else {
-             // in case there were no parallel tests, reset noTests to false
-            noTests = false
             status = sh(
                 script: (
                     """
@@ -363,7 +362,7 @@ def runIQE(String plugin, Map appOptions) {
             }
         }
 
-        if (noTests) {
+        if (noParallelTests && noSequentialTests) {
             error("There were no tests collected in the sequential or parallel test runs.")
         }
 
