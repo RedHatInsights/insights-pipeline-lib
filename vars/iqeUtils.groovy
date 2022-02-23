@@ -108,6 +108,9 @@ private def parseOptions(Map options) {
     options['settingsGitCredentialsId'] = options.get(
         'settingsGitCredentialsId', pipelineVars.gitHttpCreds)
 
+    // enable pytest-xdist plugin for multiprocess parallelism
+    options['xdistEnabled'] = options.get('xdistEnabled', true)
+
     // number of pytest-xdist workers to use for parallel tests
     options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
 
@@ -203,6 +206,7 @@ def runIQE(String plugin, Map appOptions) {
     def browserlog = ""
     def reportportalArgs = ""
     def netlog = ""
+    def xdistArgs = ""
 
     if (appOptions['filter']) {
         filterArgs = "-k \"${appOptions['filter']}\""
@@ -234,6 +238,10 @@ def runIQE(String plugin, Map appOptions) {
 
     if (appOptions["netlog"]) {
         netlog = "--netlog"
+    }
+
+    if (appOptions["xdistEnabled"]) {
+        xdistArgs = "-n ${appOptions['parallelWorkerCount']}"
     }
 
     def marker = appOptions['marker']
@@ -285,7 +293,7 @@ def runIQE(String plugin, Map appOptions) {
                     ${requirementsPriorityArgs} \
                     ${testImportanceArgs} \
                     ${extraArgs} \
-                    -n ${appOptions['parallelWorkerCount']} \
+                    ${xdistArgs} \
                     ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-parallel.log \
                     ${browserlog} \
