@@ -117,31 +117,7 @@ private def parseOptions(Map options) {
     // a Map of additional env vars to set in the .env file before running iqe
     options['extraEnvVars'] = options.get('extraEnvVars', [:])
 
-    // whether or not to use IQE's vault loader for importing secrets listed in the config file
-    options['vaultEnabled'] = options.get('vaultEnabled', false)
-
-    // if using vault, the URL of the vault server
-    options['vaultUrl'] = options.get('vaultUrl', pipelineVars.defaultVaultUrl)
-
-    // if using vault, the Jenkins credential ID that holds the vault AppRole role ID
-    options['vaultRoleIdCredential'] = options.get(
-        'vaultRoleIdCredential', pipelineVars.defaultVaultRoleIdCredential)
-
-    // if using vault, the Jenkins credential ID that holds the vault AppRole secret ID
-    options['vaultSecretIdCredential'] = options.get(
-        'vaultSecretIdCredential', pipelineVars.defaultVaultSecretIdCredential)
-
-    // if using vault, and not using approle, the Jenkins credential ID that holds the vault token
-    options['vaultTokenCredential'] = options.get('vaultTokenCredential')
-
-    // whether vault Token is github token or not
-    options['vaultGithubTokenCredential'] = options.get('vaultGithubTokenCredential', false)
-
-    // if using vault, whether or not to verify SSL connections
-    options['vaultVerify'] = options.get('vaultVerify', true)
-
-    // if using vault, the vault mount point for the kv engine
-    options['vaultMountPoint'] = options.get('vaultMountPoint', pipelineVars.defaultVaultMountPoint)
+    // parsing of vault env vars handled in 'writeVaultEnvVars' below
 
     // list of custom packages to 'pip install' before tests run
     options['customPackages'] = options.get('customPackages', [])
@@ -440,6 +416,33 @@ private def writeEnv(String key, String value) {
 
 def writeVaultEnvVars(Map options) {
     /* Parse options for vault settings and write the vault env vars to the .env file */
+
+    // whether or not to use IQE's vault loader for importing secrets listed in the config file
+    options['vaultEnabled'] = options.get('vaultEnabled', false)
+
+    // if using vault, the URL of the vault server
+    options['vaultUrl'] = options.get('vaultUrl', pipelineVars.defaultVaultUrl)
+
+    // if using vault, the Jenkins credential ID that holds the vault AppRole role ID
+    options['vaultRoleIdCredential'] = options.get(
+        'vaultRoleIdCredential', pipelineVars.defaultVaultRoleIdCredential)
+
+    // if using vault, the Jenkins credential ID that holds the vault AppRole secret ID
+    options['vaultSecretIdCredential'] = options.get(
+        'vaultSecretIdCredential', pipelineVars.defaultVaultSecretIdCredential)
+
+    // if using vault, and not using approle, the Jenkins credential ID that holds the vault token
+    options['vaultTokenCredential'] = options.get('vaultTokenCredential')
+
+    // whether vault Token is github token or not
+    options['vaultGithubTokenCredential'] = options.get('vaultGithubTokenCredential', false)
+
+    // if using vault, whether or not to verify SSL connections
+    options['vaultVerify'] = options.get('vaultVerify', true)
+
+    // if using vault, the vault mount point for the kv engine
+    options['vaultMountPoint'] = options.get('vaultMountPoint', pipelineVars.defaultVaultMountPoint)
+
     if (!options['vaultEnabled']) return
 
     if (options['vaultUrl']) writeEnv('DYNACONF_IQE_VAULT_URL', options['vaultUrl'])
@@ -472,7 +475,7 @@ def writeVaultEnvVars(Map options) {
 }
 
 
-private def configIQE(Map options) {
+def configIQE(Map options) {
     /* Sets up the settings.local.yaml and .env files */
     def settingsDir = "${env.WORKSPACE}/iqe_local_settings"
     sh "rm -fr ${settingsDir}"
