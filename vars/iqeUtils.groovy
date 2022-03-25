@@ -391,10 +391,14 @@ def runIQE(String plugin, Map appOptions) {
             rmStatus = sh(
                 script: (
                 """
+                echo "***** DEBUG *****"
+                pwd
+                ls -l
+                
                 rm -rf ${screenshotsDir}
                 """.stripIndent()
                 ),
-                returnStatus: true
+                returnStdout: true
             )
         }
     }
