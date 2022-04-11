@@ -386,20 +386,21 @@ def runIQE(String plugin, Map appOptions) {
                 )
             }
 
-            dir(env.WORKSPACE)
+            dir(env.WORKSPACE) {
+                rmStatus = sh(
+                    script: (
+                    """
+                    echo "***** DEBUG *****"
+                    pwd
+                    ls -l
+                    
+                    rm -rf ${screenshotsDir}
+                    """.stripIndent()
+                    ),
+                    returnStdout: true
+                )
+            }
 
-            rmStatus = sh(
-                script: (
-                """
-                echo "***** DEBUG *****"
-                pwd
-                ls -l
-                
-                rm -rf ${screenshotsDir}
-                """.stripIndent()
-                ),
-                returnStdout: true
-            )
         }
     }
 
@@ -545,7 +546,7 @@ def configIQE(Map options) {
 
     writeVaultEnvVars(options)
     options['extraEnvVars'].each { key, value ->
-        writeEnv(key, value)
+        writeEnv(key, value instanceof Closure ? value(env) : value)
     }
 }
 
