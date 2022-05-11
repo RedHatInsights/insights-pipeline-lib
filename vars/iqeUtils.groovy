@@ -577,12 +577,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
 
         stages[appName] = {
             if (appOptions['allocateNode']) {
-                def withNodeParams = [
-                    image: appOptions['image'],
-                    namespace: appOptions['namespace'],
-                    cloud: appOptions['cloud'],
-                ]
-                openShiftUtils.withNodeSelector(withNodeParams, appOptions['ui']) {
+                  openShiftUtils.withNodeSelector(appOptions, appOptions['ui']) {
                     createTestStages(appName, appConfig)
                 }
             }
