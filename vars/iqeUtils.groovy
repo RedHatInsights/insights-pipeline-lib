@@ -577,7 +577,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
 
         stages[appName] = {
             if (appOptions['allocateNode']) {
-                  openShiftUtils.withNodeSelector(appOptions, appOptions['ui']) {
+                openShiftUtils.withNodeSelector(appOptions, appOptions['ui']) {
                     createTestStages(appName, appConfig)
                 }
             }
