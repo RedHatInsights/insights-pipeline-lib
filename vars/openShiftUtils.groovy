@@ -163,6 +163,10 @@ def withUINode(Map parameters = [:], Closure body) {
     def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
     def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "256Mi")
     def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
+    def seleniumRequestCpu = parameters.get('seleniumRequestCpu', "500m")
+    def seleniumLimitCpu = parameters.get('seleniumLimitCpu', "1")
+    def seleniumRequestMemory = parameters.get('seleniumRequestMemory', "512Mi")
+    def seleniumLimitMemory = parameters.get('seleniumLimitMemory', "3Gi")
     def envVars = parameters.get('envVars', [])
     def extraContainers = parameters.get('extraContainers', [])
     def volumes = parameters.get('volumes', [])
@@ -191,11 +195,10 @@ def withUINode(Map parameters = [:], Closure body) {
             containerTemplate(
                 name: 'selenium',
                 image: seleniumImage,
-                alwaysPullImage: true,
-                resourceRequestCpu: '500m',
-                resourceLimitCpu: '1',
-                resourceRequestMemory: '512Mi',
-                resourceLimitMemory: '3Gi',
+                resourceRequestCpu: seleniumRequestCpu,
+                resourceLimitCpu: seleniumLimitCpu,
+                resourceRequestMemory: seleniumRequestMemory,
+                resourceLimitMemory: seleniumLimitMemory,
                 envVars: [
                     envVar(key: 'HOME', value: '/home/selenium'),
                 ],
