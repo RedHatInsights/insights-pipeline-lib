@@ -33,7 +33,7 @@ class pipelineVars implements Serializable {
         'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'
     )
     String centralCIjenkinsSlaveImage = (
-        'docker-registry.upshift.redhat.com/insights-qe/jenkins-slave-base:latest'
+        'quay.io/insights-qe/jenkins-slave-base:latest'
     )
     String iqeCoreImage = 'quay.io/cloudservices/iqe-core:latest'
     String iqeTestsImage = 'quay.io/cloudservices/iqe-tests:latest'
