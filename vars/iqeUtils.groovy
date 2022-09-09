@@ -369,7 +369,7 @@ def runIQE(String plugin, Map appOptions) {
 
 private def getSettingsFromGit(
     String settingsGitRepo, String settingsGitPath, String settingsGitCredentialsId,
-    String settingsGitBranch, String settingsDir
+    String settingsGitBranch, String settingsDir, String appName
 ) {
     /* Download the IQE settings file from a git repo */
     def repoDir = "${env.WORKSPACE}/settings_repo"
@@ -383,6 +383,7 @@ private def getSettingsFromGit(
     )
 
     dir(repoDir) {
+        sh "cp \"${settingsGitPath}\" \"${settingsDir}/${appName}.local.yaml\""
         sh "cp \"${settingsGitPath}\" \"${settingsDir}/settings.local.yaml\""
     }
 }
@@ -475,7 +476,7 @@ def writeVaultEnvVars(Map options) {
 }
 
 
-def configIQE(Map options) {
+def configIQE(String appName, Map options) {
     /* Sets up the settings.local.yaml and .env files */
     def settingsDir = "${env.WORKSPACE}/iqe_local_settings"
     sh "rm -fr ${settingsDir}"
@@ -487,7 +488,8 @@ def configIQE(Map options) {
             options['settingsGitPath'],
             options['settingsGitCredentialsId'],
             options['settingsGitBranch'],
-            settingsDir
+            settingsDir,
+            appName
         )
     }
     else if (options['settingsFileCredentialsId']) {
@@ -509,7 +511,7 @@ private def createTestStages(String appName, Map appConfig) {
     def appOptions = appConfig['options']
 
     stage("Configure IQE") {
-        configIQE(appOptions)
+        configIQE(appName, appOptions)
     }
 
     def pluginResults = [:]
