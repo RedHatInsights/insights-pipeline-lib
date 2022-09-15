@@ -27,7 +27,7 @@
  * Sample usage:
  *
  *     stage("Configure IQE") {
- *         iqeUtils.configIQE(cciJenkins.configIQEArgs([envName: 'stage_proxy']))
+ *         iqeUtils.configIQE("app name", cciJenkins.configIQEArgs([envName: 'stage_proxy']))
  *     }
  *
  * The defaults herein are derived from iqeUtils.parseOptions().
