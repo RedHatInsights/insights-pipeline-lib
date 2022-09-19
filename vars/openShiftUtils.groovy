@@ -84,6 +84,7 @@ def withNode(Map parameters = [:], Closure body) {
     def limitCpu = parameters.get('resourceLimitCpu', "500m")
     def requestMemory = parameters.get('resourceRequestMemory', "100Mi")
     def limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    def jenkinsSvcAccount = parameters.get('jenkinsSvcAccount', pipelineVars.jenkinsSvcAccount)
     def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
     def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
     def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "256Mi")
@@ -99,7 +100,7 @@ def withNode(Map parameters = [:], Closure body) {
     def podParameters = [
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: pipelineVars.jenkinsSvcAccount,
+        serviceAccount: jenkinsSvcAccount,
         cloud: cloud,
         namespace: namespace,
         annotations: [
@@ -159,6 +160,7 @@ def withUINode(Map parameters = [:], Closure body) {
     def limitCpu = parameters.get('resourceLimitCpu', "500m")
     def requestMemory = parameters.get('resourceRequestMemory', "100Mi")
     def limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    def jenkinsSvcAccount = parameters.get('jenkinsSvcAccount', pipelineVars.jenkinsSvcAccount)
     def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
     def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
     def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "256Mi")
@@ -179,7 +181,7 @@ def withUINode(Map parameters = [:], Closure body) {
     def podParameters = [
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: pipelineVars.jenkinsSvcAccount,
+        serviceAccount: jenkinsSvcAccount,
         cloud: cloud,
         namespace: namespace,
         containers: [
@@ -251,6 +253,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
     def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
     def image = parameters.get('image', getDefaultSlaveImage(cloud))
     def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
+    def jenkinsSvcAccount = parameters.get('jenkinsSvcAccount', pipelineVars.jenkinsSvcAccount)
     def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
     def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
     def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "256Mi")
@@ -265,7 +268,7 @@ def withJnlpNode(Map parameters = [:], Closure body) {
     def podParameters = [
         label: label,
         slaveConnectTimeout: 120,
-        serviceAccount: pipelineVars.jenkinsSvcAccount,
+        serviceAccount: jenkinsSvcAccount,
         cloud: cloud,
         namespace: namespace,
         annotations: [
