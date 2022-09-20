@@ -119,6 +119,7 @@ def withNode(Map parameters = [:], Closure body) {
                 name: 'jnlp',
                 image: jenkinsSlaveImage,
                 args: '${computer.jnlpmac} ${computer.name}',
+                alwaysPullImage: true,
                 resourceRequestCpu: jnlpRequestCpu,
                 resourceLimitCpu: jnlpLimitCpu,
                 resourceRequestMemory: jnlpRequestMemory,
@@ -189,6 +190,7 @@ def withUINode(Map parameters = [:], Closure body) {
                 name: 'jnlp',
                 image: slaveImage,
                 args: '${computer.jnlpmac} ${computer.name}',
+                alwaysPullImage: true,
                 resourceRequestCpu: jnlpRequestCpu,
                 resourceLimitCpu: jnlpLimitCpu,
                 resourceRequestMemory: jnlpRequestMemory,
@@ -197,6 +199,7 @@ def withUINode(Map parameters = [:], Closure body) {
             containerTemplate(
                 name: 'selenium',
                 image: seleniumImage,
+                alwaysPullImage: true,
                 resourceRequestCpu: seleniumRequestCpu,
                 resourceLimitCpu: seleniumLimitCpu,
                 resourceRequestMemory: seleniumRequestMemory,
