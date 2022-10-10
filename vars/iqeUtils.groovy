@@ -529,6 +529,7 @@ def configIQE(String appName, Map options) {
     sh "rm -f \"${env.WORKSPACE}/.env\""
     writeEnv('ENV_FOR_DYNACONF', options['envName'])
     writeEnv('IQE_TESTS_LOCAL_CONF_PATH', settingsDir)
+    writeEnv('IQE_TESTS_${appName.toUpperCase()}_CONF_PATH', settingsDir)
 
     writeVaultEnvVars(options)
     options['extraEnvVars'].each { key, value ->
