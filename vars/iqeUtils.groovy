@@ -95,7 +95,7 @@ private def parseOptions(Map options) {
 
     // if loading settings from a Jenkins file credential, the name of the credential
     options['settingsFileCredentialsId'] = options.get(
-        'settingsFileCredentialsId', "${envName}IQESettingsYaml")
+        'settingsFileCredentialsId', '')
 
     // if loading settings from git, the repo URL
     options['settingsGitRepo'] = options.get('settingsRepo', pipelineVars.jenkinsConfigRepo)
