@@ -517,7 +517,7 @@ def configIQE(String appName, Map options) {
     sh "rm -f \"${env.WORKSPACE}/.env\""
     writeEnv('ENV_FOR_DYNACONF', options['envName'])
 
-    if (options['useCustomSettings'] || options['settingsFromGit'] || options['settingsFileCredentialsId']) {
+    if (options['useCustomSettings'] && (options['settingsFromGit'] || options['settingsFileCredentialsId'])) {
         if (options['settingsFromGit']) {
             getSettingsFromGit(
                 options['settingsGitRepo'],
