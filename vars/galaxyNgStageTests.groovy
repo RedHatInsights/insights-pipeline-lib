@@ -7,22 +7,20 @@ node {
         }
 
             stage('Checkout galaxy_ng repo') {
-                steps {
                     gitUtils.checkOutRepo(
                         targetDir: "galaxy_ng",
                         repoUrl: "git@github.com:ansible/galaxy_ng.git",
                         credentialsId: "InsightsDroidGitHubHTTP",
                         branch: "cloud_tests"
                     )
-                }
+                
             }
 
             stage('Run') {
-                steps {
                     script {
                         sh "IQE_VAULT_GITHUB_TOKEN=${params.TOKEN} ./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
                     }
-                }
+                
             }
         }
 
