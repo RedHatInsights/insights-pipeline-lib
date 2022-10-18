@@ -1,11 +1,11 @@
 
 def call(args = [:]) {
-pipeline {
+
+node {
         parameters {
             password(name: 'TOKEN', defaultValue: 'secret', description: 'Github token')
         }
 
-        stages {
             stage('Checkout galaxy_ng repo') {
                 steps {
                     gitUtils.checkOutRepo(
@@ -35,5 +35,5 @@ pipeline {
             }
             
         }
-    }
+    
 }
