@@ -1,8 +1,7 @@
 
 def call(args = [:]) {
 
-    lockName = "${params.env}-test"
-    lock(lockName) {
+
         parameters {
             password(name: 'TOKEN', defaultValue: 'secret', description: 'Github token')
         }
@@ -10,7 +9,7 @@ def call(args = [:]) {
             stage('Checkout galaxy_ng repo') {
                     gitUtils.checkOutRepo(
                         targetDir: "galaxy_ng",
-                        repoUrl: "git@github.com:ansible/galaxy_ng.git",
+                        repoUrl: "https://github.com/ansible/galaxy_ng.git",
                         credentialsId: "InsightsDroidGitHubHTTP",
                         branch: "cloud_tests"
                     )
@@ -34,6 +33,6 @@ def call(args = [:]) {
             }
             
         }
-    }
+    
     
 }
