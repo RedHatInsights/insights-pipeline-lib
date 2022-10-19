@@ -1,7 +1,7 @@
 
 def call(args = [:]) {
 
-node {
+
         parameters {
             password(name: 'TOKEN', defaultValue: 'secret', description: 'Github token')
         }
@@ -32,6 +32,6 @@ node {
                 }
             }
             
-        }
+        
     
 }
