@@ -1,4 +1,3 @@
-
 def call(args = [:]) {
     node {
         stage('Checkout galaxy_ng repo') {
@@ -10,18 +9,7 @@ def call(args = [:]) {
             )
         }
         stage('Run') {
-            // vaultRoleId, vaultSecretId
-            // params['vaultRoleIdCredential'] = pipelineVars.defaultVaultRoleIdCredential
-            // params['vaultSecretIdCredential'] = pipelineVars.defaultVaultSecretIdCredential
-
-            vaultParameters = clientUtils.setupVaultParameters()
-            // iqeUtils.writeVaultEnvVars(vaultParameters)
-            withCredentials(
-                [
-                    string(credentialsId: 'vaultRoleId', variable: 'IQE_VAULT_ROLE_ID'),
-                    string(credentialsId: 'vaultSecretId', variable: 'IQE_VAULT_SECRET_ID')
-                ]
-            ) 
+            withCredentials([ string(credentialsId: 'vaultRoleId', variable: 'IQE_VAULT_ROLE_ID'), string(credentialsId: 'vaultSecretId', variable: 'IQE_VAULT_SECRET_ID')])
             {
                 sh "IQE_VAULT_ROLE_ID=${IQE_VAULT_ROLE_ID} IQE_VAULT_SECRET_ID=${IQE_VAULT_SECRET_ID} ./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
             }
