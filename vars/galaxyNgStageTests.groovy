@@ -1,7 +1,8 @@
 
 def call(args = [:]) {
 
-
+    lockName = "${params.env}-test"
+    lock(lockName) {
         parameters {
             password(name: 'TOKEN', defaultValue: 'secret', description: 'Github token')
         }
@@ -32,6 +33,7 @@ def call(args = [:]) {
                 }
             }
             
-        
+        }
+    }
     
 }
