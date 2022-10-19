@@ -18,8 +18,8 @@ def call(args = [:]) {
             // iqeUtils.writeVaultEnvVars(vaultParameters)
             withCredentials(
                 [
-                    string(credentialsId: vaultRoleId, variable: 'IQE_VAULT_ROLE_ID'),
-                    string(credentialsId: vaultSecretId, variable: 'IQE_VAULT_SECRET_ID')
+                    string(credentialsId: 'vaultRoleId', variable: 'IQE_VAULT_ROLE_ID'),
+                    string(credentialsId: 'vaultSecretId', variable: 'IQE_VAULT_SECRET_ID')
                 ]
             ) 
             script {
