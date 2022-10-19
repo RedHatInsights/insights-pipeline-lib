@@ -15,11 +15,11 @@ def call(args = [:]) {
             // params['vaultSecretIdCredential'] = pipelineVars.defaultVaultSecretIdCredential
 
             vaultParameters = clientUtils.setupVaultParameters()
-            iqeUtils.writeVaultEnvVars(vaultParameters)
+            // iqeUtils.writeVaultEnvVars(vaultParameters)
             script {
                 // sh "IQE_VAULT_GITHUB_TOKEN=${params.TOKEN} ./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
-                // sh "IQE_VAULT_ROLE_ID=${vaultParameters['vaultRoleIdCredential']} IQE_VAULT_SECRET_ID=${vaultParameters['vaultSecretIdCredential']} ./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
-                sh "./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
+                sh "IQE_VAULT_ROLE_ID=${vaultParameters['vaultRoleIdCredential']} IQE_VAULT_SECRET_ID=${vaultParameters['vaultSecretIdCredential']} ./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
+                // sh "./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
             }
         }
         post {
