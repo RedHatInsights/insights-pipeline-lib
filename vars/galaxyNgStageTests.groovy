@@ -22,7 +22,7 @@ def call(args = [:]) {
                     string(credentialsId: 'vaultSecretId', variable: 'IQE_VAULT_SECRET_ID')
                 ]
             ) 
-            script {
+            {
                 sh "IQE_VAULT_ROLE_ID=${IQE_VAULT_ROLE_ID} IQE_VAULT_SECRET_ID=${IQE_VAULT_SECRET_ID} ./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
             }
         }
