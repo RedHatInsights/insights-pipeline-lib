@@ -8,18 +8,12 @@ def call(args = [:]) {
                 branch: "cloud_tests"
             )
         }
-        stage('Run') {
+        stage('Run integration tests against stage') {
             withCredentials([ string(credentialsId: 'vaultRoleId', variable: 'IQE_VAULT_ROLE_ID'), string(credentialsId: 'vaultSecretId', variable: 'IQE_VAULT_SECRET_ID')])
             {
                 sh "IQE_VAULT_ROLE_ID=${IQE_VAULT_ROLE_ID} IQE_VAULT_SECRET_ID=${IQE_VAULT_SECRET_ID} ./galaxy_ng/dev/common/RUN_INTEGRATION_STAGE.sh"
-            }
-        }
-        post {
-            always {
-                script{
-                    archiveArtifacts allowEmptyArchive: true, artifacts: 'galaxy_ng-results.xml'
-                    junit allowEmptyResults: true, testResults: 'galaxy_ng-results.xml'
-                }
+                archiveArtifacts allowEmptyArchive: true, artifacts: 'galaxy_ng-results.xml'
+                junit allowEmptyResults: true, testResults: 'galaxy_ng-results.xml'
             }
         }
     }
