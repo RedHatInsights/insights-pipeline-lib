@@ -376,11 +376,7 @@ def runIQE(String plugin, Map appOptions) {
 
         // if there were no failures recorded, it's a success
         result = result ?: "SUCCESS"
-
-        if (errorMsgSequential || errorMsgParallel) {
-            error("${errorMsgSequential} ${errorMsgParallel}")
-        }
-
+        
         if (screenshotsDir) {
             dir(screenshotsDir) {
                 archiveArtifacts(
@@ -388,6 +384,10 @@ def runIQE(String plugin, Map appOptions) {
                     allowEmptyArchive: true
                 )
             }
+        }
+
+        if (errorMsgSequential || errorMsgParallel) {
+            error("${errorMsgSequential} ${errorMsgParallel}")
         }
     }
 
