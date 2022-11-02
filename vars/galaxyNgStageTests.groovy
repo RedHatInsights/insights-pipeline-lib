@@ -5,7 +5,7 @@ def call(args = [:]) {
                 targetDir: "galaxy_ng",
                 repoUrl: "https://github.com/chr-stian/galaxy_ng.git",
                 credentialsId: "InsightsDroidGitHubHTTP",
-                branch: "stage_tests"
+                branch: "fix-dependency-int-tests"
             )
         }
         stage('Run integration tests against stage') {
