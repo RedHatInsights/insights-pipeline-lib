@@ -5,7 +5,7 @@ def call(args = [:]) {
                 targetDir: "galaxy_ng",
                 repoUrl: "https://github.com/ansible/galaxy_ng.git",
                 credentialsId: "InsightsDroidGitHubHTTP",
-                branch: "cloud_tests"
+                branch: "master"
             )
         }
         stage('Run integration tests against stage') {
