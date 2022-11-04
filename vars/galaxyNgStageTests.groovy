@@ -3,9 +3,9 @@ def call(args = [:]) {
         stage('Checkout galaxy_ng repo') {
             gitUtils.checkOutRepo(
                 targetDir: "galaxy_ng",
-                repoUrl: "https://github.com/chr-stian/galaxy_ng.git",
+                repoUrl: "https://github.com/ansible/galaxy_ng.git",
                 credentialsId: "InsightsDroidGitHubHTTP",
-                branch: "fix-dependency-int-tests"
+                branch: "master"
             )
         }
         stage('Run integration tests against stage') {
