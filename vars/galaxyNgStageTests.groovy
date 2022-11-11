@@ -1,7 +1,7 @@
 def call(args = [:]) {
     podTemplate(containers: [
     containerTemplate(name: 'galaxy', image: 'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11')]){
-        node {
+        node(){
             stage('Checkout galaxy_ng repo') {
                 container('galaxy'){
                     gitUtils.checkOutRepo(
