@@ -1,6 +1,6 @@
 def call(args = [:]) {
     podTemplate(label: 'label', containers: [
-    containerTemplate(name: 'galaxy', image: 'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11')]){
+    containerTemplate(name: 'galaxy', image: 'quay.io/insights-qe/jenkins-slave-base:latest')]){
         node('label'){
             stage('Checkout galaxy_ng repo') {
                 container('galaxy'){
