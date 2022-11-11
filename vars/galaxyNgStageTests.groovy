@@ -1,7 +1,5 @@
 def call(args = [:]) {
-    podTemplate(label: 'label', containers: [
-    containerTemplate(name: 'galaxy', image: 'quay.io/insights-qe/jenkins-slave-base:latest')]){
-        node('label'){
+        openShiftUtils.withNode(image: "jenkins-deploy-slave:latest") {
             stage('Checkout galaxy_ng repo') {
                 container('galaxy'){
                     gitUtils.checkOutRepo(
@@ -23,5 +21,4 @@ def call(args = [:]) {
                 }
             }
         }
-    }
 }
