@@ -1,5 +1,5 @@
 def call(args = [:]) {
-        openShiftUtils.withNode(image: "jenkins-deploy-slave:latest") {
+        openShiftUtils.withNode(image: "centos/python-36-centos7") {
             stage('Checkout galaxy_ng repo') {
                 container('galaxy'){
                     gitUtils.checkOutRepo(
