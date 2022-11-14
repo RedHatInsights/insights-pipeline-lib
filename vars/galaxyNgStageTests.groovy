@@ -1,5 +1,5 @@
 def call(args = [:]) {
-    openShiftUtils.withNode((image: "registry.access.redhat.com/ubi8/python-39")) {
+    openShiftUtils.withNode(image: "registry.access.redhat.com/ubi8/python-39") {
         stage('Checkout galaxy_ng repo') {
             gitUtils.checkOutRepo(
                 targetDir: "galaxy_ng",
