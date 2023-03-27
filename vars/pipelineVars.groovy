@@ -44,10 +44,10 @@ class pipelineVars implements Serializable {
     String upshiftCloud = 'upshift'
     String upshiftNameSpace = 'insights-qe-ci'
 
-    String slackDefaultUrl = 'https://ansible.slack.com/services/hooks/jenkins-ci/'
+    String slackDefaultUrl = "https://redhat-internal.slack.com/services/hooks/jenkins-ci/"
     String slackDefaultChannel = '#insights-qe-feed'
     String slackDeployAlertsChannel = "#deploy-alerts"
-    String slackDefaultTeamDomain = "ansible"
+    String slackDefaultTeamDomain = "redhat-internal"
 
     String quayBaseUri = 'quay.io/cloudservices'
     String quayUser = "cloudservices+push"
