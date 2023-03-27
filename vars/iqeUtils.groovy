@@ -150,9 +150,7 @@ private def mergeAppOptions(Map options, Map appOptions) {
 
     def mergedOptions = [:]
 
-    options.each { key, defaultValue ->
-        mergedOptions[key] = appOptions.get(key, defaultValue)
-    }
+    mergedOptions = options + appOptions
 
     // Support compatibility w/ smoke test syntax which specifies markers as a list of strings
     if (mergedOptions['marker'] instanceof java.util.ArrayList) {
