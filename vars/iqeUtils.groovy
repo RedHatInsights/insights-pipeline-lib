@@ -250,25 +250,31 @@ def runIQE(String plugin, Map appOptions) {
         def errorMsgParallel = ""
         def errorMsgSequential = ""
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
-        // export the .env file to load env vars that should be present even before dynaconf is
-        // invoked such as IQE_TESTS_LOCAL_CONF_PATH
 
         // check that there are actually tests to run
-        collectionStatus = sh(
-            script: (
-                """
-                set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
-                iqe tests plugin ${plugin} -s -v --collect-only \
-                ${markerArgs} \
-                ${filterArgs} \
-                ${requirementsArgs} \
-                ${requirementsPriorityArgs} \
-                ${testImportanceArgs} \
-                ${extraArgs} \
-                """.stripIndent()
-            ),
-            returnStatus: true
-        )
+        def collectionStatus
+        if (appOptions["xdistEnabled"]) {
+            // if xdist is enabled, try to collect parallel tests
+            collectionStatus = sh(
+                script: (
+                    """
+                    set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
+                    iqe tests plugin ${plugin} -s -v --collect-only \
+                    ${markerArgs} \
+                    ${filterArgs} \
+                    ${requirementsArgs} \
+                    ${requirementsPriorityArgs} \
+                    ${testImportanceArgs} \
+                    ${extraArgs} \
+                    """.stripIndent()
+                ),
+                returnStatus: true
+            )
+        } else {
+            // if xdist is disabled, just act like we have no parallel tests to run
+            collectionStatus = 5
+        }
+  
         // status code 5 means no tests collected
         if (collectionStatus == 5) {
             noParallelTests = true
@@ -309,11 +315,12 @@ def runIQE(String plugin, Map appOptions) {
         }
 
         // run sequential tests
-        markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
-        // export the .env file to load env vars that should be present even before dynaconf is
-        // invoked such as IQE_TESTS_LOCAL_CONF_PATH
-
-
+        def markerArgs = marker
+        if (appOptions["xdistEnabled"]) {
+            // if xdist is enabled, modify marker
+            markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
+        }
+  
         // check that there are actually tests to run
         collectionStatus = sh(
             script: (
