@@ -252,7 +252,6 @@ def runIQE(String plugin, Map appOptions) {
         def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
 
         // check that there are actually tests to run
-        def collectionStatus
         if (appOptions["xdistEnabled"]) {
             // if xdist is enabled, try to collect parallel tests
             collectionStatus = sh(
@@ -315,7 +314,6 @@ def runIQE(String plugin, Map appOptions) {
         }
 
         // run sequential tests
-        def markerArgs = marker
         if (appOptions["xdistEnabled"]) {
             // if xdist is enabled, modify marker
             markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
