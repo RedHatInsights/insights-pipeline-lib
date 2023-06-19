@@ -249,11 +249,12 @@ def runIQE(String plugin, Map appOptions) {
         // run parallel tests
         def errorMsgParallel = ""
         def errorMsgSequential = ""
-        def markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
+        def markerArgs = marker ? ""
 
         // check that there are actually tests to run
         if (appOptions["xdistEnabled"]) {
             // if xdist is enabled, try to collect parallel tests
+            markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
             collectionStatus = sh(
                 script: (
                     """
