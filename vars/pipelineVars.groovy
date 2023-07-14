@@ -52,6 +52,7 @@ class pipelineVars implements Serializable {
     String quayBaseUri = 'quay.io/cloudservices'
     String quayUser = "cloudservices+push"
     String quayPushCredentialsId = "quay-cloudservices-push-token"
+    String stageSSOUrl = "https://sso.stage.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 
     def rhsmUrl = [
         qa: 'subscription.rhsm.qa.redhat.com',
