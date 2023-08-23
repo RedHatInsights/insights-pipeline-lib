@@ -23,6 +23,35 @@ def prepareRapidastStages(String ServiceName, String ApiScanner, String TargetUr
 
         stage("Collect artifacts") {
             archiveArtifacts allowEmptyArchive: true, artifacts: "results/${ServiceName}/**/zap/*.*, , results.html"
+            publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: true, reportDir: '', reportFiles: 'results/*/*/zap/*.html', reportName: 'report', reportTitles: '${ServiceName} Rapidast Scanner Report'])
+        }
+
+        stage("Send data to Sitreps Grafana") {
+            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
+                // There is a a dir that contains a timestamp which would be harder to predict, instead try to find resource.
+                def json_file = findFiles(glob: "results/${ServiceName}/**/zap/zap-report.json")[0]
+                def html = "${BUILD_URL}/report"
+                def raw_json = readJSON file: json_file.path
+                def data = [
+                  service: "${ServiceName}",
+                  report: raw_json,
+                  html_url: html
+                ]
+                def jsonData = groovy.json.JsonOutput.toJson(data)
+
+                def headers = [
+                    'Content-type': 'application/json',
+                    'Accept': 'text/plain'
+                ]
+                def response = httpRequest(
+                    url: pipelineVars.sitrepsRapidastUrl,
+                    httpMode: 'PUT',
+                    requestBody: jsonData,
+                    headers: headers
+                )
+                echo "Response status: ${response.status}"
+                echo "Response body: ${response.content}"
+            }
         }
     }
  }
