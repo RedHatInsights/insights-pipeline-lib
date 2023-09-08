@@ -72,16 +72,16 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
     sh "sed -i 's/maxDuration:/# maxDuration:/g' ${filename}"
     sh "sed -i 's/browserId:/# browserId:/' ${filename}"
     sh "sed -i 's/url:/# url:/g' ${filename}"
-    if ("${ApiScanner}" == "apiScan") {
+    if ("${ApiScanner}" == "OpenApiScan") {
         echo "OpenAPI Spec Compliant API Scan selected"
         sh "sed -i 's/graphql:/# graphql:/' ${filename}"
         sh "sed -i 's/spiderAjax:/# spiderAjax:/' ${filename}"
         sh "sed -i 's/spider:/# spider:/' ${filename}"
         data = readYaml file: filename
         data.scanners.zap.apiScan.target = "${TargetUrl}"
-        data.scanners.zap.apiScan.apis.apiUrl = "${OpenApISpecUrl}"
+        data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
     }
-    else if ("${ApiScanner} == graphql") {
+    else if ("${ApiScanner}" == "graphql") {
         sh "sed -i 's/apiScan:/# apiScan:/' ${filename}"
         sh "sed -i 's/target:/# target:/' ${filename}"
         sh "sed -i 's/apis:/# apis:/' ${filename}"
@@ -89,7 +89,7 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         sh "sed -i 's/# schemaUrl:/schemaUrl:/' ${filename}"
         data = readYaml file: filename
         data.scanners.zap.graphql.endpoint = "${TargetUrl}"
-        data.scanners.zap.graphql.schemaUrl = "${OpenApISpecUrl}"
+        data.scanners.zap.graphql.schemaUrl = "${ApISpecUrl}"
     }
     else {
         echo "Scanner not supported"
