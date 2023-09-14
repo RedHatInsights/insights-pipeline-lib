@@ -1,8 +1,8 @@
 @Library("github.com/RedHatInsights/insights-pipeline-lib@v5") _
 
 
-def prepareRapidastStages(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
-    openShiftUtils.withNode(cloud: pipelineVars.upshiftCloud, image: 'quay.io/redhatproductsecurity/rapidast:latest') {
+def prepareRapidastStages(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
+    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:latest') {
 
         stage("Set Build Rapidast for ${ServiceName} service") {
              currentBuild.displayName = "#"+ env.BUILD_NUMBER + " " + "${ServiceName}"
