@@ -85,34 +85,10 @@ private def parseOptions(Map options) {
     options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
 
     // whether or not to provision a selenium container in the test pod
-    options['ui'] = options.get('ui', true)
-
-    // whether or not this app needs to load custom settngs, with the options below implying true
-    options['useCustomSettings'] = options.get('useCustomSettings', false)
-
-    // whether or not to load the IQE settings file from a git repo
-    options['settingsFromGit'] = options.get('settingsFromGit', false)
-
-    // if loading settings from a Jenkins file credential, the name of the credential
-    options['settingsFileCredentialsId'] = options.get(
-        'settingsFileCredentialsId', "${envName}IQESettingsYaml")
-
-    // if loading settings from git, the repo URL
-    options['settingsGitRepo'] = options.get('settingsRepo', pipelineVars.jenkinsConfigRepo)
-
-    // if loading settings from git, the path in the repo to the config file
-    options['settingsGitPath'] = options.get(
-        'settingsGitPath', "configs/default-${envName}-settings.yaml")
-
-    // if loading settings from git, the repo branch
-    options['settingsGitBranch'] = options.get('settingsGitBranch', "master")
-
-    // if loading settings from git, the Jenkins credentials ID for github authentication
-    options['settingsGitCredentialsId'] = options.get(
-        'settingsGitCredentialsId', pipelineVars.gitHttpCreds)
+    options['ui'] = options.get('ui', false)
 
     // enable pytest-xdist plugin for multiprocess parallelism
-    options['xdistEnabled'] = options.get('xdistEnabled', true)
+    options['xdistEnabled'] = options.get('xdistEnabled', false)
 
     // number of pytest-xdist workers to use for parallel tests
     options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
@@ -138,25 +114,21 @@ private def parseOptions(Map options) {
     options['browserlog'] = options.get('browserlog', true)
     options['netlog'] = options.get('netlog', true)
 
+    // force iqe to use specific user
+    options['iqeForceDefaultUser'] = options.get('iqeForceDefaultUser', '')
+
     return options
 }
 
 
 private def mergeAppOptions(Map options, Map appOptions) {
-    /* Merge an app's options with the default options */
+    /* Merge an app's options with the default options.*/
     if (!appOptions instanceof Map) {
         error("Incorrect syntax for appConfigs: 'options' for app is not a Map")
     }
 
     def mergedOptions = [:]
-
     mergedOptions = options + appOptions
-
-    // Support compatibility w/ smoke test syntax which specifies markers as a list of strings
-    if (mergedOptions['marker'] instanceof java.util.ArrayList) {
-        mergedOptions['marker'] = mergedOptions['marker'].join(" or ")
-    }
-
     return mergedOptions
 }
 
@@ -184,6 +156,7 @@ def runIQE(String plugin, Map appOptions) {
     def reportportalArgs = ""
     def netlog = ""
     def xdistArgs = ""
+    def forceDefaultUser = ""
 
     if (appOptions['filter']) {
         filterArgs = "-k \"${appOptions['filter']}\""
@@ -219,6 +192,10 @@ def runIQE(String plugin, Map appOptions) {
 
     if (appOptions["xdistEnabled"]) {
         xdistArgs = "-n ${appOptions['parallelWorkerCount']}"
+    }
+
+    if (appOptions["iqeForceDefaultUser"]) {
+        forceDefaultUser = "--iqe-force-default-user=${appOptions['iqeForceDefaultUser']}"
     }
 
     def marker = appOptions['marker']
@@ -303,6 +280,7 @@ def runIQE(String plugin, Map appOptions) {
                     ${browserlog} \
                     ${reportportalArgs} \
                     ${netlog} \
+                    ${forceDefaultUser} \
                     2>&1
                     """.stripIndent()
                 ),
@@ -363,6 +341,7 @@ def runIQE(String plugin, Map appOptions) {
                     ${browserlog} \
                     ${reportportalArgs} \
                     ${netlog} \
+                    ${forceDefaultUser} \
                     2>&1
                     """.stripIndent()
                 ),
@@ -404,38 +383,6 @@ def runIQE(String plugin, Map appOptions) {
 }
 
 
-private def getSettingsFromGit(
-    String settingsGitRepo, String settingsGitPath, String settingsGitCredentialsId,
-    String settingsGitBranch, String settingsDir, String appName
-) {
-    /* Download the IQE settings file from a git repo */
-    def repoDir = "${env.WORKSPACE}/settings_repo"
-    sh "rm -fr \"${repoDir}\""
-
-    gitUtils.checkOutRepo(
-        targetDir: repoDir,
-        repoUrl: settingsGitRepo,
-        branch: settingsGitBranch,
-        credentialsId: settingsGitCredentialsId
-    )
-
-    dir(repoDir) {
-        sh "cp \"${settingsGitPath}\" \"${settingsDir}/${appName}.local.yaml\""
-        sh "cp \"${settingsGitPath}\" \"${settingsDir}/settings.local.yaml\""
-    }
-}
-
-
-private def getSettingsFromJenkinsSecret(String settingsFileCredentialsId, String settingsDir) {
-    /* Load the IQE settings file from a jenkins file credentials */
-    withCredentials(
-        [file(credentialsId: settingsFileCredentialsId, variable: "YAML_FILE")]
-    ) {
-        sh "cp \$YAML_FILE \"${settingsDir}/settings.local.yaml\""
-    }
-}
-
-
 private def writeEnvFromCredential(String key, String credentialsId) {
     /* Helper to write a secret value to the .env file */
     withCredentials(
@@ -469,12 +416,6 @@ def writeVaultEnvVars(Map options) {
     options['vaultSecretIdCredential'] = options.get(
         'vaultSecretIdCredential', pipelineVars.defaultVaultSecretIdCredential)
 
-    // if using vault, and not using approle, the Jenkins credential ID that holds the vault token
-    options['vaultTokenCredential'] = options.get('vaultTokenCredential')
-
-    // whether vault Token is github token or not
-    options['vaultGithubTokenCredential'] = options.get('vaultGithubTokenCredential', false)
-
     // if using vault, whether or not to verify SSL connections
     options['vaultVerify'] = options.get('vaultVerify', true)
 
@@ -485,27 +426,19 @@ def writeVaultEnvVars(Map options) {
 
     if (options['vaultUrl']) writeEnv('DYNACONF_IQE_VAULT_URL', options['vaultUrl'])
 
-    // if a token is specified, use it, otherwise use an app role to authenticate
-    if (options['vaultTokenCredential']) {
-        if (options['vaultGithubTokenCredential']) {
-            writeEnvFromCredential('DYNACONF_IQE_VAULT_GITHUB_TOKEN', options['vaultTokenCredential'])
-        } else {
-            writeEnvFromCredential('DYNACONF_IQE_VAULT_TOKEN', options['vaultTokenCredential'])
-        }
-    } else {
-        if (options['vaultRoleIdCredential']) {
-            writeEnvFromCredential(
-                'DYNACONF_IQE_VAULT_ROLE_ID',
-                options['vaultRoleIdCredential']
-            )
-        }
-        if (options['vaultSecretIdCredential']) {
-            writeEnvFromCredential(
-                'DYNACONF_IQE_VAULT_SECRET_ID',
-                options['vaultSecretIdCredential']
-            )
-        }
+    if (options['vaultRoleIdCredential']) {
+        writeEnvFromCredential(
+            'DYNACONF_IQE_VAULT_ROLE_ID',
+            options['vaultRoleIdCredential']
+        )
     }
+    if (options['vaultSecretIdCredential']) {
+        writeEnvFromCredential(
+            'DYNACONF_IQE_VAULT_SECRET_ID',
+            options['vaultSecretIdCredential']
+        )
+    }
+//     }
 
     writeEnv('DYNACONF_IQE_VAULT_VERIFY', options['vaultVerify'].toString())
     writeEnv('DYNACONF_IQE_VAULT_MOUNT_POINT', options['vaultMountPoint'])
@@ -514,31 +447,7 @@ def writeVaultEnvVars(Map options) {
 
 
 def configIQE(String appName, Map options) {
-    /* Sets up the settings.local.yaml and .env files */
-    def settingsDir = "${env.WORKSPACE}/iqe_local_settings"
-    sh "rm -fr ${settingsDir}"
-    sh "mkdir -p ${settingsDir}"
-    sh "rm -f \"${env.WORKSPACE}/.env\""
-    writeEnv('ENV_FOR_DYNACONF', options['envName'])
-
-    if (options['settingsFromGit']) {
-        getSettingsFromGit(
-            options['settingsGitRepo'],
-            options['settingsGitPath'],
-            options['settingsGitCredentialsId'],
-            options['settingsGitBranch'],
-            settingsDir,
-            appName
-        )
-    }
-    else if (options['settingsFileCredentialsId']) {
-        getSettingsFromJenkinsSecret(options['settingsFileCredentialsId'], settingsDir)
-    }
-    writeEnv('IQE_TESTS_LOCAL_CONF_PATH', settingsDir)
-
-    if (options['useCustomSettings']) {
-        writeEnv("IQE_TESTS_${appName.toUpperCase()}_CONF_PATH", settingsDir)
-    }
+    /* Sets up vault and .env files */
 
     writeVaultEnvVars(options)
     options['extraEnvVars'].each { key, value ->

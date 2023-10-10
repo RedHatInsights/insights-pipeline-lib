@@ -3,66 +3,83 @@
  *
  * 1. sends a slack msg only when test results change from fail->pass or pass->fail
  * 2. for failed tests, a callback function can be used to generate your own custom error msg
- * 3. ignores jobs that have a "reload" status
- * 4. sends a slack msg to a separate channel when an unhandled error occurs (e.g. job errors
+ * 3. for passed tests, a callback function can be used to generate your own custom success msg
+ * 4. ignores jobs that have a "reload" status
+ * 5. sends a slack msg to a separate channel when an unhandled error occurs (e.g. job errors
         unrelated to the test itself failing)
  */
 
 
-def getCurrentMinusBuilds(number) {
+/*
+ * Function is taking care of getting previous N builds
+ *
+ * @param reqNumOfBuilds Integer -- number of requested builds
+ *
+ * @return List -- list with the builds (youngest build first)
+ */
+def getPreviousBuilds(reqNumOfBuilds) {
+
     int count = 0
-    currentList = []
-    
-    // otherwise our list will include currentMinusBuilds - 1
-    while(count != number) {
-        if (currentList) {
-            currentMinusX = pipelineUtils.getLastRealBuild(currentList.last())
+    prevBuildList = []
+
+    while(count != reqNumOfBuilds) {
+        if (prevBuildList) {
+            currentBuildMinusX = prevBuildList.last().getPreviousBuild()
         } else {
-            currentMinusX = pipelineUtils.getLastRealBuild(currentBuild)
+            currentBuildMinusX = currentBuild.getPreviousBuild()
         }
 
-        // Avoid adding nulls to our list
-        if (currentMinusX) {
-            echo "Found currentMinus${count + 1} non-RELOAD/non-ERROR build: ${currentMinusX.getDisplayName()}"
-            currentList.add(currentMinusX);
+        // Finish if no previous build
+        if (!currentBuildMinusX) {
+            break
         }
+        echo "Found currentBuildMinus${count + 1} build: ${currentBuildMinusX.getDisplayName()}"
+        prevBuildList.add(currentBuildMinusX);
+
         count++;
     }
-    return currentList
+    return prevBuildList
 }
 
-def checkResolved(buildList, currentMinusBuilds) {
-    int failures = 0
+/*
+ * Function checks if tests have been resolved by reading previous build results. 
+ * The oldest build shouldn't be successfull while other builds (reqNumBuildsPassBeforeResolved) have to be green.
+ *
+ * @param prevBuildList List -- list of previous builds
+ * @param reqNumBuldsToCountResolved Integer -- required number of builds to say tests were resolved
+ *
+ * @return Boolean -- list with the builds (youngest build first)
+ */
+def checkTestsResolved(prevBuildList, reqNumBuldsToCountResolved) {
 
-    for(build in buildList) { 
-        if (build.getResult().toString() != "SUCCESS") {
-            echo "build ${build.getDisplayName()}'s result was a ${build.getResult().toString()}"
-            failures++;
-        }
-    }
-
-    if (buildList.last().getResult().toString() != "SUCCESS" && failures == 1 && buildList.size() == currentMinusBuilds) {
-        // We went from a failure and have had a consistent run of successes since
-        return true
-    } else {
-        // We have had more than just the initial failure we were hoping to resolve
+    if (prevBuildList.size() != reqNumBuldsToCountResolved) {
+        // We expect to have enough builds to count if tests were resolved
         return false
     }
+
+    for (build in prevBuildList) {
+        if (build == prevBuildList.last()) {
+            // The oldest build can't be green to consider tests resolved
+            if (build.getResult().toString() != "SUCCESS") {
+                return true
+            }
+        }
+        // other builds have to be green to consider tests resolved
+        if (build.getResult().toString() != "SUCCESS") {
+            return false
+        }
+    }
+    return false
 }
 
+
 def call(args = [:]) {
-    def defaultSlackMsgCallback = { return "test failed" }
+    def defaultSlackMsgCallback = { return "tests failed" }
+    def defaultSlackSuccessMsgCallback = { return "tests succeded" }
 
     // arguments to pass to execIQETests
     def appConfigs = args['appConfigs']
-    def envs = args['envs']
     def options = args.get('options', [:])
-    def defaultMarker = args.get('defaultMarker', pipelineVars.defaultMarker)
-    def defaultFilter = args.get('defaultFilter')
-    def requirements = args.get('requirements')
-    def requirementsPriority = args.get('requirementsPriority')
-    def testImportance = args.get('testImportance')
-    def extraJobProperties = args.get('extraJobProperties', [])
     def lockName = args.get('lockName')
 
     // arguments specific to slack notifier
@@ -79,28 +96,30 @@ def call(args = [:]) {
     def errorSlackChannel = args['errorSlackChannel']
     // OPTIONAL: closure to call that generates detailed slack msg text when tests fail
     def slackMsgCallback = args.get('slackMsgCallback', defaultSlackMsgCallback)
+    // OPTIONAL: closure to call that generates detailed slack msg text when tests pass
+    def slackSuccessMsgCallback = args.get('slackSuccessMsgCallback', defaultSlackSuccessMsgCallback)
     // OPTIONAL: slack team subdomain
     def slackTeamDomain = args.get('slackTeamDomain', pipelineVars.slackDefaultTeamDomain)
     // OPTIONAL: slack integration token
     def slackTokenCredentialId = args.get('slackTokenCredentialId', null)
+    // currentMinusBuilds DEPRECATED
     // OPTIONAL: how many past builds to use before we mark the run as a success
     def currentMinusBuilds = args.get('currentMinusBuilds', 2)
+    // OPTIONAL: how many past builds to use before we mark the run as a success
+    def reqNumBuildsPassBeforeResolved = args.get('reqNumBuildsPassBeforeResolved', currentMinusBuilds)
 
-    builds = getCurrentMinusBuilds(currentMinusBuilds)
-    runResolved = checkResolved(builds, currentMinusBuilds)
+    previousBuilds = getPreviousBuilds(reqNumBuildsPassBeforeResolved)
+    def runResolved
+
+    if (previousBuilds) {
+        runResolved = checkTestsResolved(previousBuilds, reqNumBuildsPassBeforeResolved)
+    }
 
     def results
     try {
         results = execIQETests(
             appConfigs: appConfigs,
-            envs: envs,
             options: options,
-            defaultMarker: defaultMarker,
-            defaultFilter: defaultFilter,
-            requirements: requirements,
-            requirementsPriority: requirementsPriority,
-            testImportance: testImportance,
-            extraJobProperties: extraJobProperties,
             lockName: lockName
         )
 
@@ -108,9 +127,7 @@ def call(args = [:]) {
         if (!results) error("Found no test results, unexpected error must have occurred")
 
         if (results['failed']) {
-            if (alwaysSendFailureNotification || (!builds.last() || builds.last().getResult().toString() == "SUCCESS")) {
-                // result went from success -> failed
-                // run script to collect request ID info and send the failure slack msg
+            if (alwaysSendFailureNotification || previousBuilds.isEmpty() || previousBuilds.first().getResult().toString() == "SUCCESS") {
                 def slackMsg = slackMsgCallback()
                 slackUtils.sendMsg(
                     slackChannel: slackChannel,
@@ -122,28 +139,30 @@ def call(args = [:]) {
                 )
             }
         }
-        else if (runResolved) {
-            // result went from failed -> success *currentMinusBuilds
-            slackUtils.sendMsg(
-                slackChannel: slackChannel,
-                slackUrl: slackUrl,
-                slackTeamDomain: slackTeamDomain,
-                slackTokenCredentialId: slackTokenCredentialId,
-                msg: "test resolved",
-                result: "success"
-            )
-        }
-        else if (results['success'] && alwaysSendSuccessNotification) {
-            // result is pass and alwaysSendSuccessNotification is true
-            def slackMsg = slackMsgCallback()
-            slackUtils.sendMsg(
-                slackChannel: slackChannel,
-                slackUrl: slackUrl,
-                slackTeamDomain: slackTeamDomain,
-                slackTokenCredentialId: slackTokenCredentialId,
-                msg: slackMsg.toString(),
-                result: "success"
-            )
+        else if (results['success']) {
+            if (alwaysSendSuccessNotification) {
+                def slackMsg = slackSuccessMsgCallback()
+                slackUtils.sendMsg(
+                    slackChannel: slackChannel,
+                    slackUrl: slackUrl,
+                    slackTeamDomain: slackTeamDomain,
+                    slackTokenCredentialId: slackTokenCredentialId,
+                    msg: slackMsg.toString(),
+                    result: "success"
+                )
+            }
+            else if (runResolved) {
+                // result went from failed -> success * reqNumBuildsPassBeforeResolved
+                // no need to send notification about resolved tests in case you have alwaysSendSuccessNotification flag set to True
+                slackUtils.sendMsg(
+                    slackChannel: slackChannel,
+                    slackUrl: slackUrl,
+                    slackTeamDomain: slackTeamDomain,
+                    slackTokenCredentialId: slackTokenCredentialId,
+                    msg: "tests resolved",
+                    result: "success"
+                )
+            }
         }
     } catch (err) {
         if (currentBuild.description == "reload") return

@@ -2,10 +2,8 @@ class pipelineVars implements Serializable {
     String defaultMarker = "core"
 
     String jenkinsSvcAccount = "jenkins"
-    String defaultNameSpace = "jenkins"
 
     String gitSshCreds = "insightsdroid-ssh-git"
-    String gitHttpCreds = "InsightsDroidGitHubHTTP"
 
     String userPath = "~/.local/bin"
     String venvDir = "~/.venv"
@@ -13,8 +11,6 @@ class pipelineVars implements Serializable {
     String smokeTestResourceLabel = "smoke_test_projects"
     String e2eDeployDir = 'e2e-deploy'
     String e2eDeployRepo = 'https://github.com/RedHatInsights/e2e-deploy.git'
-    String jenkinsConfigRepo = 'https://github.com/RedHatInsights/iqe-jenkins.git'
-    String jenkinsConfigDir = 'iqe-jenkins'
     String e2eDeployRepoSsh = 'git@github.com:RedHatInsights/e2e-deploy.git'
     String e2eTestsDir = 'e2e-tests'
     String e2eTestsRepo = 'https://github.com/RedHatInsights/e2e-tests.git'
@@ -29,9 +25,6 @@ class pipelineVars implements Serializable {
     String defaultIbutsuUrl = "https://ibutsu-api.apps.ocp4.prod.psi.redhat.com"
     String defaultIbutsuFrontendUrl = "https://ibutsu.apps.ocp4.prod.psi.redhat.com"
 
-    String jenkinsSlaveImage = (
-        'registry.access.redhat.com/openshift3/jenkins-slave-base-rhel7:v3.11'
-    )
     String centralCIjenkinsSlaveImage = (
         'quay.io/insights-qe/jenkins-slave-base:latest'
     )
@@ -40,9 +33,8 @@ class pipelineVars implements Serializable {
     String seleniumImage = 'quay.io/redhatqe/selenium-standalone:latest'
 
     String defaultCloud = 'openshift'
-    String defaultNamespace = 'jenkins'
     String upshiftCloud = 'upshift'
-    String upshiftNameSpace = 'insights-qe-ci'
+    String upshiftNameSpace = 'jenkins-csb-insights-qe'
 
     String slackDefaultUrl = "https://redhat-internal.slack.com/services/hooks/jenkins-ci/"
     String slackDefaultChannel = '#insights-qe-feed'
