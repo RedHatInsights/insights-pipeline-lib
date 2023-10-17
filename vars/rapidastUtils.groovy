@@ -2,7 +2,7 @@
 
 
 def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
-    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:latest') {
+    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.3.0-rc2') {
 
         stage("Set Build Rapidast for ${ServiceName} service") {
              currentBuild.displayName = "#"+ env.BUILD_NUMBER + " " + "${ServiceName}"
@@ -22,7 +22,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
         }
 
         stage("Collect artifacts") {
-            archiveArtifacts allowEmptyArchive: true, artifacts: "results/${ServiceName}/**/zap/*.*, , results.html"
+            archiveArtifacts allowEmptyArchive: true, artifacts: "results/${ServiceName}/**/zap/*.*, , results.html, config/config.yaml"
             publishHTML([allowMissing: true, alwaysLinkToLastBuild: false, keepAll: true, reportDir: '', reportFiles: 'results/*/*/zap/*.html', reportName: 'report', reportTitles: '${ServiceName} Rapidast Scanner Report'])
         }
 
@@ -61,8 +61,8 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
     // Parse the options for rapidast and add it to the config file. Always pull the latest config file
 
-    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: 'main'
-    def filename = 'config/config-template-long.yaml'
+    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.3.0-rc2'
+    def filename = 'tests/configmodel/older-schemas/v4.yaml'
 
     // Comment the fields not required.
     sh "sed -i 's/importUrlsFromFile:/# importUrlsFromFile:/' ${filename}"
@@ -103,12 +103,8 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
     data.general.authentication.parameters.client_id = "rhsm-api"
     data.general.authentication.parameters.token_endpoint = pipelineVars.stageSSOUrl
     data.general.container.type = "none"
-    try {
-        data.scanners.zap.miscOptions.oauth2OpenapiManualDownload = "True"
-    } catch(Exception e) {
-        println("Exception: ${e}")
-        data.scanners.zap.miscOptions.oauth2ManualDownload = "True"
-    }
+    data.scanners.zap.passiveScan.disabledRules = "2,10015,10027,10054,10096,10024"
+    data.scanners.zap.miscOptions.oauth2OpenapiManualDownload = true
     //create new with updated YAML config
     writeYaml file: 'config/config.yaml', data: data
     echo "Configuration Value: " + data
