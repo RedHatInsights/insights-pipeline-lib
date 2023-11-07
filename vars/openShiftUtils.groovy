@@ -1,18 +1,6 @@
 // Helpers for spinning up jenkins slaves running on OpenShift and other OpenShift utils
 
-
-def getDefaultSlaveImage(String cloud) {
-    if (cloud.equals(pipelineVars.upshiftCloud)) return pipelineVars.centralCIjenkinsSlaveImage
-    else return pipelineVars.jenkinsSlaveImage
-}
-
-
-def getDefaultSlaveNamespace(String cloud) {
-    if (cloud.equals(pipelineVars.upshiftCloud)) return pipelineVars.upshiftNameSpace
-    else return pipelineVars.defaultNameSpace
-}
-
-
+//TODO check if needed
 private def setDevPiEnvVars(String image, String cloud, Collection envVars) {
     // If using the IQE tests core image on the external OpenShift deployment, use the devpi
     // server deployed in that external cluster
@@ -78,8 +66,8 @@ def withNode(Map parameters = [:], Closure body) {
     */
     def image = parameters.get('image', pipelineVars.iqeCoreImage)
     def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
-    def jenkinsSlaveImage = parameters.get('jenkinsSlaveImage', getDefaultSlaveImage(cloud))
-    def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
+    def jenkinsSlaveImage = parameters.get('jenkinsSlaveImage', pipelineVars.centralCIjenkinsSlaveImage)
+    def namespace = parameters.get('namespace', pipelineVars.upshiftNameSpace)
     def requestCpu = parameters.get('resourceRequestCpu', "200m")
     def limitCpu = parameters.get('resourceLimitCpu', "500m")
     def requestMemory = parameters.get('resourceRequestMemory', "100Mi")
@@ -153,8 +141,8 @@ def withUINode(Map parameters = [:], Closure body) {
     Spins up a pod with 3 containers: jnlp, selenium, and specified 'image'
     */
     def cloud = parameters.get('cloud', pipelineVars.upshiftCloud)
-    def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
-    def slaveImage = parameters.get('slaveImage', getDefaultSlaveImage(cloud))
+    def namespace = parameters.get('namespace', pipelineVars.upshiftNameSpace)
+    def slaveImage = parameters.get('slaveImage', pipelineVars.centralCIjenkinsSlaveImage)
     def seleniumImage = parameters.get('seleniumImage', pipelineVars.seleniumImage)
     def image = parameters.get('image', pipelineVars.iqeCoreImage)
     def requestCpu = parameters.get('resourceRequestCpu', "500m")
@@ -254,8 +242,8 @@ def withJnlpNode(Map parameters = [:], Closure body) {
     Spins up a pod with a single jnlp container
     */
     def cloud = parameters.get('cloud', pipelineVars.defaultCloud)
-    def image = parameters.get('image', getDefaultSlaveImage(cloud))
-    def namespace = parameters.get('namespace', getDefaultSlaveNamespace(cloud))
+    def image = parameters.get('image', pipelineVars.centralCIjenkinsSlaveImage)
+    def namespace = parameters.get('namespace', pipelineVars.upshiftNameSpace)
     def jenkinsSvcAccount = parameters.get('jenkinsSvcAccount', pipelineVars.jenkinsSvcAccount)
     def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
     def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")

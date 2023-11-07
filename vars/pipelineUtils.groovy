@@ -227,13 +227,3 @@ def checkForReload() {
 def throwIfAborted(Exception err) {
     if (currentBuild.result == "ABORTED") throw err
 }
-
-
-def getLastRealBuild(build) {
-    // find the first previous build that is not a 'reload' or 'error' build
-    if (build == null) return null
-    def previousBuild = build.getPreviousBuild()
-    if (previousBuild == null) return null
-    if (previousBuild.description != "reload" && previousBuild.description != "error") return previousBuild
-    else return getLastRealBuild(previousBuild)
-}
