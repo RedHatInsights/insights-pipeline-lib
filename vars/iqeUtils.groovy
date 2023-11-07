@@ -448,7 +448,7 @@ def writeVaultEnvVars(Map options) {
 
 def configIQE(String appName, Map options) {
     /* Sets up vault and .env files */
-
+    writeEnv('ENV_FOR_DYNACONF', options['envName'])
     writeVaultEnvVars(options)
     options['extraEnvVars'].each { key, value ->
         writeEnv(key, value instanceof Closure ? value(env) : value)
