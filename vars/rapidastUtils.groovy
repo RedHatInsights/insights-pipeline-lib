@@ -16,7 +16,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                  withCredentials([string(credentialsId: 'RTOKEN', variable: 'RTOKEN')]) {
                     sh "export RTOKEN=${RTOKEN}"
-                    sh "./rapidast.py --log-level debug --config config/config.yaml"
+                    //sh "./rapidast.py --log-level debug --config config/config.yaml"
                  }
             }
         }
@@ -27,51 +27,28 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
         }
 
         stage("Send data to Sitreps Grafana") {
-            catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                // There is a a dir that contains a timestamp which would be harder to predict, instead try to find resource.
-                def json_file = findFiles(glob: "results/${ServiceName}/**/zap/zap-report.json")[0]
-                def html = "${BUILD_URL}/report"
-                def raw_json = readJSON file: json_file.path
-                def data = [
-                  service: "${ServiceName}",
-                  plugin_name: "${PluginName}",
-                  report: raw_json,
-                  html_url: html
-                ]
-                def jsonData = groovy.json.JsonOutput.toJson(data)
-
-                def headers = [
-                    'Content-type': 'application/json',
-                    'Accept': 'text/plain'
-                ]
-                def response = httpRequest(
-                    url: pipelineVars.sitrepsRapidastUrl,
-                    httpMode: 'PUT',
-                    requestBody: jsonData,
-                    headers: headers
-                )
-                echo "Response status: ${response.status}"
-                echo "Response body: ${response.content}"
-            }
+            echo "sitreps step"
         }
 
         stage("Create Jira tickets for alerts") {
         //Typecast Jira from String to Hashmap for easier usage
-        Jira = typecast_string_toMap(Jira)
-        if (Jira) {
+        jiraMap = StringToMap(Jira)
+        if (jiraMap) {
+            echo "${jiraMap}"
             catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
-                 def sarif_file = findFiles(glob: "results/${ServiceName}/**/zap/zap-report.sarif.json")[0]
+                 //def sarif_file = findFiles(glob: "results/${ServiceName}/**/zap/zap-report.sarif.json")[0]
+                 sarif_file = "/fdsfsd/fsdf/sdfsd"
                  sh "git -c http.sslVerify=false clone https://gitlab.cee.redhat.com/fcanogab/sariftojira"
                  dir("sariftojira") {
                     withCredentials([string(credentialsId: 'JIRA_TOKEN', variable: 'JIRA_TOKEN')]) {
                         sh "export JIRA_TOKEN=${JIRA_TOKEN}"
-                        jira_component = (Jira.Component == null) ? '' : "-jc ${Jira.Component}"
-                        jira_labels =  (Jira.Labels == null) ? '' : "-jl ${Jira.Labels.join(' ')}"
+                        jira_component = (jiraMap.Component == null) ? '' : "-jc ${jiraMap.Component}"
+                        jira_labels =  (jiraMap.Labels == null) ? '' : "-jl ${jiraMap.Labels}"
                         sh "mv false_positives.json.example false_positives.json"
                         //Install dependencies python jira module via pip
                         echo "Installing pip and Jira module"
                         sh "python -m venv . && source bin/activate && pip install jira"
-                        sh "source bin/activate && python sarif_to_jira.py -p ${ServiceName} -t dast -s ../${sarif_file} -jp ${Jira.Project} -ja ${Jira.Assignee} ${jira_labels} ${jira_component} -u ${TargetUrl}"
+                        echo "source bin/activate && python sarif_to_jira.py -p ${ServiceName} -t dast -s ../${sarif_file} -jp ${jiraMap.Project} -ja ${jiraMap.Assignee} ${jira_labels} ${jira_component} -u ${TargetUrl}"
                     }
                  }
             }
@@ -138,15 +115,15 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
 
 }
 
-
-def typecast_string_toMap(String mapString) {
-
-    mapString = mapString.replaceAll('\\[|\\]','')
+def StringToMap(String JiraString) {
+    if (JiraString == '[:]') {
+        return [:] // Return an empty map if "[:]" is passed as input
+    }
+    JiraString = JiraString.replaceAll('\\[|\\]', '')
     def newMap = [:]
-    mapString.tokenize(',').each {
-    kvTuple = it.tokenize(':')
-    newMap[kvTuple[0].trim()] = kvTuple[1]
-
-}
+    JiraString.tokenize(',').each {
+        kvTuple = it.tokenize(':')
+        newMap[kvTuple[0].trim()] = kvTuple[1].trim()
+    }
     return newMap
 }
