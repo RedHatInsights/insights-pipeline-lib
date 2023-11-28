@@ -1,7 +1,7 @@
 @Library("github.com/RedHatInsights/insights-pipeline-lib@master") _
 
 
-def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, LinkedHashMap Jira=[:], String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
+def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Jira, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
     openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.3.0-rc2') {
 
         stage("Set Build Rapidast for ${ServiceName} service") {
@@ -56,6 +56,8 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
         }
 
         stage("Create Jira tickets for alerts") {
+            //Typecast Jira from String to Hashmap for easier usage
+            Jira = StringToMap(Jira)
             if (Jira) {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     def sarif_file = findFiles(glob: "results/${ServiceName}/**/zap/zap-report.sarif.json")[0]
@@ -64,7 +66,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                         withCredentials([string(credentialsId: 'JIRA_TOKEN', variable: 'JIRA_TOKEN')]) {
                             sh "export JIRA_TOKEN=${JIRA_TOKEN}"
                             jira_component = (Jira.Component == null) ? '' : "-jc ${Jira.Component}"
-                            jira_labels =  (Jira.Labels == null) ? '' : "-jl ${Jira.Labels.join(' ')}"
+                            jira_labels =  (Jira.Labels == null) ? '' : "-jl ${Jira.Labels}"
                             sh "mv false_positives.json.example false_positives.json"
                             //Install dependencies python jira module via pip
                             echo "Installing pip and Jira module"
@@ -133,4 +135,18 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
     writeYaml file: 'config/config.yaml', data: data
     echo "Configuration Value: " + data
 
+}
+
+
+def StringToMap(String JiraString) {
+    if (JiraString == '[:]') {
+        return [:] // Return an empty map if "[:]" is passed as input
+    }
+    JiraString = JiraString.replaceAll('\\[|\\]', '')
+    def newMap = [:]
+    JiraString.tokenize(',').each {
+        kvTuple = it.tokenize(':')
+        newMap[kvTuple[0].trim()] = kvTuple[1].trim()
+    }
+    return newMap
 }
