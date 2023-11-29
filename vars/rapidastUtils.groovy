@@ -15,7 +15,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
         stage("Run Rapidast for ${ServiceName} service") {
             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                  withCredentials([string(credentialsId: 'RTOKEN', variable: 'RTOKEN')]) {
-                    sh "export RTOKEN=${RTOKEN}"
+                    sh 'export RTOKEN=$RTOKEN'
                     sh "./rapidast.py --log-level debug --config config/config.yaml"
                  }
             }
@@ -57,21 +57,21 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 
         stage("Create Jira tickets for alerts") {
             //Typecast Jira from String to Hashmap for easier usage
-            Jira = StringToMap(Jira)
-            if (Jira) {
+            jiraMap = StringToMap(Jira)
+            if (jiraMap) {
                 catchError(buildResult: 'SUCCESS', stageResult: 'FAILURE') {
                     def sarif_file = findFiles(glob: "results/${ServiceName}/**/zap/zap-report.sarif.json")[0]
                     sh "git -c http.sslVerify=false clone https://gitlab.cee.redhat.com/fcanogab/sariftojira"
                     dir("sariftojira") {
                         withCredentials([string(credentialsId: 'JIRA_TOKEN', variable: 'JIRA_TOKEN')]) {
                             sh "export JIRA_TOKEN=${JIRA_TOKEN}"
-                            jira_component = (Jira.Component == null) ? '' : "-jc ${Jira.Component}"
-                            jira_labels =  (Jira.Labels == null) ? '' : "-jl ${Jira.Labels}"
+                            jira_component = (jiraMap.Component == null) ? '' : "-jc ${jiraMap.Component}"
+                            jira_labels =  (jiraMap.Labels == null) ? '' : "-jl ${jiraMap.Labels}"
                             sh "mv false_positives.json.example false_positives.json"
                             //Install dependencies python jira module via pip
                             echo "Installing pip and Jira module"
                             sh "python -m venv . && source bin/activate && pip install jira"
-                            sh "source bin/activate && python sarif_to_jira.py -p ${ServiceName} -t dast -s ../${sarif_file} -jp ${Jira.Project} -ja ${Jira.Assignee} ${jira_labels} ${jira_component} -u ${TargetUrl}"
+                            sh "source bin/activate && python sarif_to_jira.py -p ${ServiceName} -t dast -s ../${sarif_file} -jp ${jiraMap.Project} -ja ${jiraMap.Assignee} ${jira_labels} ${jira_component} -u ${TargetUrl}"
                         }
                     }
                 }
