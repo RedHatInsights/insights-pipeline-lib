@@ -374,6 +374,12 @@ def runIQE(String plugin, Map appOptions) {
         }
     }
 
+    // archive Ibutsu artifacts
+    archiveArtifacts(
+        artifacts: "*.tar.gz",
+        allowEmptyArchive: true
+    )
+
     catchError {
         archiveArtifacts "iqe-${plugin}-*.log"
         junit "junit-${plugin}-*.xml"
