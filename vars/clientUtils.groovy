@@ -355,7 +355,7 @@ def runTests(Map parameters = [:]){
             """
         }
         if (ibutsu) {
-            pytestParam = "${pytestParam} --ibutsu https://ibutsu-api.apps.ocp4.prod.psi.redhat.com --ibutsu-source stg-jenkins"
+            pytestParam = "${pytestParam} --ibutsu https://ibutsu-api.insights.corp.redhat.com --ibutsu-source stg-jenkins"
             if (env) {
                 pytestParam = "${pytestParam} --ibutsu-data env=${env}"
             }

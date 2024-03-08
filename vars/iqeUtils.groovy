@@ -251,7 +251,7 @@ def runIQE(String plugin, Map appOptions) {
             // if xdist is disabled, just act like we have no parallel tests to run
             collectionStatus = 5
         }
-  
+
         // status code 5 means no tests collected
         if (collectionStatus == 5) {
             noParallelTests = true
@@ -297,7 +297,7 @@ def runIQE(String plugin, Map appOptions) {
             // if xdist is enabled, modify marker
             markerArgs = marker ? "-m \"not parallel and (${marker})\"" : "-m \"not parallel\""
         }
-  
+
         // check that there are actually tests to run
         collectionStatus = sh(
             script: (
@@ -359,7 +359,7 @@ def runIQE(String plugin, Map appOptions) {
 
         // if there were no failures recorded, it's a success
         result = result ?: "SUCCESS"
-        
+
         if (screenshotsDir) {
             dir(screenshotsDir) {
                 archiveArtifacts(
@@ -553,7 +553,7 @@ def writeIbutsuHtml() {
     writeFile(
         file: "ibutsu.html",
         text: (
-            "<a href=\"https://ibutsu.apps.ocp4.prod.psi.redhat.com/results" +
+            "<a href=\"https://ibutsu.insights.corp.redhat.com/results" +
             "?metadata.jenkins.build_number=${env.BUILD_NUMBER}" +
             "&metadata.jenkins.job_name=${env.JOB_NAME}\">Click here</a>"
         )
