@@ -198,7 +198,6 @@ def withUINode(Map parameters = [:], Closure body) {
                     envVar(key: 'SE_SCREEN_WIDTH', value: "1920"),
                     envVar(key: 'SE_NODE_MAX_SESSIONS', value: "2"),
                     envVar(key: 'SE_NODE_OVERRIDE_MAX_SESSIONS', value: "true"),
-
                 ],
             ),
             containerTemplate(
