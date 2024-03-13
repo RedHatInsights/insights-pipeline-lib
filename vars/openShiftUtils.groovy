@@ -193,7 +193,11 @@ def withUINode(Map parameters = [:], Closure body) {
                 resourceRequestMemory: seleniumRequestMemory,
                 resourceLimitMemory: seleniumLimitMemory,
                 envVars: [
-                    envVar(key: 'HOME', value: '/home/selenium'),
+                    envVar(key: 'SE_VNC_NO_PASSWORD', value: "1"),
+                    envVar(key: 'SE_SCREEN_HEIGHT', value: "1080"),
+                    envVar(key: 'SE_SCREEN_WIDTH', value: "1920"),
+                    envVar(key: 'SE_NODE_MAX_SESSIONS', value: "2"),
+                    envVar(key: 'SE_NODE_OVERRIDE_MAX_SESSIONS', value: "true"),
                 ],
             ),
             containerTemplate(
