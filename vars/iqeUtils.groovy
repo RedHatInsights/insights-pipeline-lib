@@ -94,7 +94,12 @@ private def parseOptions(Map options) {
     options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
 
     // a Map of additional env vars to set in the .env file before running iqe
-    options['extraEnvVars'] = options.get('extraEnvVars', [:])
+    extraEnvVars = options.get('extraEnvVars', [:])
+    // if we are running UI tests, force IQE to use default browser
+    if (options['ui'] && !extraEnvVars.containsKey('DYNACONF_MAIN__use_browser')){
+       extraEnvVars['DYNACONF_MAIN__use_browser'] = pipelineVars.defaultSeleniumBrowser
+    }
+    options['extraEnvVars'] = extraEnvVars
 
     // parsing of vault env vars handled in 'writeVaultEnvVars' below
 
