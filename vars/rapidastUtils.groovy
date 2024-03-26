@@ -2,21 +2,21 @@
 
 
 def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Jira, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
-    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.3.0-rc2') {
+    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.5.0') {
 
         stage("Set Build Rapidast for ${ServiceName} service") {
              currentBuild.displayName = "#"+ env.BUILD_NUMBER + " " + "${ServiceName}"
         }
 
         stage("Prepare configs for ${ServiceName} Service") {
-            parse_rapidast_options("${ServiceName}","${ApiScanner}","${TargetUrl}","${ApISpecUrl}")
+             parse_rapidast_options("${ServiceName}","${ApiScanner}","${TargetUrl}","${ApISpecUrl}")
         }
 
         stage("Run Rapidast for ${ServiceName} service") {
             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                  withCredentials([string(credentialsId: 'RTOKEN', variable: 'RTOKEN')]) {
                     sh 'export RTOKEN=$RTOKEN'
-                    sh "./rapidast.py --log-level debug --config config/config.yaml"
+                    sh "./rapidast.py --config config/config.yaml"
                  }
             }
         }
@@ -70,8 +70,8 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                             sh "mv false_positives.json.example false_positives.json"
                             //Install dependencies python jira module via pip
                             echo "Installing pip and Jira module"
-                            sh "python -m venv . && source bin/activate && pip install jira"
-                            sh "source bin/activate && python sarif_to_jira.py -p ${ServiceName} -t dast -s ../${sarif_file} -jp ${jiraMap.Project} -ja ${jiraMap.Assignee} ${jira_labels} ${jira_component} -u ${TargetUrl}"
+                            sh "python3 -m venv . && source bin/activate && pip install jira"
+                            sh "source bin/activate && python3 sarif_to_jira.py -p ${ServiceName} -t dast -s ../${sarif_file} -jp ${jiraMap.Project} -ja ${jiraMap.Assignee} ${jira_labels} ${jira_component} -u ${TargetUrl}"
                         }
                     }
                 }
@@ -87,7 +87,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
     // Parse the options for rapidast and add it to the config file. Always pull the latest config file
 
-    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.3.0-rc2'
+    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.5.0-rc1'
     def filename = 'tests/configmodel/older-schemas/v4.yaml'
 
     // Comment the fields not required.
@@ -104,9 +104,18 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         sh "sed -i 's/graphql:/# graphql:/' ${filename}"
         sh "sed -i 's/spiderAjax:/# spiderAjax:/' ${filename}"
         sh "sed -i 's/spider:/# spider:/' ${filename}"
+        sh "sed -i 's/apiUrl:/apiUrl1:/' ${filename}"
         data = readYaml file: filename
         data.scanners.zap.apiScan.target = "${TargetUrl}"
-        data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
+        //Workaround for SWATCH-2347
+        if ("${ServiceName}" == "CostManagement") {
+            sh "redocly bundle ${ApISpecUrl} -o resolved-redocly.json"
+            data.scanners.zap.apiScan.apis.apiFile = "resolved-redocly.json"
+            sh "sed -i 's/apiUrl:/# apiUrl:/' ${filename}"
+        }
+        else {
+            data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
+        }
     }
     else if ("${ApiScanner}" == "graphql") {
         sh "sed -i 's/apiScan:/# apiScan:/' ${filename}"
