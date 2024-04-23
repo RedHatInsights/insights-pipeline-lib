@@ -2,7 +2,7 @@
 
 
 def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Jira, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
-    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.5.0') {
+    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.5.1-rc1') {
 
         stage("Set Build Rapidast for ${ServiceName} service") {
              currentBuild.displayName = "#"+ env.BUILD_NUMBER + " " + "${ServiceName}"
@@ -14,10 +14,17 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 
         stage("Run Rapidast for ${ServiceName} service") {
             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
-                 withCredentials([string(credentialsId: 'RTOKEN', variable: 'RTOKEN')]) {
+                def secrets = [
+                    [path: 'insights/secrets/qe/stage/swatch/rapidast_user', engineVersion: 2, secretValues: [
+                    [envVar: 'RTOKEN', vaultKey: 'RTOKEN']]],
+                ]
+                def configuration = [vaultUrl: 'https://vault.devshift.net/',
+                                         vaultCredentialId: 'vault-approle-cred',
+                                         engineVersion: 1]
+                withVault([configuration: configuration, vaultSecrets: secrets]) {
                     sh 'export RTOKEN=$RTOKEN'
                     sh "./rapidast.py --config config/config.yaml"
-                 }
+                }
             }
         }
 
@@ -70,7 +77,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                             sh "mv false_positives.json.example false_positives.json"
                             //Install dependencies python jira module via pip
                             echo "Installing pip and Jira module"
-                            sh "python3 -m venv . && source bin/activate && pip install jira"
+                            sh "python3 -m venv . && source bin/activate && pip install pyyaml jira"
                             sh "source bin/activate && python3 sarif_to_jira.py -p ${ServiceName} -t dast -s ../${sarif_file} -jp ${jiraMap.Project} -ja ${jiraMap.Assignee} ${jira_labels} ${jira_component} -u ${TargetUrl}"
                         }
                     }
@@ -87,7 +94,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
     // Parse the options for rapidast and add it to the config file. Always pull the latest config file
 
-    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.5.0-rc1'
+    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.5.1-rc1'
     def filename = 'tests/configmodel/older-schemas/v4.yaml'
 
     // Comment the fields not required.
