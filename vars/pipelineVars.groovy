@@ -48,7 +48,7 @@ class pipelineVars implements Serializable {
     String quayPushCredentialsId = "quay-cloudservices-push-token"
     String stageSSOUrl = "https://sso.stage.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 
-    String sitrepsRapidastUrl = "https://sitreps-backend-insights-qe-sitreps.apps.ocp-c1.prod.psi.redhat.com/api/v1/rapidast/"
+    String sitrepsRapidastUrl = "https://sitreps-api.apps.int.gpc.ocp-hub.prod.psi.redhat.com/api/v1/rapidast"
 
     def rhsmUrl = [
         qa: 'subscription.rhsm.qa.redhat.com',
