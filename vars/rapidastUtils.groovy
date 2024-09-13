@@ -123,6 +123,10 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         else {
             data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
         }
+        if ("${ServiceName}" == "OcpVulnerability") {
+            def policy = 'scanners/zap/policies/API-scan-minimal.policy'
+            sh "sed -z -i 's|<p40018>\\n            <enabled>true|<p40018>\\n            <enabled>false|' ${policy}"
+        }
     }
     else if ("${ApiScanner}" == "graphql") {
         sh "sed -i 's/apiScan:/# apiScan:/' ${filename}"
