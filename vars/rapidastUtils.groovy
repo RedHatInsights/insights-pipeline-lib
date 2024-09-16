@@ -2,7 +2,7 @@
 
 
 def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Jira, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
-    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.5.1-rc1') {
+    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.7.0-rc1') {
 
         stage("Set Build Rapidast for ${ServiceName} service") {
              currentBuild.displayName = "#"+ env.BUILD_NUMBER + " " + "${ServiceName}"
@@ -94,7 +94,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
     // Parse the options for rapidast and add it to the config file. Always pull the latest config file
 
-    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.5.1-rc1'
+    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.7.0-rc1'
     def filename = 'tests/configmodel/older-schemas/v4.yaml'
 
     // Comment the fields not required.
@@ -118,9 +118,17 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         if ("${ServiceName}" == "CostManagement") {
             sh "redocly bundle ${ApISpecUrl} -o resolved-redocly.json"
             data.scanners.zap.apiScan.apis.apiFile = "resolved-redocly.json"
-            sh "sed -i 's/apiUrl:/# apiUrl:/' ${filename}"
+            data.scanners.zap.apiScan.apis.remove('apiUrl')
+        }
+        else if ("${ServiceName}" == "Host-Inventory") {
+            echo "Using HBI workaround to clean the json for recursion"
+            sh "curl --proxy squid.corp.redhat.com:3128 https://console.stage.redhat.com/api/inventory/v1/openapi.json -o test.json"
+            sh "python3 utils/remove_openapi_ref_recursion.py -f test.json"
+            data.scanners.zap.apiScan.apis.apiFile = "cleaned_openapi.json"
+            data.scanners.zap.apiScan.apis.remove('apiUrl')
         }
         else {
+            data.scanners.zap.apiScan.apis.remove('apiFile')
             data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
         }
         if ("${ServiceName}" == "OcpVulnerability") {
