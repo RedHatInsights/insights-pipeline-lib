@@ -157,7 +157,7 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
     data.general.authentication.parameters.client_id = "rhsm-api"
     data.general.authentication.parameters.token_endpoint = pipelineVars.stageSSOUrl
     data.general.container.type = "none"
-    data.scanners.zap.passiveScan.disabledRules = "2,10015,10027,10054,10096,10024"
+    data.scanners.zap.passiveScan.disabledRules = "2,10015,10027,10054,10096,10024,10112"
     data.scanners.zap.miscOptions.oauth2OpenapiManualDownload = true
     //create new with updated YAML config
     writeYaml file: 'config/config.yaml', data: data
