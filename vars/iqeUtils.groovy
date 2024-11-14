@@ -558,7 +558,9 @@ def writeIbutsuHtml() {
     writeFile(
         file: "ibutsu.html",
         text: (
-            "<a href=\"https://ibutsu.insights.corp.redhat.com/results" +
+            "<a href=\"${pipelineVars.defaultIbutsuFrontendUrl}/project/" +
+            "${pipelineVars.defaultIbutsuInsightsProject}" +
+            "/results/" +
             "?metadata.jenkins.build_number=${env.BUILD_NUMBER}" +
             "&metadata.jenkins.job_name=${env.JOB_NAME}\">Click here</a>"
         )
