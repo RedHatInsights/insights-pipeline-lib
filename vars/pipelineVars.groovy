@@ -24,6 +24,7 @@ class pipelineVars implements Serializable {
     String defaultVaultMountPoint = "insights"
     String defaultIbutsuUrl = "https://ibutsu-api.insights.corp.redhat.com"
     String defaultIbutsuFrontendUrl = "https://ibutsu.insights.corp.redhat.com"
+    String defaultIbutsuInsightsProject = "3915c900-85fc-1222-833c-10d51af56f2e"
 
     String centralCIjenkinsSlaveImage = (
         'quay.io/insights-qe/jenkins-slave-base:latest'
