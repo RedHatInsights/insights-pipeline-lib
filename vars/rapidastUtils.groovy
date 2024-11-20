@@ -1,5 +1,6 @@
 @Library("github.com/RedHatInsights/insights-pipeline-lib@master") _
 
+def slackMessage
 
 def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Jira, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
     openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.7.0-rc1') {
@@ -23,8 +24,50 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                                          engineVersion: 1]
                 withVault([configuration: configuration, vaultSecrets: secrets]) {
                     sh 'export RTOKEN=$RTOKEN'
-                    sh "./rapidast.py --config config/config.yaml"
+                    def results_rapidast = sh(returnStdout: true, script: './rapidast.py --config config/config.yaml && echo $?')
+
+                    splLines = results_rapidast.split('\n')
+                    def cmd_status = splLines[-1]
+
+                    if (cmd_status.toInteger() != 0) {
+                        echo "======================================================="
+                        echo "rapidast command failed with error message ${results_rapidast}"
+                        echo "======================================================="
+                    }
+                    else {
+                        echo "STDOUT: ${results_rapidast}"
+                    }
+
+                    splLines.each { line ->
+                        if (line =~ /WARN-NEW:\s*(\d+)/) {
+                            warnNewFound = true
+                            warnNewCount = (line =~ /WARN-NEW:\s*(\d+)/)[0][1]
+                        }
+                    }
+
+                    if (warnNewFound) {
+                        if (warnNewCount == '0') {
+                            echo "WARN-NEW is 0."
+                        } else {
+                            def slackMessage = ("""
+                                WARN-NEW is not 0.
+                                =======================================================
+                                rapidast command for ${ServiceName} completed successfully, but warnings were raised.
+                                Because of this, the build was marked as UNSTABLE.
+                                Please investigate output of rapidast command.
+                                =======================================================""".stripIndent())
+                            env.slackMessage = slackMessage
+
+                            echo "${slackMessage}"
+                            currentBuild.result = "UNSTABLE"
+
+                        }
+                    } else {
+                        echo "WARN-NEW not found in the output."
+                    }
+
                 }
+
             }
         }
 
@@ -85,6 +128,20 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
             }
             else {
                 echo "Skipping Step for ${ServiceName} No Jira arguments configured"
+            }
+        }
+
+        stage("Send slack message if build is UNSTABLE"){
+            if (currentBuild.result == "UNSTABLE") {
+                jiraMap = StringToMap(Jira)
+                if (jiraMap) {
+                    if (jiraMap.Assignee != null) {
+                        slackUtils.sendMsg([msg: "${env.slackMessage}", slackChannel: "@" + jiraMap.Assignee, slackTokenCredentialId: 'slackToken'])
+                    }
+                }
+                else {
+                    echo "Assignee key/value pair not defined in groovy file."
+                }
             }
         }
     }
