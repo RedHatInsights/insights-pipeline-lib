@@ -63,7 +63,7 @@ In this repository you can find 2 methods that can be useful for you:
   - **image** - REQUIRED: the container image that the tests will run with in OpenShift
     - Example: `quay.io/foo/bar:my_plugin`
   - **namespace** - OPTIONAL: the namespace that the test pods run in
-    - Example: `'jenkins-csb-insights-qe'`
+    - Example: `'dno--jenkins-csb-insights-qe'`
   - **cloud** - OPTIONAL: the name of the 'cloud' under the Jenkins kubernetes plugin settings
     - Example: `'openshift'`
   - **marker** - OPTIONAL: the pytest marker expression (-m) used when running tests
@@ -109,7 +109,7 @@ In this repository you can find 2 methods that can be useful for you:
 - **lockName** - OPTIONAL: name of lock for pipeline that will help to avoid running pipelines at the same time
 
 **Note** that you have 2 types of options: application options and global options. App options overwrite global options
-for app specifically. This is made for case when you need to define multiple pipelines run  in parallel. 
+for app specifically. This is made for case when you need to define multiple pipelines run  in parallel.
 Options affects every pipeline while appConfigs options affect only specific application pipeline.
 
 **execIQETestsWithNotifier** takes same arguments as execIQETests and some additional:

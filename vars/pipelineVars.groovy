@@ -37,7 +37,7 @@ class pipelineVars implements Serializable {
 
     String defaultCloud = 'openshift'
     String upshiftCloud = 'upshift'
-    String upshiftNameSpace = 'jenkins-csb-insights-qe'
+    String upshiftNameSpace = 'dno--jenkins-csb-insights-qe'
 
     String slackDefaultUrl = "https://redhat-internal.slack.com/services/hooks/jenkins-ci/"
     String slackDefaultChannel = '#insights-qe-feed'
