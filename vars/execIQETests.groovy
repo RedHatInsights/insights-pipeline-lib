@@ -20,7 +20,7 @@ def call(args = [:]) {
 
     options['envName'] = options.get('envName', '')
     options['marker'] = options.get('marker', '')
-    options['namespace'] = options.get('namespace', 'jenkins-csb-insights-qe')
+    options['namespace'] = options.get('namespace', 'dno--jenkins-csb-insights-qe')
     options['filter'] = options.get('filter', '')
     options['requirements'] = options.get('requirements', '')
     options['requirementsPriority'] = options.get('requirementsPriority', '')
