@@ -1,7 +1,7 @@
 class pipelineVars implements Serializable {
     String defaultMarker = "core"
 
-    String jenkinsSvcAccount = "default"
+    String jenkinsSvcAccount = "jenkins"
 
     String gitSshCreds = "insightsdroid-ssh-git"
 
