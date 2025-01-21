@@ -1,7 +1,7 @@
 class pipelineVars implements Serializable {
     String defaultMarker = "core"
 
-    String jenkinsSvcAccount = "jenkins"
+    String jenkinsSvcAccount = "default"
 
     String gitSshCreds = "insightsdroid-ssh-git"
 
@@ -27,7 +27,7 @@ class pipelineVars implements Serializable {
     String defaultIbutsuInsightsProject = "3915c900-85fc-1222-833c-10d51af56f2e"
 
     String centralCIjenkinsSlaveImage = (
-        'quay.io/insights-qe/jenkins-slave-base:latest'
+        'image-registry.openshift-image-registry.svc:5000/dno--jenkins-csb-insights-qe/main-jenkins-agent:latest'
     )
     String iqeCoreImage = 'quay.io/cloudservices/iqe-core:latest'
     String iqeTestsImage = 'quay.io/cloudservices/iqe-tests:latest'
@@ -37,7 +37,7 @@ class pipelineVars implements Serializable {
 
     String defaultCloud = 'openshift'
     String upshiftCloud = 'upshift'
-    String upshiftNameSpace = 'jenkins-csb-insights-qe'
+    String upshiftNameSpace = 'dno--jenkins-csb-insights-qe'
 
     String slackDefaultUrl = "https://redhat-internal.slack.com/services/hooks/jenkins-ci/"
     String slackDefaultChannel = '#insights-qe-feed'
