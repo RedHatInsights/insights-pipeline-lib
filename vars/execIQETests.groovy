@@ -31,6 +31,7 @@ def call(args = [:]) {
     options['cloud'] = options.get('cloud', pipelineVars.upshiftCloud)
     options['timeout'] = options.get('timeout', 150)
     options['jenkinsSlaveImage'] = options.get('jenkinsSlaveImage', pipelineVars.centralCIjenkinsSlaveImage)
+    options['limitMemory'] = options.get('resourceLimitMemory', "1Gi")
 
     // Run the tests
     if (!lockName) lockName = "${options['envName']}-test"
