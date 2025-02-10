@@ -558,6 +558,7 @@ def writeIbutsuHtml() {
     writeFile(
         file: "ibutsu.html",
         text: (
+            "<p>⚠️ You need to be logged in first to access the page</p>" +
             "<a href=\"${pipelineVars.defaultIbutsuFrontendUrl}/project/" +
             "${pipelineVars.defaultIbutsuInsightsProject}" +
             "/results/" +
