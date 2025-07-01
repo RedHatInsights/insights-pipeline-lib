@@ -562,8 +562,8 @@ def writeIbutsuHtml() {
             "<a href=\"${pipelineVars.defaultIbutsuFrontendUrl}/project/" +
             "${pipelineVars.defaultIbutsuInsightsProject}" +
             "/results/" +
-            "?metadata.jenkins.build_number=${env.BUILD_NUMBER}" +
-            "&metadata.jenkins.job_name=${env.JOB_NAME}\">Click here</a>"
+            "?metadata.jenkins.build_number=%5Beq%5D${env.BUILD_NUMBER}" +
+            "&metadata.jenkins.job_name=%5Beq%5D${env.JOB_NAME}\">Click here</a>"
         )
     )
     archiveArtifacts "ibutsu.html"
