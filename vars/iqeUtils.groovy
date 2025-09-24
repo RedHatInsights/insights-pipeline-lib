@@ -452,17 +452,26 @@ def writeVaultEnvVars(Map options) {
 }
 
 
-def configIQE(String appName, Map options) {
-    /* Sets up vault and .env files */
-    writeEnv('ENV_FOR_DYNACONF', options['envName'])
-    writeVaultEnvVars(options)
+private def setupIbutsuEnvVars(Map options) {
+    /* Configure ibutsu environment variables based on options */
+    
+    // Set defaults if not already set (for backward compatibility)
+    options['ibutsu'] = options.get('ibutsu', true)
+    options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
     
     // Set up ibutsu environment variables if ibutsu is enabled
     if (options['ibutsu']) {
         writeEnv('IBUTSU_MODE', options['ibutsuUrl'])
         writeEnv('IBUTSU_PROJECT', 'insights-qe')
-        writeEnv('IBUTSU_SOURCE', env.BUILD_TAG ?: 'unknown')
+        writeEnv('IBUTSU_SOURCE', env.BUILD_TAG ?: 'csb-jenkins')
     }
+}
+
+def configIQE(String appName, Map options) {
+    /* Sets up vault and .env files */
+    writeEnv('ENV_FOR_DYNACONF', options['envName'])
+    writeVaultEnvVars(options)
+    setupIbutsuEnvVars(options)
     
     options['extraEnvVars'].each { key, value ->
         writeEnv(key, value instanceof Closure ? value(env) : value)
