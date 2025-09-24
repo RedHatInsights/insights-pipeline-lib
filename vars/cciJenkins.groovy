@@ -42,6 +42,9 @@ def configIQEArgs(Map args = [:]) {
     args['vaultSecretIdCredential'] = args.get('vaultSecretIdCredential', pipelineVars.defaultVaultSecretIdCredential)
     args['vaultUrl'] = args.get('vaultUrl', pipelineVars.defaultVaultUrl)
     args['vaultVerify'] = args.get('vaultVerify', true)
+    // Add ibutsu options for consistency with parseOptions
+    args['ibutsu'] = args.get('ibutsu', true)
+    args['ibutsuUrl'] = args.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
     return args
 }
 

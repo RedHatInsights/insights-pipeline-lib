@@ -156,7 +156,6 @@ def runIQE(String plugin, Map appOptions) {
     def requirementsArgs = ""
     def requirementsPriorityArgs = ""
     def testImportanceArgs = ""
-    def ibutsuArgs = ""
     def browserlog = ""
     def reportportalArgs = ""
     def netlog = ""
@@ -183,9 +182,7 @@ def runIQE(String plugin, Map appOptions) {
         reportportalArgs = "--reportportal"
     }
 
-    if (appOptions['ibutsu']) {
-        ibutsuArgs = "-o ibutsu_server=${appOptions['ibutsuUrl']} -o ibutsu_source=${env.BUILD_TAG}"
-    }
+    // ibutsu configuration now handled via environment variables in configIQE
 
     if (appOptions["browserlog"]) {
         browserlog = "--browserlog"
@@ -280,7 +277,6 @@ def runIQE(String plugin, Map appOptions) {
                     ${testImportanceArgs} \
                     ${extraArgs} \
                     ${xdistArgs} \
-                    ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-parallel.log \
                     ${browserlog} \
                     ${reportportalArgs} \
@@ -341,7 +337,6 @@ def runIQE(String plugin, Map appOptions) {
                     ${requirementsPriorityArgs} \
                     ${testImportanceArgs} \
                     ${extraArgs} \
-                    ${ibutsuArgs} \
                     --log-file=iqe-${plugin}-sequential.log \
                     ${browserlog} \
                     ${reportportalArgs} \
@@ -457,10 +452,29 @@ def writeVaultEnvVars(Map options) {
 }
 
 
+private def setupIbutsuEnvVars(Map options) {
+    /* Configure ibutsu environment variables based on options */
+    
+    // Set defaults if not already set (for backward compatibility)
+    options['ibutsu'] = options.get('ibutsu', true)
+    options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
+    
+    // Set up ibutsu environment variables if ibutsu is enabled
+    if (options['ibutsu']) {
+        writeEnv('IBUTSU_MODE', options['ibutsuUrl'])
+        writeEnv('IBUTSU_PROJECT', 'insights-qe')
+        writeEnv('IBUTSU_SOURCE', env.BUILD_TAG ?: 'csb-jenkins')
+        // Set IBUTSU_TOKEN from Jenkins secret store
+        writeEnvFromCredential('IBUTSU_TOKEN', 'ibutsuToken')
+    }
+}
+
 def configIQE(String appName, Map options) {
     /* Sets up vault and .env files */
     writeEnv('ENV_FOR_DYNACONF', options['envName'])
     writeVaultEnvVars(options)
+    setupIbutsuEnvVars(options)
+    
     options['extraEnvVars'].each { key, value ->
         writeEnv(key, value instanceof Closure ? value(env) : value)
     }
