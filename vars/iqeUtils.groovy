@@ -464,6 +464,8 @@ private def setupIbutsuEnvVars(Map options) {
         writeEnv('IBUTSU_MODE', options['ibutsuUrl'])
         writeEnv('IBUTSU_PROJECT', 'insights-qe')
         writeEnv('IBUTSU_SOURCE', env.BUILD_TAG ?: 'csb-jenkins')
+        // Set IBUTSU_TOKEN from Jenkins secret store
+        writeEnvFromCredential('IBUTSU_TOKEN', 'ibutsuToken')
     }
 }
 
