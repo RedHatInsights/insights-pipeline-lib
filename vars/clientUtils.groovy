@@ -318,6 +318,7 @@ def runTests(Map parameters = [:]){
     def pytestParam = parameters.get("pytestParam", null)
     def satelliteInstance = parameters.get("satelliteInstance", null)
     def iqeVmRhel = parameters.get("iqeVmRhel", null)
+    def ibutsuData = parameters.get("ibutsuData", null)
     if (iqeVmRhel){
         replaced_rhel_string = iqeVmRhel.replaceAll( /rhel/, 'rhel_' )
     }
@@ -354,12 +355,7 @@ def runTests(Map parameters = [:]){
                 sleep 8
             """
         }
-        if (ibutsu) {
-            pytestParam = "${pytestParam} --ibutsu https://ibutsu-api.insights.corp.redhat.com --ibutsu-source stg-jenkins"
-            if (env) {
-                pytestParam = "${pytestParam} --ibutsu-data env=${env}"
-            }
-        }
+        // ibutsu configuration moved to test execution section to use environment variables
 
         if (reportportal) {
             pytestParam = "${pytestParam} --reportportal"
@@ -370,6 +366,10 @@ def runTests(Map parameters = [:]){
             set +x && export \$(cat "${WORKSPACE}/.env" | xargs) && set -x
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
+            ${ibutsu ? "export IBUTSU_MODE=\"https://ibutsu-api.insights.corp.redhat.com/\"" : ""}
+            ${ibutsu ? "export IBUTSU_PROJECT=\"insights-qe\"" : ""}
+            ${ibutsu ? "export IBUTSU_SOURCE=\"stg-jenkins\"" : ""}
+            ${ibutsu && (env || ibutsuData) ? "export IBUTSU_DATA=\"${env ? "env=${env}" : ""}${env && ibutsuData ? " " : ""}${ibutsuData ?: ""}\"" : ""}
             source ${venvDir}/bin/activate
             iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys
         """
