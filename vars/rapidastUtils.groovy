@@ -3,7 +3,7 @@
 def slackMessage
 
 def prepareRapidastStages(String ServiceName, String PluginName, String ApiScanner, String TargetUrl, String ApISpecUrl, String Jira, String Cloud=pipelineVars.upshiftCloud, String Namespace=pipelineVars.upshiftNameSpace) {
-    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.12.1', resourceLimitMemory: '2Gi') {
+    openShiftUtils.withNode(cloud: Cloud, namespace: Namespace, image: 'quay.io/redhatproductsecurity/rapidast:2.12.1', resourceLimitMemory: '4Gi') {
 
         stage("Set Build Rapidast for ${ServiceName} service") {
              currentBuild.displayName = "#"+ env.BUILD_NUMBER + " " + "${ServiceName}"
