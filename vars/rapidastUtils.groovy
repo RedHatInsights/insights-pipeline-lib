@@ -16,7 +16,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
         stage("Run Rapidast for ${ServiceName} service") {
             catchError(buildResult: 'FAILURE', stageResult: 'FAILURE') {
                 def secrets = [
-                    [path: 'insights/secrets/qe/stage/swatch/rapidast_user', engineVersion: 4, secretValues: [
+                    [path: 'insights/secrets/qe/stage/swatch/rapidast_user', engineVersion: 2, secretValues: [
                     [envVar: 'RTOKEN', vaultKey: 'RTOKEN']]],
                 ]
                 def configuration = [vaultUrl: 'https://vault.devshift.net/',
