@@ -227,16 +227,108 @@ def withUINode(Map parameters = [:], Closure body) {
 }
 
 
-def withNodeSelector(Map parameters = [:], Boolean ui, Closure body) {
-    /* A wrapper that selects a different closure based on if 'ui' is true or false */
-    if (ui) {
+def withPlaywrightNode(Map parameters = [:], Closure body) {
+    /*
+    Spins up a pod with 3 containers: jnlp, playwright, and specified 'image'
+    */
+    def cloud = parameters.get('cloud', pipelineVars.upshiftCloud)
+    def namespace = parameters.get('namespace', pipelineVars.upshiftNameSpace)
+    def slaveImage = parameters.get('slaveImage', pipelineVars.centralCIjenkinsSlaveImage)
+    def playwrightImage = parameters.get('playwrightImage', pipelineVars.playwrightImage)
+    def image = parameters.get('image', pipelineVars.iqeCoreImage)
+    def requestCpu = parameters.get('resourceRequestCpu', "500m")
+    def limitCpu = parameters.get('resourceLimitCpu', "500m")
+    def requestMemory = parameters.get('resourceRequestMemory', "100Mi")
+    def limitMemory = parameters.get('resourceLimitMemory', "1Gi")
+    def jenkinsSvcAccount = parameters.get('jenkinsSvcAccount', pipelineVars.jenkinsSvcAccount)
+    def jnlpRequestCpu = parameters.get('jnlpRequestCpu', "100m")
+    def jnlpLimitCpu = parameters.get('jnlpLimitCpu', "300m")
+    def jnlpRequestMemory = parameters.get('jnlpRequestMemory', "256Mi")
+    def jnlpLimitMemory = parameters.get('jnlpLimitMemory', "512Mi")
+    def playwrightRequestCpu = parameters.get('playwrightRequestCpu', "1000m")
+    def playwrightLimitCpu = parameters.get('playwrightLimitCpu', "1500m")
+    def playwrightRequestMemory = parameters.get('playwrightRequestMemory', "1Gi")
+    def playwrightLimitMemory = parameters.get('playwrightLimitMemory', "3Gi")
+    def envVars = parameters.get('envVars', [])
+    def extraContainers = parameters.get('extraContainers', [])
+    def volumes = parameters.get('volumes', [])
+    volumes.add(emptyDirVolume(mountPath: '/dev/shm', memory: true))
+
+    def label = "node-${UUID.randomUUID().toString()}"
+
+    setDevPiEnvVars(image, cloud, envVars)
+
+    def podParameters = [
+        label: label,
+        slaveConnectTimeout: 120,
+        serviceAccount: jenkinsSvcAccount,
+        cloud: cloud,
+        namespace: namespace,
+        containers: [
+            containerTemplate(
+                name: 'jnlp',
+                image: slaveImage,
+                args: '${computer.jnlpmac} ${computer.name}',
+                alwaysPullImage: true,
+                resourceRequestCpu: jnlpRequestCpu,
+                resourceLimitCpu: jnlpLimitCpu,
+                resourceRequestMemory: jnlpRequestMemory,
+                resourceLimitMemory: jnlpLimitMemory,
+            ),
+            containerTemplate(
+                name: 'playwright',
+                image: playwrightImage,
+                alwaysPullImage: true,
+                resourceRequestCpu: playwrightRequestCpu,
+                resourceLimitCpu: playwrightLimitCpu,
+                resourceRequestMemory: playwrightRequestMemory,
+                resourceLimitMemory: playwrightLimitMemory,
+                envVars: [
+                    envVar(key: 'PW_BROWSER', value: "chrome"),
+                    envVar(key: 'PW_HEADLESS', value: "false"),
+                ],
+            ),
+            containerTemplate(
+                name: 'iqe',
+                ttyEnabled: true,
+                command: 'cat',
+                image: image,
+                alwaysPullImage: true,
+                resourceRequestCpu: requestCpu,
+                resourceLimitCpu: limitCpu,
+                resourceRequestMemory: requestMemory,
+                resourceLimitMemory: limitMemory,
+                envVars: envVars,
+            ),
+        ],
+        volumes: volumes,
+        annotations: [
+            podAnnotation(key: "job-name", value: "${env.JOB_NAME}"),
+            podAnnotation(key: "run-display-url", value: "${env.RUN_DISPLAY_URL}"),
+        ]
+    ]
+
+    // if yaml is used, the containers key will not be present
+    if (podParameters.get('containers')) podParameters['containers'].addAll(extraContainers)
+
+    runBody(podParameters, label, 'iqe', body)
+}
+
+
+def withNodeSelector(Map parameters = [:], Boolean ui, Boolean playwright = false, Closure body) {
+    /* A wrapper that selects a different node type based on ui/playwright flags */
+    if (ui && playwright) {
+        withPlaywrightNode(parameters) {
+            body()
+        }
+    } else if (ui) {
         withUINode(parameters) {
             body()
         }
     } else {
         withNode(parameters) {
             body()
-        }   
+        }
     }
 }
 

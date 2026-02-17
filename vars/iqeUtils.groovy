@@ -87,6 +87,10 @@ private def parseOptions(Map options) {
     // whether or not to provision a selenium container in the test pod
     options['ui'] = options.get('ui', false)
 
+    // [Upcoming playwright migration] whether to use playwright instead of selenium for UI tests
+    // when true, a playwright sidecar is provisioned instead of a selenium sidecar
+    options['playwright'] = options.get('playwright', false)
+
     // enable pytest-xdist plugin for multiprocess parallelism
     options['xdistEnabled'] = options.get('xdistEnabled', false)
 
@@ -553,7 +557,7 @@ def prepareStages(Map defaultOptions, Map appConfigs) {
 
         stages[appName] = {
             if (appOptions['allocateNode']) {
-                openShiftUtils.withNodeSelector(appOptions, appOptions['ui']) {
+                openShiftUtils.withNodeSelector(appOptions, appOptions['ui'], appOptions.get('playwright', false)) {
                     createTestStages(appName, appConfig)
                 }
             }
