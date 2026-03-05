@@ -149,77 +149,102 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 
 
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
-    // Parse the options for rapidast and add it to the config file. Always pull the latest config file
+    // RapiDAST configuration template
+    def secrets = [
+        [path: 'insights/secrets/qe/stage/swatch/rapidast-sa-insights_key', engineVersion: 2, secretValues: [
+        [envVar: 'gcs_key', vaultKey: 'gcs_key' ]]],
+    ]
+    def configuration = [vaultUrl: 'https://vault.devshift.net/',
+                            vaultCredentialId: 'vault-approle-cred',
+                            engineVersion: 1]
+    withVault([configuration: configuration, vaultSecrets: secrets]) {
+        writeFile file: 'gcs-key.json', text: env.gcs_key
+        sh 'chmod 600 gcs-key.json'
 
-    git url: 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.7.0-rc1'
-    def filename = 'tests/configmodel/older-schemas/v4.yaml'
+        def rapidastConfigTemplate = """
+        config:
+            configVersion: 6
+            base_results_dir: ./results
+            environ:
+                envFile: .env
+            googleCloudStorage:
+                keyFile: "gcs-key.json"
+                bucketName: "secaut-bucket"
+                directory: "insights"
+        
+            application:
+                shortName: "${ServiceName}"
+                url: ${TargetUrl}"
 
-    // Comment the fields not required.
-    sh "sed -i 's/importUrlsFromFile:/# importUrlsFromFile:/' ${filename}"
-    sh "sed -i 's/defectDojoExport:/# defectDojoExport:/' ${filename}"
-    sh "sed -i 's/# format:/format:/' ${filename}"
-    sh "sed -i 's/spiderAjax:/# spiderAjax:/' ${filename}"
-    sh "sed -i 's/spider:/# spider:/' ${filename}"
-    sh "sed -i 's/maxDuration:/# maxDuration:/g' ${filename}"
-    sh "sed -i 's/browserId:/# browserId:/' ${filename}"
-    sh "sed -i 's/url:/# url:/g' ${filename}"
-    if ("${ApiScanner}" == "OpenApiScan") {
-        echo "OpenAPI Spec Compliant API Scan selected"
-        sh "sed -i 's/graphql:/# graphql:/' ${filename}"
-        sh "sed -i 's/spiderAjax:/# spiderAjax:/' ${filename}"
-        sh "sed -i 's/spider:/# spider:/' ${filename}"
-        sh "sed -i 's/apiUrl:/apiUrl1:/' ${filename}"
-        data = readYaml file: filename
-        data.scanners.zap.apiScan.target = "${TargetUrl}"
-        //Workaround for SWATCH-2347
-        if ("${ServiceName}" == "CostManagement") {
-            sh "redocly bundle ${ApISpecUrl} -o resolved-redocly.json"
-            data.scanners.zap.apiScan.apis.apiFile = "resolved-redocly.json"
-            data.scanners.zap.apiScan.apis.remove('apiUrl')
+            general:
+                proxy:
+                    proxyHost: squid.corp.redhat.com
+                    proxyPort: '3128'
+                authentication:
+                    type: oauth2_rtoken
+                    parameters:
+                        client_id: rhsm-api
+                        token_endpoint: "${pipelineVars.stageSSOUrl}"
+                        rtoken_from_var: RTOKEN
+        
+            scanners:
+                zap:
+                    apiScan:
+                        target: "${TargetUrl}"
+                        apis:
+                            apiUrl: "${ApISpecUrl}"
+                    graphql:
+                        endpoint: "${TargetUrl}"
+                        schemaUrl: "${ApISpecUrl}"
+                    passiveScan:
+                        disabledRules: 2,10015,10027,10054,10096,10024,10112
+                    activeScan:
+                        policy: API-scan-minimal
+                    report:
+                        format: ["json","html","sarif"]
+                    miscOptions:
+                        oauth2ManualDownload: true
+        """
+
+        def data = readYaml text: rapidastConfigTemplate
+        if ("${ApiScanner}" == "OpenApiScan") {
+            echo "OpenAPI Spec Compliant API Scan selected"
+
+            data.scanners.zap.remove('graphql')
+
+            // Workaround for SWATCH-2347
+            if ("${ServiceName}" == "CostManagement") {
+                sh "redocly bundle ${ApISpecUrl} -o resolved.redocly.json"
+                data.scanners.zap.apiScan.apis.apiFile = "resolved.redocly.json"
+                data.scanners.zap.apiScan.apis.remove('apiUrl')
+            }
+            else if ("${ServiceName}" == "Host-Inventory") {
+                echo "Using HBI workaround to clean the json for recursion"
+                sh "curl --proxy squid.corp.redhat.com:3128 https://console.stage.redhat.com/api/inventory/v1/openapi.json -o test.json"
+                sh "python3 utils/remove_openapi_ref_recursion.py -f test.json"
+                data.scanners.zap.apiScan.apis.apiFile = "cleaned_openapi.json"
+                data.scanners.zap.apiScan.apis.remove('apiUrl')
+            }
+                if ("${ServiceName}" == "OcpVulnerability") {
+                def policy = 'scanners/zap/policies/API-scan-minimal.policy'
+                sh "sed -z -i 's|<p40018>\\n            <enabled>true|<p40018>\\n            <enabled>false|' ${policy}"
+            }
         }
-        else if ("${ServiceName}" == "Host-Inventory") {
-            echo "Using HBI workaround to clean the json for recursion"
-            sh "curl --proxy squid.corp.redhat.com:3128 https://console.stage.redhat.com/api/inventory/v1/openapi.json -o test.json"
-            sh "python3 utils/remove_openapi_ref_recursion.py -f test.json"
-            data.scanners.zap.apiScan.apis.apiFile = "cleaned_openapi.json"
-            data.scanners.zap.apiScan.apis.remove('apiUrl')
+        else if ("${ApiScanner}" == "graphql") {
+            echo "GraphQL API Scan selected"
+
+            data.scanners.zap.remove('apiScan')
         }
         else {
-            data.scanners.zap.apiScan.apis.remove('apiFile')
-            data.scanners.zap.apiScan.apis.apiUrl = "${ApISpecUrl}"
-        }
-        if ("${ServiceName}" == "OcpVulnerability") {
-            def policy = 'scanners/zap/policies/API-scan-minimal.policy'
-            sh "sed -z -i 's|<p40018>\\n            <enabled>true|<p40018>\\n            <enabled>false|' ${policy}"
-        }
-    }
-    else if ("${ApiScanner}" == "graphql") {
-        sh "sed -i 's/apiScan:/# apiScan:/' ${filename}"
-        sh "sed -i 's/target:/# target:/' ${filename}"
-        sh "sed -i 's/apis:/# apis:/' ${filename}"
-        sh "sed -i 's/apiUrl:/# apiUrl:/' ${filename}"
-        sh "sed -i 's/# schemaUrl:/schemaUrl:/' ${filename}"
-        data = readYaml file: filename
-        data.scanners.zap.graphql.endpoint = "${TargetUrl}"
-        data.scanners.zap.graphql.schemaUrl = "${ApISpecUrl}"
-    }
-    else {
-        echo "Scanner not supported"
-    }
-    data.config.environ = ".env"
-    data.application.shortName = "${ServiceName}"
-    data.application.url = "${TargetUrl}"
-    data.general.proxy.proxyHost = "squid.corp.redhat.com"
-    data.general.proxy.proxyPort = "3128"
-    data.general.authentication.parameters.client_id = "rhsm-api"
-    data.general.authentication.parameters.token_endpoint = pipelineVars.stageSSOUrl
-    data.general.container.type = "none"
-    data.scanners.zap.passiveScan.disabledRules = "2,10015,10027,10054,10096,10024,10112"
-    data.scanners.zap.miscOptions.oauth2OpenapiManualDownload = true
-    //create new with updated YAML config
-    writeYaml file: 'config/config.yaml', data: data
-    echo "Configuration Value: " + data
+            echo "Scanner '${ApiScanner}' not supported!"
 
+            // TODO: return error
+        }
+
+        // Create configuration file from the YAML config
+        writeYaml file: 'config/config.yaml', data:data
+        echo "Configuration Value: " + data
+    }
 }
 
 
