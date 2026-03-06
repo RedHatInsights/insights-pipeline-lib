@@ -170,7 +170,7 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
             googleCloudStorage:
                 keyFile: "gcs-key.json"
                 bucketName: "secaut-bucket"
-                directory: "insights"
+                directory: "insights/${ServiceName}"
         
             application:
                 shortName: "${ServiceName}"
@@ -237,8 +237,7 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         }
         else {
             echo "Scanner '${ApiScanner}' not supported!"
-
-            // TODO: return error
+            error("Unsupported scanner type '${ApiScanner}'. Only 'OpenApiScan' and 'graphql' are supported.")
         }
 
         // Create configuration file from the YAML config
