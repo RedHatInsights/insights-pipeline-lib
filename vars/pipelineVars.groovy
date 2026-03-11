@@ -54,6 +54,8 @@ class pipelineVars implements Serializable {
     String rapidastBucket = "secaut-bucket"
     String rapidastProxyHost = "squid.corp.redhat.com"
     String rapidastProxyPort = '3128'
+    String rapidastBinDirectory = '/opt/rapidast'
+    String rapidastLogLevel = 'info' // debug,verbose,info,warning,error,critical
 
     def rhsmUrl = [
         qa: 'subscription.rhsm.qa.redhat.com',
