@@ -151,7 +151,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
     // RapiDAST configuration template
     def secrets = [
-        [path: 'insights/secrets/qe/stage/swatch/rapidast-sa-insights_key', engineVersion: 2, secretValues: [
+        [path: 'insights/secrets/qe/global/rapidast-sa-insights_key', engineVersion: 2, secretValues: [
         [envVar: 'gcs_key', vaultKey: 'gcs_key' ]]],
     ]
     def configuration = [vaultUrl: 'https://vault.devshift.net/',
@@ -169,24 +169,24 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
                 envFile: .env
             googleCloudStorage:
                 keyFile: "gcs-key.json"
-                bucketName: "secaut-bucket"
+                bucketName: "${pipelineVars.rapidastBucket}"
                 directory: "insights/${ServiceName}"
-        
+
             application:
                 shortName: "${ServiceName}"
-                url: ${TargetUrl}"
+                url: "${TargetUrl}"
 
             general:
                 proxy:
-                    proxyHost: squid.corp.redhat.com
-                    proxyPort: '3128'
+                    proxyHost: "${pipelineVars.rapidastProxyHost}"
+                    proxyPort: "${pipelineVars.rapidastProxyPort}"
                 authentication:
                     type: oauth2_rtoken
                     parameters:
                         client_id: rhsm-api
                         token_endpoint: "${pipelineVars.stageSSOUrl}"
                         rtoken_from_var: RTOKEN
-        
+
             scanners:
                 zap:
                     apiScan:
