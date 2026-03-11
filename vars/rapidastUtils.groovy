@@ -24,7 +24,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                                          engineVersion: 1]
                 withVault([configuration: configuration, vaultSecrets: secrets]) {
                     sh 'export RTOKEN=$RTOKEN'
-                    def results_rapidast = sh(returnStdout: true, script: './rapidast.py --config config/config.yaml && echo $?')
+                    def results_rapidast = sh(returnStdout: true, script: '/opt/rapidast/rapidast.py --config config/config.yaml && echo $?')
 
                     splLines = results_rapidast.split('\n')
                     def cmd_status = splLines[-1]
@@ -149,6 +149,9 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
 
 
 def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetUrl, String ApISpecUrl) {
+    //git url 'https://github.com/RedHatProductSecurity/rapidast.git', branch: '2.7.0-rc1'
+    //sh 'mkdir -p config'
+    
     // RapiDAST configuration template
     def secrets = [
         [path: 'insights/secrets/qe/global/rapidast-sa-insights_key', engineVersion: 2, secretValues: [
@@ -226,6 +229,7 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
                 data.config.scanners.zap.apiScan.apis.remove('apiUrl')
             }
                 if ("${ServiceName}" == "OcpVulnerability") {
+                // unclear if this will work 
                 def policy = 'scanners/zap/policies/API-scan-minimal.policy'
                 sh "sed -z -i 's|<p40018>\\n            <enabled>true|<p40018>\\n            <enabled>false|' ${policy}"
             }
