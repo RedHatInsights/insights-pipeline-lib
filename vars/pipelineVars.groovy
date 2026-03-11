@@ -51,6 +51,9 @@ class pipelineVars implements Serializable {
     String stageSSOUrl = "https://sso.stage.redhat.com/auth/realms/redhat-external/protocol/openid-connect/token"
 
     String sitrepsRapidastUrl = "https://sitreps-api.apps.int.gpc.ocp-hub.prod.psi.redhat.com/api/v1/rapidast/"
+    String rapidastBucket = "secaut-bucket"
+    String rapidastProxyHost = "squid.corp.redhat.com"
+    String rapidastProxyPort = '3128'
 
     def rhsmUrl = [
         qa: 'subscription.rhsm.qa.redhat.com',
