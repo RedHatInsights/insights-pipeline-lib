@@ -24,7 +24,6 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                                          engineVersion: 1]
                 withVault([configuration: configuration, vaultSecrets: secrets]) {
                     sh 'export RTOKEN=$RTOKEN'
-                    //def results_rapidast = sh(returnStdout: true, script: './rapidast.py --config config/config.yaml && echo $?')
                     def results_rapidast = sh(returnStdout: true, script: '/opt/rapidast/rapidast.py --config config/config.yaml && echo $?')
 
                     splLines = results_rapidast.split('\n')
