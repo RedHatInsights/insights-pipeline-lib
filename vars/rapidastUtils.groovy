@@ -24,7 +24,11 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                                          engineVersion: 1]
                 withVault([configuration: configuration, vaultSecrets: secrets]) {
                     sh 'export RTOKEN=$RTOKEN'
-                    def results_rapidast = sh(returnStdout: true, script: './rapidast.py --config config/config.yaml && echo $?')
+
+                    def YAML_CONFIG_FILE = sh(returnStdout: true, script: 'cat ./config/config.yaml')
+                    echo "Display content of config file: ./config/config.yaml: ${YAML_CONFIG_FILE}"
+
+                    def results_rapidast = sh(returnStdout: true, script: "${pipelineVars.rapidastBinDirectory}/rapidast.py --log-level ${pipelineVars.rapidastLogLevel} --config ./config/config.yaml && echo \$?")
 
                     splLines = results_rapidast.split('\n')
                     def cmd_status = splLines[-1]
@@ -162,11 +166,11 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         sh 'chmod 600 gcs-key.json'
 
         def rapidastConfigTemplate = """
-        config:
-            configVersion: 6
-            base_results_dir: ./results
-            environ:
-                envFile: .env
+            config:
+                configVersion: 6
+                base_results_dir: ./results
+                environ:
+                    envFile: .env
             googleCloudStorage:
                 keyFile: "gcs-key.json"
                 bucketName: "${pipelineVars.rapidastBucket}"
@@ -210,20 +214,20 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         if ("${ApiScanner}" == "OpenApiScan") {
             echo "OpenAPI Spec Compliant API Scan selected"
 
-            data.config.scanners.zap.remove('graphql')
+            data.scanners.zap.remove('graphql')
 
             // Workaround for SWATCH-2347
             if ("${ServiceName}" == "CostManagement") {
                 sh "redocly bundle ${ApISpecUrl} -o resolved.redocly.json"
-                data.config.scanners.zap.apiScan.apis.apiFile = "resolved.redocly.json"
-                data.config.scanners.zap.apiScan.apis.remove('apiUrl')
+                data.scanners.zap.apiScan.apis.apiFile = "resolved.redocly.json"
+                data.scanners.zap.apiScan.apis.remove('apiUrl')
             }
             else if ("${ServiceName}" == "Host-Inventory") {
                 echo "Using HBI workaround to clean the json for recursion"
                 sh "curl --proxy squid.corp.redhat.com:3128 https://console.stage.redhat.com/api/inventory/v1/openapi.json -o test.json"
                 sh "python3 utils/remove_openapi_ref_recursion.py -f test.json"
-                data.config.scanners.zap.apiScan.apis.apiFile = "cleaned_openapi.json"
-                data.config.scanners.zap.apiScan.apis.remove('apiUrl')
+                data.scanners.zap.apiScan.apis.apiFile = "cleaned_openapi.json"
+                data.scanners.zap.apiScan.apis.remove('apiUrl')
             }
                 if ("${ServiceName}" == "OcpVulnerability") {
                 def policy = 'scanners/zap/policies/API-scan-minimal.policy'
@@ -233,7 +237,7 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
         else if ("${ApiScanner}" == "graphql") {
             echo "GraphQL API Scan selected"
 
-            data.config.scanners.zap.remove('apiScan')
+            data.scanners.zap.remove('apiScan')
         }
         else {
             echo "Scanner '${ApiScanner}' not supported!"
