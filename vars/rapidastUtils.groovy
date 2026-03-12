@@ -1,4 +1,4 @@
-@Library("github.com/RedHatInsights/insights-pipeline-lib@master") _
+@Library("github.com/opacut/insights-pipeline-lib@fix_gcs_exporter") _
 
 def slackMessage
 
@@ -171,10 +171,10 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
                 base_results_dir: ./results
                 environ:
                     envFile: .env
-            googleCloudStorage:
-                keyFile: "gcs-key.json"
-                bucketName: "${pipelineVars.rapidastBucket}"
-                directory: "insights/${ServiceName}"
+                googleCloudStorage:
+                    keyFile: "gcs-key.json"
+                    bucketName: "${pipelineVars.rapidastBucket}"
+                    directory: "insights/${ServiceName}"
 
             application:
                 shortName: "${ServiceName}"
