@@ -124,6 +124,9 @@ Options affects every pipeline while appConfigs options affect only specific app
 - **slackTokenCredentialId** - REQUIRED: slack integration token
 - **reqNumBuildsPassBeforeResolved** - OPTIONAL: how many past builds to use before we mark the run as a success
 
+### Upload of test results to Ibutsu server
+By default all iqe test resuls are uploaded to Ibutsu server. There is also option to upload results to AWS S3 bucket. This might be useful if you want to upgrade/take down Ibutsu server. Uploaded results into S3 bucket can be processed later when the Ibutsu server is available. This can be achieved by changing `defaultIbutsuUrl` in pipelineVars to `s3`.
+
 ### Example of pipeline definition
 ```
 @Library("github.com/RedHatInsights/insights-pipeline-lib@v5") _

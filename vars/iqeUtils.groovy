@@ -84,6 +84,12 @@ private def parseOptions(Map options) {
     // the URL of ibutsu
     options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
 
+    // AWS bucket name for Ibutsu if S3 upload mode is used
+    options['ibutsuBucket'] = options.get('ibutsuAwsBucket', pipelineVars.defaultIbutsuAwsBucket)
+
+    // AWS region for Ibutsu if S3 upload mode is used
+    options['ibutsuRegion'] = options.get('ibutsuAwsRegion', pipelineVars.defaultIbutsuAwsRegion)
+
     // whether or not to provision a selenium container in the test pod
     options['ui'] = options.get('ui', false)
 
@@ -458,14 +464,42 @@ def writeVaultEnvVars(Map options) {
 
 private def setupIbutsuEnvVars(Map options) {
     /* Configure ibutsu environment variables based on options */
-    
+
     // Set defaults if not already set (for backward compatibility)
     options['ibutsu'] = options.get('ibutsu', true)
     options['ibutsuUrl'] = options.get('ibutsuUrl', pipelineVars.defaultIbutsuUrl)
-    
+    options['ibutsuBucket'] = options.get('ibutsuAwsBucket', pipelineVars.defaultIbutsuAwsBucket)
+    options['ibutsuRegion'] = options.get('ibutsuAwsRegion', pipelineVars.defaultIbutsuAwsRegion)
+
     // Set up ibutsu environment variables if ibutsu is enabled
     if (options['ibutsu']) {
         writeEnv('IBUTSU_MODE', options['ibutsuUrl'])
+        if (options['ibutsuUrl'] == 's3'){
+            writeEnv('AWS_BUCKET', options['ibutsuBucket'])
+            writeEnv('AWS_REGION', options['ibutsuRegion'])
+
+            def secrets = [
+                [path: 'insights/secrets/qe-admin/ibutsu-naberachka',
+                    engineVersion: 2,
+                    secretValues:
+                        [
+                            [envVar: 'AWS_ACCESS_KEY_ID',
+                            vaultKey: 'AWS_ACCESS_KEY_ID'],
+                            [envVar: 'AWS_SECRET_ACCESS_KEY',
+                            vaultKey: 'AWS_SECRET_ACCESS_KEY']
+                        ]
+                ],
+            ]
+
+            def configuration = [vaultUrl: 'https://vault.devshift.net/',
+                vaultCredentialId: 'vault-approle-cred',
+                engineVersion: 1]
+            withVault([configuration: configuration, vaultSecrets: secrets]) {
+                writeEnv('AWS_ACCESS_KEY_ID', "$AWS_ACCESS_KEY_ID")
+                writeEnv('AWS_SECRET_ACCESS_KEY', "$AWS_SECRET_ACCESS_KEY")
+            }
+
+        }
         writeEnv('IBUTSU_PROJECT', 'insights-qe')
         writeEnv('IBUTSU_SOURCE', env.BUILD_TAG ?: 'csb-jenkins')
         // Set IBUTSU_TOKEN from Jenkins secret store
@@ -478,7 +512,7 @@ def configIQE(String appName, Map options) {
     writeEnv('ENV_FOR_DYNACONF', options['envName'])
     writeVaultEnvVars(options)
     setupIbutsuEnvVars(options)
-    
+
     options['extraEnvVars'].each { key, value ->
         writeEnv(key, value instanceof Closure ? value(env) : value)
     }
