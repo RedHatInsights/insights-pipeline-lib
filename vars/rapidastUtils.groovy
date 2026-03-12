@@ -1,4 +1,4 @@
-@Library("github.com/opacut/insights-pipeline-lib@fix_gcs_exporter") _
+@Library("github.com/RedHatInsights/insights-pipeline-lib@master") _
 
 def slackMessage
 
