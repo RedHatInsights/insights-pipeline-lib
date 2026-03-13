@@ -26,7 +26,7 @@ def prepareRapidastStages(String ServiceName, String PluginName, String ApiScann
                     sh 'export RTOKEN=$RTOKEN'
 
                     def YAML_CONFIG_FILE = sh(returnStdout: true, script: 'cat ./config/config.yaml')
-                    echo "Display content of config file: ./config/config.yaml: ${YAML_CONFIG_FILE}"
+                    echo "Display content of config file: ./config/config.yaml: \n\n${YAML_CONFIG_FILE}"
 
                     def results_rapidast = sh(returnStdout: true, script: "${pipelineVars.rapidastBinDirectory}/rapidast.py --log-level ${pipelineVars.rapidastLogLevel} --config ./config/config.yaml && echo \$?")
 
@@ -171,10 +171,10 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
                 base_results_dir: ./results
                 environ:
                     envFile: .env
-            googleCloudStorage:
-                keyFile: "gcs-key.json"
-                bucketName: "${pipelineVars.rapidastBucket}"
-                directory: "insights/${ServiceName}"
+                googleCloudStorage:
+                    keyFile: "gcs-key.json"
+                    bucketName: "${pipelineVars.rapidastBucket}"
+                    directory: "insights/${ServiceName}"
 
             application:
                 shortName: "${ServiceName}"
