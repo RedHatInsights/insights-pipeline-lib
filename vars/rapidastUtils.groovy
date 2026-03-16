@@ -225,7 +225,7 @@ def parse_rapidast_options(String ServiceName, String ApiScanner, String TargetU
             else if ("${ServiceName}" == "Host-Inventory") {
                 echo "Using HBI workaround to clean the json for recursion"
                 sh "curl --proxy squid.corp.redhat.com:3128 https://console.stage.redhat.com/api/inventory/v1/openapi.json -o test.json"
-                sh "python3 utils/remove_openapi_ref_recursion.py -f test.json"
+                sh "python3 ${pipelineVars.rapidastBinDirectory}/utils/remove_openapi_ref_recursion.py -f test.json"
                 data.scanners.zap.apiScan.apis.apiFile = "cleaned_openapi.json"
                 data.scanners.zap.apiScan.apis.remove('apiUrl')
             }
