@@ -23,8 +23,8 @@ class pipelineVars implements Serializable {
     String defaultVaultSecretIdCredential = "vaultSecretId"
     String defaultVaultMountPoint = "insights"
 
-    // String defaultIbutsuUrl = "https://ibutsu-api.insights.corp.redhat.com"
-    String defaultIbutsuUrl = "s3"
+    String defaultIbutsuUrl = "https://ibutsu-api.insights.corp.redhat.com"
+    // String defaultIbutsuUrl = "s3"
     String defaultIbutsuFrontendUrl = "https://ibutsu.insights.corp.redhat.com"
     String defaultIbutsuInsightsProject = "3915c900-85fc-1222-833c-10d51af56f2e"
     String defaultIbutsuAwsBucket = "ibutsu-payloads"
