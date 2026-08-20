@@ -20,3 +20,4 @@ repos:
     rev: v18.0.0
     hooks:
       - id: fix-npm-groovy-lint
+        args: ['--failon', 'error']

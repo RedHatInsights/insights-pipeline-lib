@@ -184,7 +184,7 @@ def call(p = [:]) {
     }
 
     properties([parameters(getJobParams(envs, svcs) + extraParams)])
-    parsed = parseParams(envs, svcs)
+    def parsed = parseParams(envs, svcs)
 
     // Exit the job if this env should be ignored
     if (parsed['envConfig'].get('disabled')) {

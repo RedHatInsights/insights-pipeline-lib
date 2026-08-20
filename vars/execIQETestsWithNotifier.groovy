@@ -89,7 +89,7 @@ def call(args = [:]) {
     // REQUIRED: where to report test failures
     def slackChannel = args['slackChannel']
     // REQUIRED: where to report unhandled errors when this job unexpectedly fails
-    def errorSlackChannel = args['errorSlackChannel']
+    String errorSlackChannel = args['errorSlackChannel']
     // OPTIONAL: closure to call that generates detailed slack msg text when tests fail
     def slackMsgCallback = args.get('slackMsgCallback', defaultSlackMsgCallback)
     // OPTIONAL: closure to call that generates detailed slack msg text when tests pass

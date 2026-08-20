@@ -21,7 +21,10 @@ def getBeta() {
 }
 
 def getRhelMajor() {
-    def major = sh( script: 'cat /etc/redhat-release | sed "s/.*release //" | sed "s/ .*//" | awk -F. "{ print \\$1 }" | tr -d "\n"', returnStdout: true)
+    def major = sh(
+        script: 'cat /etc/redhat-release | sed "s/.*release //" | sed "s/ .*//" | awk -F. "{ print \\$1 }" | tr -d "\n"',
+        returnStdout: true
+    )
     return major
 }
 
@@ -34,7 +37,11 @@ def rhsmRegister(Map parameters = [:]) {
     def org = parameters.get('org', null)
 
     if (poolId) {
-        withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
+        withCredentials([usernamePassword(
+            credentialsId: credentialId,
+            usernameVariable: 'username',
+            passwordVariable: 'password'
+        )]) {
             echo 'Subscribing machine with poolId...'
             sh """
                 subscription-manager register --serverurl=${url} --username=${username} --password=${password}
@@ -52,12 +59,17 @@ def rhsmRegister(Map parameters = [:]) {
         """
     }
     else {
-        withCredentials([usernamePassword(credentialsId: credentialId, usernameVariable: 'username', passwordVariable: 'password')]) {
+        withCredentials([usernamePassword(
+            credentialsId: credentialId,
+            usernameVariable: 'username',
+            passwordVariable: 'password'
+        )]) {
             echo 'Subscribing machine to Cloud...'
             if (getBeta().toBoolean()) {
                 echo 'We are on beta, do not auto attach subscription...'
                 sh """
-                    subscription-manager register --serverurl=${url} --username=${username} --password=${password} --force
+                    subscription-manager register --serverurl=${url} --username=${username} \\
+                        --password=${password} --force
                     subscription-manager refresh
                 """
             }
@@ -66,13 +78,15 @@ def rhsmRegister(Map parameters = [:]) {
             if (getRhelMajor() == '6') {
                 echo 'Do not auto attach on RHEL6'
                 sh """
-                    subscription-manager register --serverurl=${url} --username=${username} --password=${password} --force
+                    subscription-manager register --serverurl=${url} \\
+                        --username=${username} --password=${password} --force
                     subscription-manager refresh
                 """
             }
             else {
                 sh """
-                    subscription-manager register --serverurl=${url} --username=${username} --password=${password} --auto-attach --force
+                    subscription-manager register --serverurl=${url} \\
+                        --username=${username} --password=${password} --auto-attach --force
                     subscription-manager refresh
                 """
             }
@@ -160,17 +174,17 @@ def collectSystemArtifacts() {
             rm -rf \$(hostname).txt
         """
     }
-    sh '''
+    sh """
     cat /etc/redhat-release >> \$(hostname).txt
     rpm -qa insights-client >> \$(hostname).txt
-    echo "ENV_AUTH_TYPE=${ENV_AUTH_TYPE}" >> \$(hostname).txt
+    echo "ENV_AUTH_TYPE=\${ENV_AUTH_TYPE}" >> \$(hostname).txt
     export OS_MAJOR_VERSION=\$(cat /etc/redhat-release | sed 's/.*release //' | sed 's/ .*//' | awk -F. '{ print \$1 }')
     export OS_MINOR_VERSION=\$(cat /etc/redhat-release | sed 's/.*release //' | sed 's/ .*//' | awk -F. '{ print \$2 }')
     export OS_ARCH=\$(uname -m)
     echo "OS_MAJOR_VERSION=\${OS_MAJOR_VERSION}" >> \$(hostname).txt
     echo "OS_MINOR_VERSION=\${OS_MINOR_VERSION}" >> \$(hostname).txt
     echo "OS_ARCH=\${OS_ARCH}" >> \$(hostname).txt
-    '''
+    """
     archiveArtifacts artifacts: '*.txt'
 }
 
@@ -188,23 +202,29 @@ def setupIqePlugin(Map parameters = [:]) {
     def plugin = parameters.get('plugin')
     def iqeCoreBranch = parameters.get('iqeCoreBranch' , '3.0')
     def iqePluginBranch = parameters.get('iqePluginBranch', 'master')
-    def satelliteInstance = parameters.get('satelliteInstance' , 'satellite_69')
     def jenkinsCredentials = null
     def vaultEnabled = false
 
-    venvDir = setupVenvDir()
+    def venvDir = setupVenvDir()
+    def plugin_dir
     if (plugin == 'insights-client') {
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git', branch: iqePluginBranch
+        git credentialsId: 'gitlab',
+            url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git',
+            branch: iqePluginBranch
         plugin_dir = 'iqe_insights_client'
         jenkinsCredentials = 'settings_iqe_insights_client'
         vaultEnabled = true
     }
     else if (plugin.contains('rhc')) {
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git', branch: iqePluginBranch
+        git credentialsId: 'gitlab',
+            url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git',
+            branch: iqePluginBranch
         vaultEnabled = true
     }
     else if (plugin.contains('iqe-satellite-plugin')) {
-        git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git', branch: iqePluginBranch
+        git credentialsId: 'gitlab',
+            url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git',
+            branch: iqePluginBranch
         plugin_dir = 'iqe-satellite-plugin'
         plugin_dir = 'iqe_insights_satellite'
         jenkinsCredentials = 'settings_iqe_satellite'
@@ -259,14 +279,16 @@ def setupIqePlugin(Map parameters = [:]) {
     sh "rm -f \"${env.WORKSPACE}/.env\""
 
     if (vaultEnabled) {
-        vaultParameters = setupVaultParameters()
+        def vaultParameters = setupVaultParameters()
         iqeUtils.writeVaultEnvVars(vaultParameters)
     }
 }
 
 def setupIqeAnsible(String iqeAnsibleBranch='master') {
-    venvDir = setupVenvDir()
-    git credentialsId: 'gitlab', url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-ansible.git', branch: "${iqeAnsibleBranch}"
+    def venvDir = setupVenvDir()
+    git credentialsId: 'gitlab',
+        url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-ansible.git',
+        branch: "${iqeAnsibleBranch}"
 
     if ("${venvDir}" != '/iqe_venv') {
         sh '''
@@ -291,22 +313,24 @@ def setupIqeAnsible(String iqeAnsibleBranch='master') {
 }
 
 def runTests(Map parameters = [:]) {
-    def plugin = parameters.get('plugin')
-    def env = parameters.get('env', null)
-    def pytestParam = parameters.get('pytestParam', null)
-    def satelliteInstance = parameters.get('satelliteInstance', null)
-    def iqeVmRhel = parameters.get('iqeVmRhel', null)
-    def ibutsuData = parameters.get('ibutsuData', null)
+    String plugin = parameters.get('plugin')
+    String env = parameters.get('env', null)
+    String pytestParam = parameters.get('pytestParam', null)
+    String satelliteInstance = parameters.get('satelliteInstance', null)
+    String iqeVmRhel = parameters.get('iqeVmRhel', null)
+    String ibutsuData = parameters.get('ibutsuData', null)
+    def replaced_rhel_string
     if (iqeVmRhel) {
         replaced_rhel_string = iqeVmRhel.replaceAll( /rhel/, 'rhel_' )
     }
     else {
         replaced_rhel_string = null
     }
-    def ibutsu = parameters.get('ibutsu', true)
+    Boolean ibutsu = parameters.get('ibutsu', true)
     def reportportal = parameters.get('reportportal', false)
 
-    venvDir = setupVenvDir()
+    def venvDir = setupVenvDir()
+    def plugin_test
     if (plugin == 'insights-client') {
         plugin_test = 'insights_client'
     }
@@ -335,13 +359,14 @@ def runTests(Map parameters = [:]) {
             set +x && export \$(cat "${WORKSPACE}/.env" | xargs) && set -x
             export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
-            ${ibutsu ? "export IBUTSU_MODE=\"https://ibutsu-api.insights.corp.redhat.com/\'' : ""}
-            ${ibutsu ? "export IBUTSU_PROJECT=\"insights-qe\'' : ""}
-            ${ibutsu ? "export IBUTSU_SOURCE=\"stg-jenkins\'' : ""}
-            ${ibutsu && (env || ibutsuData) ? "export IBUTSU_DATA=\"${env ? "env=${env}" : ''}${env && ibutsuData ? ' ' : ''}${ibutsuData ?: ''}\'' : ""}
+            ${ibutsu ? "export IBUTSU_MODE=\"https://ibutsu-api.insights.corp.redhat.com/\"" : ''}
+            ${ibutsu ? "export IBUTSU_PROJECT=\"insights-qe\"" : ''}
+            ${ibutsu ? "export IBUTSU_SOURCE=\"stg-jenkins\"" : ''}
+            ${ibutsu && (env || ibutsuData) ? "export IBUTSU_DATA=\"${env ? "env=${env}" : ''}${env && ibutsuData ? ' ' : ''}${ibutsuData ?: ''}\"" : ''}
             source ${venvDir}/bin/activate
-            iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys
-        '''
+            iqe tests plugin ${plugin_test} --junitxml=junit.xml \\
+                --disable-pytest-warnings -srxv ${pytestParam} -vvv --capture=sys
+        """
 }
 
 def runAnsible(String playbookFile, String playbookTags=null) {
@@ -354,12 +379,12 @@ def runAnsible(String playbookFile, String playbookTags=null) {
         play_command = "ansible-playbook ${playbookFile} --tags test"
         }
 
-    sh '''
+    sh """
             cd insights-client/
             cp -pr hosts_localhost hosts
             source ${venvDir}/bin/activate
-            export ANSIBLE_LOG_PATH="${WORKSPACE}/ansible_${env.NODE_NAME}.log"
-            export JUNIT_OUTPUT_DIR="${WORKSPACE}/"
+            export ANSIBLE_LOG_PATH="\${WORKSPACE}/ansible_\${env.NODE_NAME}.log"
+            export JUNIT_OUTPUT_DIR="\${WORKSPACE}/"
             ${play_command}
         """
 }

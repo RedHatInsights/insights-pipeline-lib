@@ -36,11 +36,11 @@ def runPipenvInstall(parameters = [:]) {
     def sequential = parameters.get('sequential', false)
 
     // Common errors we may hit ...
-    def lockErrorRegex = ~/.*Your Pipfile.lock \(\S+\) is out of date. Expected: \(\S+\).*/
-    def lockError = "\n* `Pipfile.lock` is out of sync. Run '`pipenv lock`' and commit the changes."
-    def installError = "\n* '`pipenv install`' has failed."
+    java.util.regex.Pattern lockErrorRegex = ~/.*Your Pipfile.lock \(\S+\) is out of date. Expected: \(\S+\).*/
+    String lockError = "\n* `Pipfile.lock` is out of sync. Run '`pipenv lock`' and commit the changes."
+    String installError = "\n* '`pipenv install`' has failed."
 
-    if (installPipenv) sh 'pip install --user --upgrade pip setuptools wheel pipenv'
+    if (installPipenv) { sh 'pip install --user --upgrade pip setuptools wheel pipenv' }
 
     // NOTE: Removing old comments won't work unless Pipeline Github Plugin >= v2.0
     removePipfileComments()
@@ -57,7 +57,7 @@ def runPipenvInstall(parameters = [:]) {
     )
 
     def installFailed = false
-    def errorMsg = ''
+    String errorMsg = ''
     if (cmdStatus != 0) {
         if (readFile('pipenv_install_out.txt').trim() ==~ lockErrorRegex) {
             currentBuild.result = 'UNSTABLE'

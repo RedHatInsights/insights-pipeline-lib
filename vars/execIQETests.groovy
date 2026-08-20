@@ -34,6 +34,7 @@ def call(args = [:]) {
 
     // Run the tests
     if (!lockName) lockName = "${options['envName']}-test"
+    def results
     lock(lockName) {
         timeout(time: options['timeout'], unit: 'MINUTES') {
             results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))

@@ -33,19 +33,17 @@
  *     def results = pipelineUtils.runParallel(iqeUtils.prepareStages(options, appConfigs))
  */
 
-private parseOptions(Map options) {
+private Map parseOptions(Map options) {
     /*
      * Take the options map provided by the caller in prepareStages and populate it with defaults
      * if needed
      */
-    if (!options['envName']) error('envName must be defined')
-
-    // the ENV_FOR_DYNACONF environment name
-    def envName = options['envName']
+    if (!options['envName']) {
+        error('envName must be defined')
+    }
 
     // the container image that the tests will run with in OpenShift
-    // we use a ternary here to deal with the empty string
-    options['image'] = options.get('image') ? options.get('image') : pipelineVars.iqeCoreImage
+    options['image'] = options.get('image') ?: pipelineVars.iqeCoreImage
 
     // the namespace that the test pods run in
     options['namespace'] = options.get('namespace')
@@ -96,7 +94,7 @@ private parseOptions(Map options) {
     options['parallelWorkerCount'] = options.get('parallelWorkerCount', 2)
 
     // a Map of additional env vars to set in the .env file before running iqe
-    def extraEnvVars = options.get('extraEnvVars', [:])
+    Map extraEnvVars = options.get('extraEnvVars', [:])
     // if we are running UI tests, force IQE to use default browser
     if (options['ui'] && !extraEnvVars.containsKey('DYNACONF_MAIN__use_browser')) {
         extraEnvVars['DYNACONF_MAIN__use_browser'] = pipelineVars.defaultBrowser
@@ -127,18 +125,17 @@ private parseOptions(Map options) {
     return options
 }
 
-private mergeAppOptions(Map options, Map appOptions) {
+private Map mergeAppOptions(Map options, Map appOptions) {
     /* Merge an app's options with the default options.*/
-    if (!appOptions instanceof Map) {
+    if (!(appOptions instanceof Map)) {
         error("Incorrect syntax for appConfigs: 'options' for app is not a Map")
     }
 
-    def mergedOptions = [:]
-    mergedOptions = options + appOptions
+    Map mergedOptions = options + appOptions
     return mergedOptions
 }
 
-def runIQE(String plugin, Map appOptions) {
+String runIQE(String plugin, Map appOptions) {
     /*
      * Run IQE sequential tests and parallel tests for a plugin.
      *
@@ -147,20 +144,20 @@ def runIQE(String plugin, Map appOptions) {
      *
      * Returns result of "SUCCESS" or "FAILURE"
      */
-    def result
-    def status
-    def noParallelTests = false
-    def noSequentialTests = false
+    String result
+    Integer status
+    Boolean noParallelTests = false
+    Boolean noSequentialTests = false
 
-    def filterArgs = ''
-    def requirementsArgs = ''
-    def requirementsPriorityArgs = ''
-    def testImportanceArgs = ''
-    def browserlog = ''
-    def reportportalArgs = ''
-    def netlog = ''
-    def xdistArgs = ''
-    def forceDefaultUser = ''
+    String filterArgs = ''
+    String requirementsArgs = ''
+    String requirementsPriorityArgs = ''
+    String testImportanceArgs = ''
+    String browserlog = ''
+    String reportportalArgs = ''
+    String netlog = ''
+    String xdistArgs = ''
+    String forceDefaultUser = ''
 
     if (appOptions['filter']) {
         filterArgs = "-k \"${appOptions['filter']}\""
@@ -200,11 +197,11 @@ def runIQE(String plugin, Map appOptions) {
         forceDefaultUser = "--iqe-force-default-user=${appOptions['iqeForceDefaultUser']}"
     }
 
-    def marker = appOptions['marker']
-    def extraArgs = appOptions['extraArgs']
+    String marker = appOptions['marker']
+    String extraArgs = appOptions['extraArgs']
 
     catchError(stageResult: 'FAILURE') {
-        def screenshotsDir = sh(
+        String screenshotsDir = sh(
             script: (
                 """
                 # note: trims trailing newlines and removes spaces
@@ -226,15 +223,15 @@ def runIQE(String plugin, Map appOptions) {
         }
 
         // run parallel tests
-        def errorMsgParallel = ''
-        def errorMsgSequential = ''
-        def markerArgs = marker ? "-m \"${marker}\'' : ""
+        String errorMsgParallel = ''
+        String errorMsgSequential = ''
+        String markerArgs = marker ? "-m \"${marker}\"" : ''
 
         if (appOptions['xdistEnabled']) {
             markerArgs = marker ? "-m \"parallel and (${marker})\"" : "-m \"parallel\""
             status = sh(
                 script: (
-                    '''
+                    """
                     set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
                     iqe tests plugin ${plugin} -s -v \
                     --junitxml=junit-${plugin}-parallel.xml \
@@ -251,7 +248,7 @@ def runIQE(String plugin, Map appOptions) {
                     ${netlog} \
                     ${forceDefaultUser} \
                     2>&1
-                    '''.stripIndent()
+                    """.stripIndent()
                 ),
                 returnStatus: true
             )
@@ -272,7 +269,7 @@ def runIQE(String plugin, Map appOptions) {
 
         status = sh(
             script: (
-                '''
+                """
                 set +x && export \$(cat "${env.WORKSPACE}/.env" | xargs) && set -x && \
                 iqe tests plugin ${plugin} -s -v \
                 --junitxml=junit-${plugin}-sequential.xml \
@@ -288,7 +285,7 @@ def runIQE(String plugin, Map appOptions) {
                 ${netlog} \
                 ${forceDefaultUser} \
                 2>&1
-                '''.stripIndent()
+                """.stripIndent()
             ),
             returnStatus: true
         )

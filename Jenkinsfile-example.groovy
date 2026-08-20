@@ -6,6 +6,9 @@
  */
 import groovy.transform.Field
 
+// The library statement is necessary, the _ will be flagged
+// Naming it will also flag. Just ignore the groovylint for it
+// groovylint-disable-next-line
 @Library('github.com/RedHatInsights/insights-pipeline-lib@v3') _
 
 // Code coverage failure threshold

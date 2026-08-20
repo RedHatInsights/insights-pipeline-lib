@@ -1,0 +1,7 @@
+{
+  "extends": "recommended",
+  "recipes": [],
+  "rules": {
+    "UnnecessaryGString": "off"
+  }
+}
