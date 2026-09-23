@@ -34,7 +34,7 @@ def call(Map parameters = [:]) {
     mynvr = mymessage.build.nvr
 
     mytype = 'brew-build'
-    // mynamespace = 'insights-client.brew-build'
+    // mynamespace = 'rhc.brew-build'
     mynamespace = component + '.brew-build'
     println("DEBUG: mymespace is: ${mynamespace}")
 
@@ -46,11 +46,11 @@ def call(Map parameters = [:]) {
     println("DEBUG: myTopic is: ${myTopic}")
 
     // Create common message body content
-    // myContactContent = msgBusContactContent(name: "insights-client", team: "Insights Client QE", docs: '', email: "pakotvan@redhat.com")
+    // myContactContent = msgBusContactContent(name: "rhc", team: "Insights Client QE", docs: '', email: "pakotvan@redhat.com")
     myContactContent = msgBusContactContent(name: component, team: 'Insights Client QE', docs: '', email: 'pakotvan@redhat.com')
     println('DEBUG: myContactContent is:' + myContactContent())
 
-    // myArtifactContent = msgBusArtifactContent(type: 'brew-build', id: "${parsedMsg['build']['task_id']}", component: 'insights-client', issuer: "${parsedMsg['build']['owner_name']}", nvr: env.nvr, scratch: false, source: env.RPM_REQUEST_SOURCE ?: "UNKNOWN")
+    // myArtifactContent = msgBusArtifactContent(type: 'brew-build', id: "${parsedMsg['build']['task_id']}", component: 'rhc', issuer: "${parsedMsg['build']['owner_name']}", nvr: env.nvr, scratch: false, source: env.RPM_REQUEST_SOURCE ?: "UNKNOWN")
     // myArtifactContent = msgBusArtifactContent(type: mytype, id: id, component: component, issuer: issuer, nvr: env.nvr, scratch: false, source: env.RPM_REQUEST_SOURCE ?: "UNKNOWN")
     myArtifactContent = msgBusArtifactContent(type: mytype, id: mytaskid, component: component, issuer: issuer, nvr: mynvr, scratch: false, source: mysource ?: 'UNKNOWN')
     println('DEBUG: myArtifactContent is:' + myArtifactContent())
@@ -78,7 +78,7 @@ def call(Map parameters = [:]) {
             // os: OS your jenkins master running - RHEL-7, RHEL-8
             // provider: upshift? RHOS? Where is hosting your jenkins master
             // variant: What variant of rhel is your master running? `cat /etc/os-release`
-            // mySystemContent = msgBusSystemContent(label: "insights-client", os: "RHEL-8", provider: "RHOS", architecture: "x86_64", variant: "Server")
+            // mySystemContent = msgBusSystemContent(label: "rhc", os: "RHEL-8", provider: "RHOS", architecture: "x86_64", variant: "Server")
             mySystemContent = msgBusSystemContent(label: component, os: 'RHEL-8', provider: 'RHOS', architecture: 'x86_64', variant: 'Server')
             println('DEBUG: mySystemContent is:' + mySystemContent())
 
