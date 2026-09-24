@@ -7,8 +7,6 @@
 * @param (optional) url = RHSM url
 * @param credentialId = Jenkins credential id to authenticate using username and password
 * @param (optional) poolId = RHSM pool id
-* @param (optional) activationKey = RHSM activation key, usually used for Satellite hosts
-* @param (optional) org = Satellite Organization name
 */
 def getBeta() {
     def beta = sh( script: 'cat /etc/redhat-release | egrep -e "Alpha|Beta" > /dev/null', returnStatus: true)
@@ -32,9 +30,6 @@ def rhsmRegister(Map parameters = [:]) {
     def url = parameters.get('url', null)
     def credentialId = parameters.get('credentialId', null)
     def poolId = parameters.get('poolId', null)
-    def satellite = parameters.get('satellite', null)
-    def activationKey = parameters.get('activationKey', null)
-    def org = parameters.get('org', null)
 
     if (poolId) {
         withCredentials([usernamePassword(
@@ -49,14 +44,6 @@ def rhsmRegister(Map parameters = [:]) {
                 subscription-manager refresh
             """
         }
-    }
-    else if (satellite) {
-        echo 'Subscribing machine to Satellite ...'
-        sh """
-            rpm -Uvh http://\$${satellite}/pub/katello-ca-consumer-\$${satellite}-1.0-1.noarch.rpm
-            subscription-manager register --org=${org} --activationkey=${activationKey}
-            subscription-manager refresh
-        """
     }
     else {
         withCredentials([usernamePassword(
@@ -134,11 +121,6 @@ def installRpm(Map parameters = [:]) {
         sh """
         yum remove -y ${rpmName}
         """
-        if ("${rpmName}" == 'insights-client') {
-            sh '''
-            rm -rf /etc/insights-client
-            '''
-        }
     }
 
     if (url) {
@@ -176,7 +158,6 @@ def collectSystemArtifacts() {
     }
     sh """
     cat /etc/redhat-release >> \$(hostname).txt
-    rpm -qa insights-client >> \$(hostname).txt
     echo "ENV_AUTH_TYPE=\${ENV_AUTH_TYPE}" >> \$(hostname).txt
     export OS_MAJOR_VERSION=\$(cat /etc/redhat-release | sed 's/.*release //' | sed 's/ .*//' | awk -F. '{ print \$1 }')
     export OS_MINOR_VERSION=\$(cat /etc/redhat-release | sed 's/.*release //' | sed 's/ .*//' | awk -F. '{ print \$2 }')
@@ -200,34 +181,17 @@ def setupVenvDir() {
 
 def setupIqePlugin(Map parameters = [:]) {
     def plugin = parameters.get('plugin')
-    def iqeCoreBranch = parameters.get('iqeCoreBranch' , '3.0')
     def iqePluginBranch = parameters.get('iqePluginBranch', 'master')
     def jenkinsCredentials = null
     def vaultEnabled = false
 
     def venvDir = setupVenvDir()
     def plugin_dir
-    if (plugin == 'insights-client') {
-        git credentialsId: 'gitlab',
-            url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-insights-client-plugin.git',
-            branch: iqePluginBranch
-        plugin_dir = 'iqe_insights_client'
-        jenkinsCredentials = 'settings_iqe_insights_client'
-        vaultEnabled = true
-    }
-    else if (plugin.contains('rhc')) {
+    if (plugin.contains('rhc')) {
         git credentialsId: 'gitlab',
             url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-rhc-client-plugin.git',
             branch: iqePluginBranch
         vaultEnabled = true
-    }
-    else if (plugin.contains('iqe-satellite-plugin')) {
-        git credentialsId: 'gitlab',
-            url: 'https://gitlab.cee.redhat.com/insights-qe/iqe-satellite-plugin.git',
-            branch: iqePluginBranch
-        plugin_dir = 'iqe-satellite-plugin'
-        plugin_dir = 'iqe_insights_satellite'
-        jenkinsCredentials = 'settings_iqe_satellite'
     }
     else {
         println('Unknown plugin string passed...')
@@ -256,13 +220,7 @@ def setupIqePlugin(Map parameters = [:]) {
             iqe plugin install --editable .
         '''
     }
-    if (plugin == 'insights-client') {
-        sh """
-            source ${venvDir}/bin/activate
-            pip install git+https://github.com/RedHatInsights/insights-core.git@${iqeCoreBranch}
-        """
-    }
-    else if (plugin.contains('rhc')) {
+    if (plugin.contains('rhc')) {
         sh """
             source ${venvDir}/bin/activate
             pip install --editable .[client]
@@ -299,24 +257,12 @@ def setupIqeAnsible(String iqeAnsibleBranch='master') {
             pip install -r requirements.txt
         '''
     }
-    sh """
-        echo ${venvDir}
-        source ${venvDir}/bin/activate
-        pip install -r insights-client/requirements.txt
-    """
-
-    withCredentials([file(credentialsId: 'settings_iqe_ansible', variable: 'settings')]) {
-        sh 'pwd'
-        sh 'ls -ltr'
-        sh "cp \$settings insights-client/vars/settings.local.yaml"
-    }
 }
 
 def runTests(Map parameters = [:]) {
     String plugin = parameters.get('plugin')
     String env = parameters.get('env', null)
     String pytestParam = parameters.get('pytestParam', null)
-    String satelliteInstance = parameters.get('satelliteInstance', null)
     String iqeVmRhel = parameters.get('iqeVmRhel', null)
     String ibutsuData = parameters.get('ibutsuData', null)
     def replaced_rhel_string
@@ -331,14 +277,11 @@ def runTests(Map parameters = [:]) {
 
     def venvDir = setupVenvDir()
     def plugin_test
-    if (plugin == 'insights-client') {
-        plugin_test = 'insights_client'
-    }
-        else if (plugin == 'rhc') {
+    if (plugin == 'rhc') {
         plugin_test = 'rhc_client'
         pytestParam = "${pytestParam} -k test_client"
-        }
-        else if (plugin == 'rhc-worker-playbook') {
+    }
+    else if (plugin == 'rhc-worker-playbook') {
         plugin_test = 'rhc_client'
         pytestParam = "${pytestParam} -m worker_playbook"
         // start python web server with playbook
@@ -347,7 +290,7 @@ def runTests(Map parameters = [:]) {
                 cd iqe_rhc_client/resources/playbooks
                 nohup python -m http.server 8000 > /dev/null 2>&1 &
             '''
-        }
+    }
         // ibutsu configuration moved to test execution section to use environment variables
 
     if (reportportal) {
@@ -357,7 +300,6 @@ def runTests(Map parameters = [:]) {
     // iqe tests plugin ${plugin_test} --junitxml=junit.xml --disable-pytest-warnings -srxv ${pytestParam}
     sh """
             set +x && export \$(cat "${WORKSPACE}/.env" | xargs) && set -x
-            export SATELLITE_INSTANCE=${satelliteInstance}
             export IQE_VM_RHEL=${replaced_rhel_string}
             ${ibutsu ? "export IBUTSU_MODE=\"https://ibutsu-api.insights.corp.redhat.com/\"" : ''}
             ${ibutsu ? "export IBUTSU_PROJECT=\"insights-qe\"" : ''}
@@ -380,7 +322,6 @@ def runAnsible(String playbookFile, String playbookTags=null) {
         }
 
     sh """
-            cd insights-client/
             cp -pr hosts_localhost hosts
             source ${venvDir}/bin/activate
             export ANSIBLE_LOG_PATH="\${WORKSPACE}/ansible_\${env.NODE_NAME}.log"
