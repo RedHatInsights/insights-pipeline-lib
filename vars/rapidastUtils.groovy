@@ -24,6 +24,7 @@ String prepareRapidastStages(
     String namespace = pipelineVars.upshiftNameSpace,
     String vaultSecretPath = 'insights/secrets/qe/stage/swatch/rapidast_user'
 ) {
+    String buildSuccessResult = 'SUCCESS'
     openShiftUtils.withNode(
         cloud: cloud,
         namespace: namespace,
@@ -32,7 +33,6 @@ String prepareRapidastStages(
         resourceLimitMemory: '4Gi'
     ) {
         String buildFailureResult = 'FAILURE'
-        String buildSuccessResult = 'SUCCESS'
         String buildUnstableResult = 'UNSTABLE'
         String rtokenEnvVar = 'RTOKEN'
         String vaultUrlValue = 'https://vault.devshift.net/'
